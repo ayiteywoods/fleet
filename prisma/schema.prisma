@@ -1,0 +1,672 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id                BigInt    @id @default(autoincrement())
+  name              String    @db.VarChar(255)
+  email             String?   @unique(map: "users_email_unique") @db.VarChar(255)
+  phone             String?   @db.VarChar(255)
+  role              String    @default("user") @db.VarChar(255)
+  region            String?   @db.VarChar(255)
+  district          String?   @db.VarChar(255)
+  spcode            Int?
+  group             Int?
+  email_verified_at DateTime? @db.Timestamp(0)
+  password          String    @db.VarChar(255)
+  license_number    String?   @db.VarChar(255)
+  license_category  String?   @db.VarChar(255)
+  license_expiry    DateTime? @db.Date
+  specialization    String?   @db.VarChar(255)
+  is_active         Boolean   @default(true)
+  remember_token    String?   @db.VarChar(100)
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+  created_by        String?   @db.VarChar(15)
+  updated_by        String?   @db.VarChar(15)
+  profile_image     String?   @db.VarChar(255)
+  user_code         String?   @db.VarChar(50)
+  status            String?   @db.Char(1)
+  user_type         String?   @db.VarChar(50)
+  role_id           BigInt?
+  api_token         String?   @db.VarChar(255)
+  password_reset    String?   @db.Char(1)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  providers         String?
+  branch_id         BigInt?
+  user_level        String?   @db.VarChar(50)
+  type              String?   @db.VarChar(100)
+  full_name         String?   @db.VarChar(100)
+  picture           String?   @db.VarChar(255)
+  wc_id             BigInt?
+  district_id       Int?
+}
+
+model vehicles {
+  id                   BigInt                 @id @default(autoincrement())
+  vin_number           String?                @unique(map: "vehicles_vin_number_unique") @db.VarChar(255)
+  reg_number           String                 @unique(map: "vehicles_reg_number_unique") @db.VarChar(255)
+  trim                 String?                @db.VarChar(255)
+  year                 Int?
+  status               String                 @db.VarChar(255)
+  color                String?                @db.VarChar(255)
+  engine_number        String?                @db.VarChar(255)
+  chassis_number       String?                @db.VarChar(255)
+  current_region       String?                @db.VarChar(255)
+  current_district     String?                @db.VarChar(255)
+  current_mileage      Decimal                @default(0) @db.Decimal(10, 2)
+  last_service_date    DateTime?              @db.Date
+  next_service_km      Int?
+  type_id              BigInt?
+  make_id              BigInt?
+  notes                String?
+  created_at           DateTime?              @db.Timestamp(0)
+  updated_at           DateTime?              @db.Timestamp(0)
+  created_by           Int?
+  updated_by           Int?
+  deleted_at           DateTime?              @db.Timestamp(6)
+  deleted_by           String?                @db.VarChar(15)
+  spcode               Int
+  driver_operators     driver_operators[]
+  fuel_logs            fuel_logs[]
+  fuel_request         fuel_request[]
+  incident_reports     incident_reports[]
+  insurance            insurance[]
+  maintenance_history  maintenance_history[]
+  maintenance_schedule maintenance_schedule[]
+  repair_history       repair_history[]
+  repair_request       repair_request[]
+  spare_part_receipt   spare_part_receipt[]
+  spare_part_request   spare_part_request[]
+  vehicle_dispatch     vehicle_dispatch[]
+  vehicle_reservation  vehicle_reservation[]
+}
+
+model categories {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+}
+
+model clusters {
+  id         BigInt    @id(map: "cluster_pkey") @default(autoincrement())
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model companies {
+  id             BigInt    @id @default(autoincrement())
+  name           String    @db.VarChar(255)
+  location       String    @db.VarChar(255)
+  loc_code       String?   @db.VarChar(255)
+  phone          String    @db.VarChar(255)
+  description    String?   @db.VarChar(255)
+  group_id       Int?
+  email          String    @db.VarChar(255)
+  address        String    @db.VarChar(255)
+  contact_person String    @db.VarChar(255)
+  contact_phone  String    @db.VarChar(255)
+  status         String    @db.VarChar(255)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+}
+
+model driver_operators {
+  id               BigInt             @id @default(autoincrement())
+  name             String             @db.VarChar(255)
+  phone            String             @db.VarChar(255)
+  license_number   String             @db.VarChar(255)
+  license_category String             @db.VarChar(255)
+  license_expire   String             @db.VarChar(255)
+  region           String             @db.VarChar(255)
+  district         String             @db.VarChar(255)
+  status           String             @db.VarChar(255)
+  vehicle_id       BigInt
+  created_at       DateTime?          @db.Timestamp(0)
+  updated_at       DateTime?          @db.Timestamp(0)
+  created_by       Int?
+  updated_by       Int?
+  vehicles         vehicles           @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "driver_operators_vehicle_id_foreign")
+  fuel_logs        fuel_logs[]
+  incident_reports incident_reports[]
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement())
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String
+  queue      String
+  payload    String
+  exception  String
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model fuel_expense_log {
+  id              BigInt       @id @default(autoincrement())
+  vendor          String       @db.VarChar(255)
+  payment_method  String       @db.VarChar(255)
+  fuel_request_id BigInt
+  created_at      DateTime?    @db.Timestamp(0)
+  updated_at      DateTime?    @db.Timestamp(0)
+  created_by      Int?
+  updated_by      Int?
+  fuel_request    fuel_request @relation(fields: [fuel_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fuel_expense_log_fuel_request_id_foreign")
+}
+
+model fuel_logs {
+  id               BigInt           @id @default(autoincrement())
+  refuel_date      DateTime         @db.Date
+  quantity         Decimal          @db.Decimal(8, 2)
+  unit_cost        Decimal          @db.Decimal(8, 2)
+  total_cost       Decimal          @db.Decimal(10, 2)
+  mileage_before   Int
+  mileage_after    Int
+  fuel_type        String           @db.VarChar(255)
+  vendor           String           @db.VarChar(255)
+  receipt_number   String?          @db.VarChar(255)
+  notes            String?
+  vehicle_id       BigInt
+  driver_id        BigInt
+  created_at       DateTime?        @db.Timestamp(0)
+  updated_at       DateTime?        @db.Timestamp(0)
+  created_by       Int?
+  updated_by       Int?
+  driver_operators driver_operators @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fuel_logs_driver_id_foreign")
+  vehicles         vehicles         @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fuel_logs_vehicle_id_foreign")
+}
+
+model fuel_request {
+  id               BigInt             @id @default(autoincrement())
+  justification    String
+  quantity         Float
+  unit_cost        Float
+  total_cost       Float
+  status           String             @db.VarChar(255)
+  vehicle_id       BigInt
+  created_at       DateTime?          @db.Timestamp(0)
+  updated_at       DateTime?          @db.Timestamp(0)
+  created_by       Int?
+  updated_by       Int?
+  fuel_expense_log fuel_expense_log[]
+  vehicles         vehicles           @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fuel_request_vehicle_id_foreign")
+}
+
+model groups {
+  id         BigInt    @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  desc       String?
+  status     String
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model incident_reports {
+  id                    BigInt           @id @default(autoincrement())
+  incident_date         DateTime         @db.Date
+  incident_time         DateTime         @db.Time(0)
+  location              String           @db.VarChar(255)
+  description           String
+  severity              String           @db.VarChar(255)
+  actions_taken         String?
+  estimated_damage_cost Decimal?         @db.Decimal(10, 2)
+  reported_by           String           @db.VarChar(255)
+  witnesses             Json?            @db.Json
+  photos                Json?            @db.Json
+  vehicle_id            BigInt
+  driver_id             BigInt
+  created_at            DateTime?        @db.Timestamp(0)
+  updated_at            DateTime?        @db.Timestamp(0)
+  created_by            Int?
+  updated_by            Int?
+  driver_operators      driver_operators @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "incident_reports_driver_id_foreign")
+  vehicles              vehicles         @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "incident_reports_vehicle_id_foreign")
+}
+
+model insurance {
+  id                BigInt    @id @default(autoincrement())
+  policy_number     String    @db.VarChar(255)
+  insurance_company String    @db.VarChar(255)
+  start_date        DateTime  @db.Date
+  end_date          DateTime  @db.Date
+  premium_amount    Decimal   @db.Decimal(10, 2)
+  coverage_type     String    @db.VarChar(255)
+  notes             String?
+  vehicle_id        BigInt
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @db.Timestamp(0)
+  created_by        Int?
+  updated_by        Int?
+  vehicles          vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "insurance_vehicle_id_foreign")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model maintenance_history {
+  id                 BigInt    @id @default(autoincrement())
+  service_date       DateTime  @db.Date
+  cost               Decimal   @db.Decimal(10, 2)
+  status             String    @default("completed") @db.VarChar(255)
+  service_details    String?
+  service_type       String    @db.VarChar(255)
+  mileage_at_service Int       @default(0)
+  parts_replaced     String?
+  vehicle_id         BigInt
+  mechanic_id        BigInt
+  workshop_id        BigInt
+  created_at         DateTime? @db.Timestamp(0)
+  updated_at         DateTime? @db.Timestamp(0)
+  created_by         Int?
+  updated_by         Int?
+  vehicles           vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maintenance_history_vehicle_id_foreign")
+}
+
+model maintenance_schedule {
+  id         BigInt    @id @default(autoincrement())
+  due_date   DateTime  @db.Date
+  vehicle_id BigInt
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  created_by Int?
+  updated_by Int?
+  vehicles   vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maintenance_schedule_vehicle_id_foreign")
+}
+
+model mechanics {
+  id              BigInt            @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  specialization  String            @db.VarChar(255)
+  region          String            @db.VarChar(255)
+  district        String            @db.VarChar(255)
+  status          String            @db.VarChar(255)
+  workshop_id     BigInt
+  created_at      DateTime?         @db.Timestamp(0)
+  updated_at      DateTime?         @db.Timestamp(0)
+  created_by      Int?
+  updated_by      Int?
+  workshops       workshops         @relation(fields: [workshop_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mechanics_workshop_id_foreign")
+  repair_schedule repair_schedule[]
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement())
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model model_has_permissions {
+  permission_id BigInt
+  model_type    String      @db.VarChar(255)
+  model_id      BigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "model_has_permissions_permission_id_foreign")
+
+  @@id([permission_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_permissions_model_id_model_type_index")
+}
+
+model model_has_roles {
+  role_id    BigInt
+  model_type String @db.VarChar(255)
+  model_id   BigInt
+  roles      roles  @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "model_has_roles_role_id_foreign")
+
+  @@id([role_id, model_id, model_type])
+  @@index([model_id, model_type], map: "model_has_roles_model_id_model_type_index")
+}
+
+model oauth_access_tokens {
+  id         String    @id @db.Char(80)
+  user_id    BigInt?
+  client_id  String    @db.Uuid
+  name       String?   @db.VarChar(255)
+  scopes     String?
+  revoked    Boolean
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  expires_at DateTime? @db.Timestamp(0)
+
+  @@index([user_id], map: "oauth_access_tokens_user_id_index")
+}
+
+model oauth_auth_codes {
+  id         String    @id @db.Char(80)
+  user_id    BigInt
+  client_id  String    @db.Uuid
+  scopes     String?
+  revoked    Boolean
+  expires_at DateTime? @db.Timestamp(0)
+
+  @@index([user_id], map: "oauth_auth_codes_user_id_index")
+}
+
+model oauth_clients {
+  id            String    @id @db.Uuid
+  owner_type    String?   @db.VarChar(255)
+  owner_id      BigInt?
+  name          String    @db.VarChar(255)
+  secret        String?   @db.VarChar(255)
+  provider      String?   @db.VarChar(255)
+  redirect_uris String
+  grant_types   String
+  revoked       Boolean
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+
+  @@index([owner_type, owner_id], map: "oauth_clients_owner_type_owner_id_index")
+}
+
+model oauth_device_codes {
+  id               String    @id @db.Char(80)
+  user_id          BigInt?
+  client_id        String    @db.Uuid
+  user_code        String    @unique(map: "oauth_device_codes_user_code_unique") @db.Char(8)
+  scopes           String
+  revoked          Boolean
+  user_approved_at DateTime? @db.Timestamp(0)
+  last_polled_at   DateTime? @db.Timestamp(0)
+  expires_at       DateTime? @db.Timestamp(0)
+
+  @@index([client_id], map: "oauth_device_codes_client_id_index")
+  @@index([user_id], map: "oauth_device_codes_user_id_index")
+}
+
+model oauth_refresh_tokens {
+  id              String    @id @db.Char(80)
+  access_token_id String    @db.Char(80)
+  revoked         Boolean
+  expires_at      DateTime? @db.Timestamp(0)
+
+  @@index([access_token_id], map: "oauth_refresh_tokens_access_token_id_index")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model password_resets {
+  email      String    @db.VarChar(255)
+  token      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+
+  @@index([email], map: "password_resets_email_index")
+  @@ignore
+}
+
+model permissions {
+  id                    BigInt                  @id @default(autoincrement())
+  name                  String                  @db.VarChar(255)
+  guard_name            String                  @db.VarChar(255)
+  created_at            DateTime?               @db.Timestamp(0)
+  updated_at            DateTime?               @db.Timestamp(0)
+  model_has_permissions model_has_permissions[]
+  role_has_permissions  role_has_permissions[]
+
+  @@unique([name, guard_name], map: "permissions_name_guard_name_unique")
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement())
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   BigInt
+  name           String    @db.VarChar(255)
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?
+  last_used_at   DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(6)
+
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model repair_history {
+  id           BigInt    @id @default(autoincrement())
+  service_date DateTime  @db.Date
+  cost         Decimal   @db.Decimal(10, 2)
+  status       String    @db.VarChar(255)
+  vehicle_id   BigInt
+  created_at   DateTime? @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+  created_by   Int?
+  updated_by   Int?
+  vehicles     vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_history_vehicle_id_foreign")
+}
+
+model repair_request {
+  id              BigInt            @id @default(autoincrement())
+  issue_desc      String            @db.VarChar(255)
+  urgency_level   String            @db.VarChar(255)
+  region          String            @db.VarChar(255)
+  district        String            @db.VarChar(255)
+  status          String            @db.VarChar(255)
+  workshop_id     BigInt
+  vehicle_id      BigInt
+  created_at      DateTime?         @db.Timestamp(0)
+  updated_at      DateTime?         @db.Timestamp(0)
+  created_by      Int?
+  updated_by      Int?
+  vehicles        vehicles          @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_request_vehicle_id_foreign")
+  workshops       workshops         @relation(fields: [workshop_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_request_workshop_id_foreign")
+  repair_schedule repair_schedule[]
+}
+
+model repair_schedule {
+  id                  BigInt         @id @default(autoincrement())
+  schedule_date       DateTime       @db.Date
+  assigned_technician BigInt
+  repair_request_id   BigInt
+  created_at          DateTime?      @db.Timestamp(0)
+  updated_at          DateTime?      @db.Timestamp(0)
+  created_by          Int?
+  updated_by          Int?
+  mechanics           mechanics      @relation(fields: [assigned_technician], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_schedule_assigned_technician_foreign")
+  repair_request      repair_request @relation(fields: [repair_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_schedule_repair_request_id_foreign")
+}
+
+model role_has_permissions {
+  permission_id BigInt
+  role_id       BigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_has_permissions_permission_id_foreign")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_has_permissions_role_id_foreign")
+
+  @@id([permission_id, role_id])
+}
+
+model roles {
+  id                   BigInt                 @id @default(autoincrement())
+  name                 String                 @db.VarChar(255)
+  guard_name           String                 @db.VarChar(255)
+  created_at           DateTime?              @db.Timestamp(0)
+  updated_at           DateTime?              @db.Timestamp(0)
+  model_has_roles      model_has_roles[]
+  role_has_permissions role_has_permissions[]
+
+  @@unique([name, guard_name], map: "roles_name_guard_name_unique")
+}
+
+model spare_part_dispatch {
+  id                    BigInt               @id @default(autoincrement())
+  quantity              Int
+  status                String               @db.VarChar(255)
+  spare_part_request_id BigInt
+  created_at            DateTime?            @db.Timestamp(0)
+  updated_at            DateTime?            @db.Timestamp(0)
+  created_by            Int?
+  updated_by            Int?
+  spare_part_request    spare_part_request   @relation(fields: [spare_part_request_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_dispatch_spare_part_request_id_foreign")
+  spare_part_receipt    spare_part_receipt[]
+}
+
+model spare_part_inventory {
+  id                       BigInt                     @id @default(autoincrement())
+  part_name                String                     @db.VarChar(255)
+  description              String                     @db.VarChar(255)
+  quantity                 Int
+  reorder_threshold        Int
+  supplier_name            String                     @db.VarChar(255)
+  created_at               DateTime?                  @db.Timestamp(0)
+  updated_at               DateTime?                  @db.Timestamp(0)
+  created_by               Int?
+  updated_by               Int?
+  spare_part_inventory_log spare_part_inventory_log[]
+  spare_part_request       spare_part_request[]
+}
+
+model spare_part_inventory_log {
+  id                      BigInt               @id @default(autoincrement())
+  quantity_added          Int
+  spare_part_inventory_id BigInt
+  created_at              DateTime?            @db.Timestamp(0)
+  updated_at              DateTime?            @db.Timestamp(0)
+  created_by              Int?
+  updated_by              Int?
+  spare_part_inventory    spare_part_inventory @relation(fields: [spare_part_inventory_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_inventory_log_spare_part_inventory_id_foreign")
+}
+
+model spare_part_receipt {
+  id                     BigInt              @id @default(autoincrement())
+  spare_part_dispatch_id BigInt
+  vehicle_id             BigInt
+  created_at             DateTime?           @db.Timestamp(0)
+  updated_at             DateTime?           @db.Timestamp(0)
+  created_by             Int?
+  updated_by             Int?
+  spare_part_dispatch    spare_part_dispatch @relation(fields: [spare_part_dispatch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_receipt_spare_part_dispatch_id_foreign")
+  vehicles               vehicles            @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_receipt_vehicle_id_foreign")
+}
+
+model spare_part_request {
+  id                      BigInt                @id @default(autoincrement())
+  quantity                Int
+  justification           String
+  region                  String                @db.VarChar(255)
+  district                String                @db.VarChar(255)
+  status                  String                @db.VarChar(255)
+  spare_part_inventory_id BigInt
+  vehicle_id              BigInt
+  approved_at             DateTime?             @db.Timestamp(0)
+  approved_by             Int?
+  created_at              DateTime?             @db.Timestamp(0)
+  updated_at              DateTime?             @db.Timestamp(0)
+  created_by              Int?
+  updated_by              Int?
+  spare_part_dispatch     spare_part_dispatch[]
+  spare_part_inventory    spare_part_inventory  @relation(fields: [spare_part_inventory_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_request_spare_part_inventory_id_foreign")
+  vehicles                vehicles              @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "spare_part_request_vehicle_id_foreign")
+}
+
+model subsidiary {
+  id         BigInt    @id @default(autoincrement())
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model supervisors {
+  id         BigInt      @id @default(autoincrement())
+  name       String      @db.VarChar(255)
+  phone      String      @db.VarChar(255)
+  email      String      @db.VarChar(255)
+  region     String      @db.VarChar(255)
+  district   String      @db.VarChar(255)
+  status     String      @db.VarChar(255)
+  created_at DateTime?   @db.Timestamp(0)
+  updated_at DateTime?   @db.Timestamp(0)
+  created_by Int?
+  updated_by Int?
+  workshops  workshops[]
+}
+
+model tags {
+  id         BigInt    @id @default(autoincrement())
+  name       String?   @db.VarChar(255)
+  color      String?   @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+}
+
+model vehicle_dispatch {
+  id                   BigInt    @id @default(autoincrement())
+  region               String    @db.VarChar(255)
+  district             String    @db.VarChar(255)
+  first_maintenance    DateTime? @db.Date
+  assigned_to          String    @db.VarChar(255)
+  received_by          String    @db.VarChar(255)
+  purpose              String?
+  dispatch_date        DateTime  @db.Date
+  expected_return_date DateTime? @db.Date
+  vehicle_id           BigInt
+  driver_id            BigInt
+  created_at           DateTime? @db.Timestamp(0)
+  updated_at           DateTime? @db.Timestamp(0)
+  created_by           Int?
+  updated_by           Int?
+  vehicles             vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vehicle_dispatch_vehicle_id_foreign")
+}
+
+model vehicle_makes {
+  id         BigInt    @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  model      String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  created_by Int?
+  updated_by Int?
+}
+
+model vehicle_reservation {
+  id            BigInt    @id @default(autoincrement())
+  justification String
+  start_date    DateTime  @db.Date
+  end_date      DateTime  @db.Date
+  duration      Int
+  status        String    @db.VarChar(255)
+  vehicle_id    BigInt
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+  created_by    Int?
+  updated_by    Int?
+  vehicles      vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "vehicle_reservation_vehicle_id_foreign")
+}
+
+model vehicle_types {
+  id          BigInt    @id @default(autoincrement())
+  type        String    @db.VarChar(255)
+  description String?
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @db.Timestamp(0)
+  created_by  Int?
+  updated_by  Int?
+}
+
+model workshops {
+  id             BigInt           @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  region         String           @db.VarChar(255)
+  district       String           @db.VarChar(255)
+  supervisor_id  BigInt
+  created_at     DateTime?        @db.Timestamp(0)
+  updated_at     DateTime?        @db.Timestamp(0)
+  created_by     Int?
+  updated_by     Int?
+  mechanics      mechanics[]
+  repair_request repair_request[]
+  supervisors    supervisors      @relation(fields: [supervisor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "workshops_supervisor_id_foreign")
+}
+
+model roadworthy {
+  id               BigInt
+  company          String    @db.VarChar
+  vehicle_number   String    @db.VarChar
+  vehicle_type     String?   @db.VarChar
+  date_issued      DateTime  @db.Date
+  date_expired     DateTime  @db.Date
+  roadworth_status String    @db.VarChar
+  updated_by       String    @db.VarChar
+  created_at       DateTime? @db.Time(6)
+  updated_at       DateTime? @db.Time(6)
+
+  @@id([id, vehicle_number])
+}
