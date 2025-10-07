@@ -301,19 +301,19 @@ export default function FleetDashboard() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Osei's Van - Checking Transmission</p>
+                    <p className="text-sm font-medium text-gray-900">Osei&apos;s Van - Checking Transmission</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Ansah's Honda - Change rear brakes and...</p>
+                    <p className="text-sm font-medium text-gray-900">Ansah&apos;s Honda - Change rear brakes and...</p>
                     <p className="text-xs text-gray-500">54 Days left</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Quaye's Car - Changing of Oil Tank...</p>
+                    <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Changing of Oil Tank...</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>
@@ -350,19 +350,19 @@ export default function FleetDashboard() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Ike's BMW - Insurance</p>
+                    <p className="text-sm font-medium text-gray-900">Ike&apos;s BMW - Insurance</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Ansah's VW - MOT</p>
+                    <p className="text-sm font-medium text-gray-900">Ansah&apos;s VW - MOT</p>
                     <p className="text-xs text-gray-500">54 Days left</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Quaye's Car - Road Tax</p>
+                    <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Road Tax</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>

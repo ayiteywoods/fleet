@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, User, Phone, CreditCard, MapPin, Calendar, Car, Edit } from 'lucide-react'
+import { X, User, Phone, CreditCard, MapPin, Calendar, Car, Edit, Printer, Download } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface ViewDriverModalProps {
