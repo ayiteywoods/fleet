@@ -87,11 +87,11 @@ export default function FleetMap() {
   }
 
   return (
-    <div className="h-96 rounded-lg overflow-hidden">
+    <div className="h-96 rounded-lg overflow-hidden relative z-10">
       <MapContainer
         center={[7.9465, -1.0232]} // Center of West Africa
         zoom={6}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', zIndex: 10 }}
         className="rounded-lg"
       >
         <TileLayer

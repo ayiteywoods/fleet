@@ -77,7 +77,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -91,7 +91,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-3xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -119,7 +119,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -141,7 +141,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -172,7 +172,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.license_number}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -193,7 +193,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.license_category}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -221,7 +221,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.license_expire}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -251,7 +251,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.region}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -273,7 +273,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.district}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -303,7 +303,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.status}
                       onChange={handleChange}
                       required
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -327,7 +327,7 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       name="vehicle_id"
                       value={formData.vehicle_id}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
@@ -345,14 +345,14 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+              className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-3xl hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Updating...' : 'Update Driver'}
             </button>

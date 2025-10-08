@@ -2,29 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Wrench, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock,
-  Banknote,
-  Plus,
-  Download,
-  FileText,
-  FileSpreadsheet,
-  Printer,
-  Search,
-  Eye,
-  Edit,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Settings
-} from 'lucide-react'
+  WrenchScrewdriverIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  ClockIcon,
+  BanknotesIcon,
+  PlusIcon,
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
+  PrinterIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilIcon,
+  XMarkIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon
+} from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
-import DashboardLayout from '@/components/DashboardLayout'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import AddMaintenanceModal from '@/components/AddMaintenanceModal'
 import ViewMaintenanceModal from '@/components/ViewMaintenanceModal'
 import EditMaintenanceModal from '@/components/EditMaintenanceModal'
@@ -129,12 +129,12 @@ export default function MaintenancePage() {
   const avgCost = totalMaintenance > 0 ? totalCost / totalMaintenance : 0
 
   const kpiCards = [
-    { title: 'Total', value: totalMaintenance.toString(), icon: Wrench, color: 'blue' },
-    { title: 'Completed', value: completedMaintenance.toString(), icon: CheckCircle, color: 'green' },
-    { title: 'Pending', value: pendingMaintenance.toString(), icon: Clock, color: 'orange' },
-    { title: 'In Progress', value: inProgressMaintenance.toString(), icon: AlertTriangle, color: 'yellow' },
-    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: Banknote, color: 'purple' },
-    { title: 'Avg Cost', value: `₵${avgCost.toLocaleString()}`, icon: Banknote, color: 'indigo' }
+    { title: 'Total', value: totalMaintenance.toString(), icon: WrenchScrewdriverIcon, color: 'blue' },
+    { title: 'Completed', value: completedMaintenance.toString(), icon: CheckCircleIcon, color: 'blue' },
+    { title: 'Pending', value: pendingMaintenance.toString(), icon: ClockIcon, color: 'blue' },
+    { title: 'In Progress', value: inProgressMaintenance.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
+    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
+    { title: 'Avg Cost', value: `₵${avgCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
   ]
 
   const toggleFieldSelection = (fieldKey: string) => {
@@ -254,16 +254,16 @@ export default function MaintenancePage() {
     if (sortColumn !== column) {
       return (
         <div className="flex flex-col">
-          <ChevronUp className="w-3 h-3 text-blue-300" />
-          <ChevronDown className="w-3 h-3 text-blue-300" />
+          <ChevronUpIcon className="w-3 h-3 text-blue-300" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-300" />
         </div>
       )
     }
     
     return sortDirection === 'asc' ? (
-      <ChevronUp className="w-3 h-3 text-blue-200" />
+      <ChevronUpIcon className="w-3 h-3 text-blue-200" />
     ) : (
-      <ChevronDown className="w-3 h-3 text-blue-200" />
+      <ChevronDownIcon className="w-3 h-3 text-blue-200" />
     )
   }
 
@@ -374,8 +374,8 @@ export default function MaintenancePage() {
     setShowViewMaintenanceModal(true)
   }
 
-  const handleEditMaintenance = (maintenance: Maintenance) => {
-    console.log('Edit maintenance clicked:', maintenance)
+  const handlePencilIconMaintenance = (maintenance: Maintenance) => {
+    console.log('PencilIcon maintenance clicked:', maintenance)
     setSelectedMaintenance(maintenance)
     setShowEditMaintenanceModal(true)
   }
@@ -498,9 +498,9 @@ export default function MaintenancePage() {
       return row
     })
 
-    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Maintenance Records')
+    const worksheet = XMarkIconLSXMarkIcon.utils.aoa_to_sheet([headers, ...data])
+    const workbook = XMarkIconLSXMarkIcon.utils.book_new()
+    XMarkIconLSXMarkIcon.utils.book_append_sheet(workbook, worksheet, 'Maintenance Records')
     
     // Auto-size columns
     const colWidths = headers.map((_, index) => {
@@ -512,7 +512,7 @@ export default function MaintenancePage() {
     })
     worksheet['!cols'] = colWidths
 
-    XLSX.writeFile(workbook, `maintenance-records-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XMarkIconLSXMarkIcon.writeFile(workbook, `maintenance-records-${new Date().toISOString().split('T')[0]}.xlsx`)
     
     setNotification({
       isOpen: true,
@@ -673,20 +673,20 @@ export default function MaintenancePage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <HorizonDashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      </HorizonDashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
-        overflowX: 'hidden',
+        overflowXMarkIcon: 'hidden',
         boxSizing: 'border-box',
         minWidth: '0',
         flexShrink: 1
@@ -696,34 +696,40 @@ export default function MaintenancePage() {
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
-              <div key={index} className={`p-4 rounded-lg shadow-sm ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div key={index} className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="w-8 h-8 text-blue-600" />
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <IconComponent className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-2xl font-bold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    }`}>
+                      {card.value}
+                    </p>
+                  </div>
                 </div>
-                <h3 className={`text-sm font-medium ${
-                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {card.title}
-                </h3>
-                <p className={`text-2xl font-bold ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {card.value}
-                </p>
               </div>
             )
           })}
         </div>
 
         {/* Main Content Area */}
-        <div className={`rounded-lg shadow-sm ${
-          themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+        <div className={`rounded-2xl ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
         }`} style={{
           width: '100%',
           maxWidth: '100%',
-          overflowX: 'hidden',
+          overflowXMarkIcon: 'hidden',
           boxSizing: 'border-box',
           minWidth: '0',
           flexShrink: 1
@@ -735,7 +741,7 @@ export default function MaintenancePage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowMaintenanceScheduleModal(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -748,9 +754,9 @@ export default function MaintenancePage() {
               {/* Right Side - Add Maintenance Button */}
               <button 
                 onClick={() => setShowAddMaintenanceModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">ADD MAINTENANCE</span>
               </button>
             </div>
@@ -767,10 +773,10 @@ export default function MaintenancePage() {
                 <select
                   value={entriesPerPage}
                   onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                  className={`px-3 py-1 text-sm border rounded-lg ${
+                  className={`px-3 py-1 text-sm border rounded-3xl ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-gray-300' 
-                      : 'bg-white border-gray-300 text-gray-700'
+                      : 'bg-gray-100 border-gray-300 text-gray-700'
                   }`}
                 >
                   <option value={5}>5</option>
@@ -790,50 +796,50 @@ export default function MaintenancePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowFieldSelector(true)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">SELECT COLUMNS ({selectedFields.length})</span>
                 </button>
                 
                 <button
                   onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <TableCellsIcon className="w-4 h-4" />
                   <span className="text-sm">EXCEL</span>
                 </button>
                 
                 <button
                   onClick={handleExportCSV}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   <span className="text-sm">CSV</span>
                 </button>
                 
                 <button
                   onClick={handleExportPDF}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <Download className="w-4 h-4" />
+                  <ArrowDownTrayIcon className="w-4 h-4" />
                   <span className="text-sm">PDF</span>
                 </button>
                 
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <Printer className="w-4 h-4" />
+                  <PrinterIcon className="w-4 h-4" />
                   <span className="text-sm">PRINT</span>
                 </button>
               </div>
 
-              {/* Search */}
+              {/* Search Bar */}
               <div className="flex items-center gap-2">
                 <span className={`text-sm ${
                   themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -841,13 +847,13 @@ export default function MaintenancePage() {
                   Search:
                 </span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search maintenance..."
+                    placeholder="Search maintenance records..."
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className={`pl-10 pr-4 py-2 text-sm border rounded-lg ${
+                    className={`pl-10 pr-4 py-2 text-sm border rounded-3xl ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-gray-300 placeholder-gray-500' 
                         : 'bg-white border-gray-300 text-gray-700 placeholder-gray-400'
@@ -868,8 +874,8 @@ export default function MaintenancePage() {
                 backdropFilter: 'blur(2px)'
               }}
             >
-              <div className={`w-96 max-h-96 rounded-lg shadow-lg ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div className={`w-96 max-h-96 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
                 <div className={`p-4 border-b ${
                   themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
@@ -886,7 +892,7 @@ export default function MaintenancePage() {
                         themeMode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                       }`}
                     >
-                      <X className="w-5 h-5" />
+                      <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
                   <p className={`text-sm mt-1 ${
@@ -997,21 +1003,21 @@ export default function MaintenancePage() {
                           className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
                           title="View"
                         >
-                          <Eye className="w-4 h-4" />
+                          <EyeIcon className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleEditMaintenance(maintenance)}
+                          onClick={() => handlePencilIconMaintenance(maintenance)}
                           className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
-                          title="Edit"
+                          title="PencilIcon"
                         >
-                          <Edit className="w-4 h-4" />
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteMaintenance(maintenance)}
                           className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
                           title="Delete"
                         >
-                          <X className="w-4 h-4" />
+                          <XMarkIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -1066,7 +1072,7 @@ export default function MaintenancePage() {
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Previous
             </button>
@@ -1076,7 +1082,7 @@ export default function MaintenancePage() {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Next
             </button>
@@ -1094,7 +1100,7 @@ export default function MaintenancePage() {
           isOpen={showViewMaintenanceModal}
           onClose={() => setShowViewMaintenanceModal(false)}
           maintenance={selectedMaintenance}
-          onEdit={handleEditMaintenance}
+          onPencilIcon={handlePencilIconMaintenance}
         />
 
         <EditMaintenanceModal
@@ -1118,6 +1124,6 @@ export default function MaintenancePage() {
           message={notification.message}
         />
       </div>
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

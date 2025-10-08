@@ -370,7 +370,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
         <button
           onClick={() => {
             onClose()
@@ -387,7 +387,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
         <h2 className="text-2xl font-bold mb-4">Manage Permissions</h2>
 
         {/* Add/Edit Form */}
-        <div className={`mb-6 p-4 rounded-lg ${themeMode === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <div className={`mb-6 p-4 rounded-3xl ${themeMode === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
           <h3 className="text-xl font-semibold mb-3">{editingPermission ? 'Edit Permission' : 'Add New Permission'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -429,7 +429,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
                   setNewPermissionName('')
                   setNewGuardName('web')
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-600 text-white hover:bg-gray-500'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -440,7 +440,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
             )}
             <button
               onClick={editingPermission ? handleUpdatePermission : handleAddPermission}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -463,7 +463,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
+              className={`w-full pl-10 pr-4 py-2 rounded-3xl border ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-gray-100 border-gray-300 text-gray-900'
@@ -473,7 +473,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
           <div className="flex gap-2">
             <button
               onClick={handleExportExcel}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -485,7 +485,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
             </button>
             <button
               onClick={handleExportCSV}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -497,7 +497,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
             </button>
             <button
               onClick={handleExportPDF}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -509,7 +509,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
             </button>
             <button
               onClick={handlePrint}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -530,7 +530,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-lg shadow-md">
+            <div className="overflow-x-auto rounded-3xl shadow-md">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className={`${themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
                   <tr>

@@ -66,7 +66,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             value={formData.firstName}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -80,7 +80,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             value={formData.lastName}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -107,7 +107,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -121,7 +121,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             value={formData.licenseNumber}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -134,7 +134,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
             name="licenseExpiry"
             value={formData.licenseExpiry}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -142,14 +142,14 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-3xl hover:bg-blue-700 disabled:opacity-50"
           >
             {isSubmitting ? 'Creating...' : 'Create Driver'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-3xl hover:bg-gray-400"
           >
             Cancel
           </button>

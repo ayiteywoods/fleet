@@ -42,6 +42,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     
     if (savedMode && ['light', 'dark'].includes(savedMode)) {
       setThemeModeState(savedMode)
+      // Apply dark mode class to document
+      if (savedMode === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
   }, [])
 
@@ -63,7 +69,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }
 
   const toggleThemeMode = () => {
-    setThemeModeState(prev => prev === 'light' ? 'dark' : 'light')
+    setThemeModeState(prev => {
+      const newMode = prev === 'light' ? 'dark' : 'light'
+      // Apply dark mode class to document
+      if (newMode === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+      return newMode
+    })
   }
 
   const value: ThemeContextType = {

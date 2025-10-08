@@ -341,7 +341,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
       />
       
       {/* Modal */}
-      <div className={`relative z-10 w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-lg shadow-xl ${
+      <div className={`relative z-10 w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
         themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -374,7 +374,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                     value={formData.due_date}
                     onChange={handleChange}
                     required
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
@@ -395,7 +395,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                     placeholder="Enter vehicle ID"
                     min="1"
                     required
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
@@ -407,13 +407,13 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
               <div className="flex gap-3">
                 <button
                   onClick={editingSchedule ? handleUpdate : handleAddSchedule}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
                 >
                   {editingSchedule ? 'Update Schedule' : 'Add Schedule'}
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 bg-gray-500 text-white rounded-3xl hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
@@ -427,7 +427,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowAddForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Add Schedule
@@ -437,7 +437,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportExcel}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -448,7 +448,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -459,7 +459,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -470,7 +470,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                   </button>
                   <button
                     onClick={handlePrint}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -490,7 +490,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
                   placeholder="Search maintenance schedules..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'

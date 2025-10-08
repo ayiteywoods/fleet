@@ -134,7 +134,7 @@ Notes: ${insurance.notes || 'No notes'}
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -150,7 +150,7 @@ Notes: ${insurance.notes || 'No notes'}
             {onEdit && (
               <button
                 onClick={() => onEdit(insurance)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 Edit
@@ -158,7 +158,7 @@ Notes: ${insurance.notes || 'No notes'}
             )}
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-3xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -250,14 +250,14 @@ Notes: ${insurance.notes || 'No notes'}
             <button
               onClick={handlePrint}
               disabled={isPrinting}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-3xl hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
               <Printer className="w-4 h-4" />
               {isPrinting ? 'Printing...' : 'Print'}
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 transition-colors"
             >
               <Download className="w-4 h-4" />
               Download PDF
@@ -265,7 +265,7 @@ Notes: ${insurance.notes || 'No notes'}
           </div>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+            className="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-3xl hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
           >
             Close
           </button>

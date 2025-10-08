@@ -383,7 +383,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           backdropFilter: 'blur(2px)'
         }}
       >
-        <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-lg shadow-xl ${
+        <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
           themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
         }`}>
           {/* Header */}
@@ -403,7 +403,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           <div className="p-6 max-h-[70vh] overflow-y-auto">
             {/* Add/Edit Form */}
             {showAddForm && (
-              <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="mb-6 p-4 border border-gray-200 rounded-3xl bg-gray-50">
                 <h3 className="text-lg font-medium mb-4">
                   {editingMake ? 'Edit Vehicle Make' : 'Add New Vehicle Make'}
                 </h3>
@@ -490,7 +490,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportExcel}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -502,7 +502,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -514,7 +514,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -526,7 +526,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                   </button>
                   <button
                     onClick={handlePrint}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

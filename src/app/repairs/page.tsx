@@ -2,29 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Wrench, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock,
-  Banknote,
-  Plus,
-  Download,
-  FileText,
-  FileSpreadsheet,
-  Printer,
-  Search,
-  Eye,
-  Edit,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Settings
-} from 'lucide-react'
+  WrenchScrewdriverIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  ClockIcon,
+  BanknotesIcon,
+  PlusIcon,
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
+  PrinterIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilIcon,
+  XMarkIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon
+} from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
-import DashboardLayout from '@/components/DashboardLayout'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import AddRepairModal from '@/components/AddRepairModal'
 import ViewRepairModal from '@/components/ViewRepairModal'
 import EditRepairModal from '@/components/EditRepairModal'
@@ -129,12 +129,12 @@ export default function RepairsPage() {
   const averageCost = totalRepairs > 0 ? totalCost / totalRepairs : 0
 
   const kpiCards = [
-    { title: 'Total Repairs', value: totalRepairs, icon: Wrench, color: 'blue' },
-    { title: 'Completed', value: completedRepairs, icon: CheckCircle, color: 'green' },
-    { title: 'Pending', value: pendingRepairs, icon: Clock, color: 'yellow' },
-    { title: 'In Progress', value: inProgressRepairs, icon: AlertTriangle, color: 'orange' },
-    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: Banknote, color: 'purple' },
-    { title: 'Average Cost', value: `₵${averageCost.toLocaleString()}`, icon: Banknote, color: 'indigo' }
+    { title: 'Total Repairs', value: totalRepairs, icon: WrenchScrewdriverIcon, color: 'blue' },
+    { title: 'Completed', value: completedRepairs, icon: CheckCircleIcon, color: 'blue' },
+    { title: 'Pending', value: pendingRepairs, icon: ClockIcon, color: 'blue' },
+    { title: 'In Progress', value: inProgressRepairs, icon: ExclamationTriangleIcon, color: 'blue' },
+    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
+    { title: 'Average Cost', value: `₵${averageCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
   ]
 
   // Format field value for display
@@ -313,8 +313,8 @@ export default function RepairsPage() {
     setShowViewRepairModal(true)
   }
 
-  const handleEditRepair = (repair: Repair) => {
-    console.log('Edit repair clicked:', repair)
+  const handlePencilIconRepair = (repair: Repair) => {
+    console.log('PencilIcon repair clicked:', repair)
     setSelectedRepair(repair)
     setShowEditRepairModal(true)
   }
@@ -423,7 +423,7 @@ export default function RepairsPage() {
   const handleExportExcel = () => {
     const headers = ['Actions', 'No', ...getSelectedFieldsData().map(field => field.label)]
     const data = currentRepairs.map((repair, index) => {
-      const row = ['View/Edit/Delete', startIndex + index + 1]
+      const row = ['View/PencilIcon/Delete', startIndex + index + 1]
       getSelectedFieldsData().forEach(field => {
         const value = field.key.includes('.') 
           ? field.key.split('.').reduce((obj, key) => obj?.[key], repair)
@@ -433,9 +433,9 @@ export default function RepairsPage() {
       return row
     })
 
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Repairs')
+    const ws = XMarkIconLSXMarkIcon.utils.aoa_to_sheet([headers, ...data])
+    const wb = XMarkIconLSXMarkIcon.utils.book_new()
+    XMarkIconLSXMarkIcon.utils.book_append_sheet(wb, ws, 'Repairs')
     
     // Auto-size columns
     const colWidths = headers.map((_, colIndex) => {
@@ -447,13 +447,13 @@ export default function RepairsPage() {
     })
     ws['!cols'] = colWidths
 
-    XLSX.writeFile(wb, `repairs-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XMarkIconLSXMarkIcon.writeFile(wb, `repairs-${new Date().toISOString().split('T')[0]}.xlsx`)
   }
 
   const handleExportCSV = () => {
     const headers = ['Actions', 'No', ...getSelectedFieldsData().map(field => field.label)]
     const data = currentRepairs.map((repair, index) => {
-      const row = ['View/Edit/Delete', startIndex + index + 1]
+      const row = ['View/PencilIcon/Delete', startIndex + index + 1]
       getSelectedFieldsData().forEach(field => {
         const value = field.key.includes('.') 
           ? field.key.split('.').reduce((obj, key) => obj?.[key], repair)
@@ -482,7 +482,7 @@ export default function RepairsPage() {
     const doc = new jsPDF('l', 'mm', 'a4') // landscape orientation
     const headers = ['Actions', 'No', ...getSelectedFieldsData().map(field => field.label)]
     const data = currentRepairs.map((repair, index) => {
-      const row = ['View/Edit/Delete', startIndex + index + 1]
+      const row = ['View/PencilIcon/Delete', startIndex + index + 1]
       getSelectedFieldsData().forEach(field => {
         const value = field.key.includes('.') 
           ? field.key.split('.').reduce((obj, key) => obj?.[key], repair)
@@ -523,7 +523,7 @@ export default function RepairsPage() {
 
     const headers = ['Actions', 'No', ...getSelectedFieldsData().map(field => field.label)]
     const data = currentRepairs.map((repair, index) => {
-      const row = ['View/Edit/Delete', startIndex + index + 1]
+      const row = ['View/PencilIcon/Delete', startIndex + index + 1]
       getSelectedFieldsData().forEach(field => {
         const value = field.key.includes('.') 
           ? field.key.split('.').reduce((obj, key) => obj?.[key], repair)
@@ -598,20 +598,20 @@ export default function RepairsPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <HorizonDashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      </HorizonDashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
-        overflowX: 'hidden',
+        overflowXMarkIcon: 'hidden',
         boxSizing: 'border-box',
         minWidth: '0',
         flexShrink: 1
@@ -621,34 +621,40 @@ export default function RepairsPage() {
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
-              <div key={index} className={`p-4 rounded-lg shadow-sm ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div key={index} className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="w-8 h-8 text-blue-600" />
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <IconComponent className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-2xl font-bold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    }`}>
+                      {card.value}
+                    </p>
+                  </div>
                 </div>
-                <h3 className={`text-sm font-medium ${
-                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {card.title}
-                </h3>
-                <p className={`text-2xl font-bold ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {card.value}
-                </p>
               </div>
             )
           })}
         </div>
 
         {/* Main Content Area */}
-        <div className={`rounded-lg shadow-sm ${
-          themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+        <div className={`rounded-2xl ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
         }`} style={{
           width: '100%',
           maxWidth: '100%',
-          overflowX: 'hidden',
+          overflowXMarkIcon: 'hidden',
           boxSizing: 'border-box',
           minWidth: '0',
           flexShrink: 1
@@ -660,7 +666,7 @@ export default function RepairsPage() {
               <div className="flex gap-2">
                   <button 
                     onClick={() => setShowRepairRequestModal(true)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -670,7 +676,7 @@ export default function RepairsPage() {
                   </button>
                   <button 
                     onClick={() => setShowRepairScheduleModal(true)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -683,9 +689,9 @@ export default function RepairsPage() {
               {/* Right Side - Add Repair Button */}
               <button 
                 onClick={() => setShowAddRepairModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">ADD REPAIR</span>
               </button>
             </div>
@@ -702,10 +708,10 @@ export default function RepairsPage() {
                 <select
                   value={entriesPerPage}
                   onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                  className={`px-3 py-1 text-sm border rounded-lg ${
+                  className={`px-3 py-1 text-sm border rounded-3xl ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-gray-300' 
-                      : 'bg-white border-gray-300 text-gray-700'
+                      : 'bg-gray-100 border-gray-300 text-gray-700'
                   }`}
                 >
                   <option value={5}>5</option>
@@ -725,50 +731,50 @@ export default function RepairsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowFieldSelector(true)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">SELECT COLUMNS ({selectedFields.length})</span>
                 </button>
                 
                 <button
                   onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <TableCellsIcon className="w-4 h-4" />
                   <span className="text-sm">EXCEL</span>
                 </button>
                 
                 <button
                   onClick={handleExportCSV}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   <span className="text-sm">CSV</span>
                 </button>
                 
                 <button
                   onClick={handleExportPDF}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <Download className="w-4 h-4" />
+                  <ArrowDownTrayIcon className="w-4 h-4" />
                   <span className="text-sm">PDF</span>
                 </button>
                 
                 <button
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
                 >
-                  <Printer className="w-4 h-4" />
+                  <PrinterIcon className="w-4 h-4" />
                   <span className="text-sm">PRINT</span>
                 </button>
               </div>
 
-              {/* Search */}
+              {/* Search Bar */}
               <div className="flex items-center gap-2">
                 <span className={`text-sm ${
                   themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
@@ -776,13 +782,13 @@ export default function RepairsPage() {
                   Search:
                 </span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search repairs..."
+                    placeholder="Search repairs records..."
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className={`pl-10 pr-4 py-2 text-sm border rounded-lg ${
+                    className={`pl-10 pr-4 py-2 text-sm border rounded-3xl ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-gray-300 placeholder-gray-500' 
                         : 'bg-white border-gray-300 text-gray-700 placeholder-gray-400'
@@ -802,8 +808,8 @@ export default function RepairsPage() {
                 backdropFilter: 'blur(2px)'
               }}
             >
-              <div className={`w-96 max-h-96 rounded-lg shadow-lg ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div className={`w-96 max-h-96 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
                 <div className={`p-4 border-b ${
                   themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
@@ -820,7 +826,7 @@ export default function RepairsPage() {
                         themeMode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                       }`}
                     >
-                      <X className="w-5 h-5" />
+                      <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
                   <p className={`text-sm mt-1 ${
@@ -911,9 +917,9 @@ export default function RepairsPage() {
                           {field.label}
                           {sortColumn === field.key && (
                             sortDirection === 'asc' ? (
-                              <ChevronUp className="w-4 h-4 text-blue-200" />
+                              <ChevronUpIcon className="w-4 h-4 text-blue-200" />
                             ) : (
-                              <ChevronDown className="w-4 h-4 text-blue-200" />
+                              <ChevronDownIcon className="w-4 h-4 text-blue-200" />
                             )
                           )}
                         </div>
@@ -931,21 +937,21 @@ export default function RepairsPage() {
                             className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
                             title="View"
                           >
-                            <Eye className="w-4 h-4" />
+                            <EyeIcon className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleEditRepair(repair)}
+                            onClick={() => handlePencilIconRepair(repair)}
                             className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
-                            title="Edit"
+                            title="PencilIcon"
                           >
-                            <Edit className="w-4 h-4" />
+                            <PencilIcon className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => handleDeleteRepair(repair)}
                             className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
                             title="Delete"
                           >
-                            <X className="w-4 h-4" />
+                            <XMarkIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -994,7 +1000,7 @@ export default function RepairsPage() {
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Previous
               </button>
@@ -1004,7 +1010,7 @@ export default function RepairsPage() {
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Next
               </button>
@@ -1023,7 +1029,7 @@ export default function RepairsPage() {
           isOpen={showViewRepairModal}
           onClose={() => setShowViewRepairModal(false)}
           repair={selectedRepair}
-          onEdit={handleEditRepair}
+          onPencilIcon={handlePencilIconRepair}
         />
 
         <EditRepairModal
@@ -1052,6 +1058,6 @@ export default function RepairsPage() {
           message={notification.message}
         />
       </div>
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

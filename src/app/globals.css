@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -8,8 +10,38 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Poppins', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+  
+  /* Horizon UI Colors */
+  --color-navy-50: #d0dcfb;
+  --color-navy-100: #aac0fe;
+  --color-navy-200: #a3b9f8;
+  --color-navy-300: #728fea;
+  --color-navy-400: #3652ba;
+  --color-navy-500: #1b3bbb;
+  --color-navy-600: #24388a;
+  --color-navy-700: #1B254B;
+  --color-navy-800: #111c44;
+  --color-navy-900: #0b1437;
+  
+  --color-brand-50: #E9E3FF;
+  --color-brand-100: #C0B8FE;
+  --color-brand-200: #A195FD;
+  --color-brand-300: #8171FC;
+  --color-brand-400: #7551FF;
+  --color-brand-500: #422AFB;
+  --color-brand-600: #3311DB;
+  --color-brand-700: #2111A5;
+  --color-brand-800: #190793;
+  --color-brand-900: #11047A;
+  
+  --color-lightPrimary: #F4F7FE;
+  
+  /* Custom shadows */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  --shadow-soft-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-3xl: 14px 17px 40px 4px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +51,74 @@
   }
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Horizon UI Official Styles */
+.horizon-card {
+  @apply bg-white dark:bg-navy-800 rounded-xl shadow-3xl border border-gray-200 dark:border-navy-700;
+}
+
+.horizon-button-primary {
+  @apply bg-brand-500 hover:bg-brand-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+}
+
+.horizon-button-secondary {
+  @apply bg-gray-100 hover:bg-gray-200 dark:bg-navy-700 dark:hover:bg-navy-600 text-gray-700 dark:text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+.horizon-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent;
+}
+
+.horizon-sidebar {
+  @apply bg-white dark:bg-navy-800 border-r border-gray-200 dark:border-navy-700;
+}
+
+.horizon-navbar {
+  @apply bg-white/10 dark:bg-navy-900/50 backdrop-blur-xl border-b border-gray-200 dark:border-navy-700;
+}
+
+.horizon-main {
+  @apply bg-lightPrimary dark:bg-navy-900;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

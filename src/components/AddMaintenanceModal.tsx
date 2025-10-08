@@ -70,7 +70,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto`}>
+      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
         <div className="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
           <div className="flex items-center justify-between">
@@ -80,7 +80,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-blue-700 rounded-lg p-1 transition-colors"
+              className="text-white hover:bg-blue-700 rounded-3xl p-1 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -102,7 +102,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 value={formData.service_date}
                 onChange={handleChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -125,7 +125,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 required
                 min="0"
                 step="0.01"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -144,7 +144,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -170,7 +170,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 onChange={handleChange}
                 placeholder="e.g., Oil Change, Brake Service"
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -191,7 +191,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 onChange={handleChange}
                 placeholder="Enter mileage"
                 min="0"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -212,7 +212,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 onChange={handleChange}
                 placeholder="Enter vehicle ID (optional)"
                 min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -234,7 +234,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 placeholder="Enter mechanic ID"
                 required
                 min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -256,7 +256,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
                 placeholder="Enter workshop ID"
                 required
                 min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -277,7 +277,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
               onChange={handleChange}
               placeholder="Describe the maintenance work performed..."
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
@@ -297,7 +297,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
               onChange={handleChange}
               placeholder="List any parts that were replaced..."
               rows={2}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
@@ -310,14 +310,14 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-3xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-3xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Adding...' : 'Add Maintenance Record'}
             </button>

@@ -401,7 +401,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
           backdropFilter: 'blur(2px)'
         }}
       >
-        <div className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-lg shadow-xl ${
+        <div className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
           themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
         }`}>
           {/* Header */}
@@ -421,7 +421,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
           <div className="p-6 max-h-[70vh] overflow-y-auto">
             {/* Add/Edit Form */}
             {showAddForm && (
-              <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div className="mb-6 p-4 border border-gray-200 rounded-3xl bg-gray-50">
                 <h3 className="text-lg font-medium mb-4">
                   {editingSchedule ? 'Edit Repair Schedule' : 'Add New Repair Schedule'}
                 </h3>
@@ -525,7 +525,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportExcel}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -537,7 +537,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -549,7 +549,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -561,7 +561,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
                   </button>
                   <button
                     onClick={handlePrint}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

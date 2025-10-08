@@ -2,30 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Shield, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock, 
-  DollarSign, 
-  FileText,
-  Plus,
-  Download,
-  FileSpreadsheet,
-  Printer,
-  Search,
-  Eye,
-  Edit,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Settings,
-  Banknote
-} from 'lucide-react'
+  ShieldCheckIcon, 
+  CheckCircleIcon, 
+  ExclamationTriangleIcon, 
+  ClockIcon, 
+  CurrencyDollarIcon, 
+  DocumentTextIcon,
+  PlusIcon,
+  ArrowDownTrayIcon,
+  TableCellsIcon,
+  PrinterIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilIcon,
+  XMarkIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
+  BanknotesIcon
+} from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
-import DashboardLayout from '@/components/DashboardLayout'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import Notification from '@/components/Notification'
 import AddInsuranceModal from '@/components/AddInsuranceModal'
 import ViewInsuranceModal from '@/components/ViewInsuranceModal'
@@ -111,12 +111,12 @@ export default function InsurancePage() {
   const averagePremium = totalPolicies > 0 ? totalPremium / totalPolicies : 0
 
   const kpiCards = [
-    { title: 'Total Policies', value: totalPolicies.toString(), icon: Shield, color: 'blue' },
-    { title: 'Active', value: activePolicies.toString(), icon: CheckCircle, color: 'green' },
-    { title: 'Expired', value: expiredPolicies.toString(), icon: AlertTriangle, color: 'red' },
-    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: Clock, color: 'orange' },
-    { title: 'Total Premium', value: `₵${totalPremium.toLocaleString()}`, icon: Banknote, color: 'purple' },
-    { title: 'Avg Premium', value: `₵${averagePremium.toLocaleString()}`, icon: Banknote, color: 'gray' }
+    { title: 'Total Policies', value: totalPolicies.toString(), icon: ShieldCheckIcon, color: 'blue' },
+    { title: 'Active', value: activePolicies.toString(), icon: CheckCircleIcon, color: 'blue' },
+    { title: 'Expired', value: expiredPolicies.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
+    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue' },
+    { title: 'Total Premium', value: `₵${totalPremium.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
+    { title: 'Avg Premium', value: `₵${averagePremium.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
   ]
 
   const handleSort = (column: string) => {
@@ -203,19 +203,19 @@ export default function InsurancePage() {
     if (sortColumn !== column) {
       return (
         <div className="flex flex-col">
-          <ChevronUp className="w-3 h-3 text-blue-200" />
-          <ChevronDown className="w-3 h-3 text-blue-200" />
+          <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-200" />
         </div>
       )
     }
     return sortDirection === 'asc' ? 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-white" />
-        <ChevronDown className="w-3 h-3 text-blue-200" />
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
       </div> : 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-blue-200" />
-        <ChevronDown className="w-3 h-3 text-white" />
+        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
       </div>
   }
 
@@ -546,16 +546,16 @@ export default function InsurancePage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <HorizonDashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading insurance records...</div>
         </div>
-      </DashboardLayout>
+      </HorizonDashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
@@ -569,30 +569,36 @@ export default function InsurancePage() {
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
-              <div key={index} className={`p-4 rounded-lg shadow-sm ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div key={index} className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="w-8 h-8 text-blue-600" />
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <IconComponent className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-2xl font-bold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    }`}>
+                      {card.value}
+                    </p>
+                  </div>
                 </div>
-                <h3 className={`text-sm font-medium ${
-                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {card.title}
-                </h3>
-                <p className={`text-2xl font-bold ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {card.value}
-                </p>
               </div>
             )
           })}
         </div>
 
         {/* Main Content Area */}
-        <div className={`rounded-lg shadow-sm ${
-          themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+        <div className={`rounded-2xl ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
         }`} style={{
           width: '100%',
           maxWidth: '100%',
@@ -603,45 +609,13 @@ export default function InsurancePage() {
         }}>
           {/* Header Controls */}
           <div className="p-6 border-b border-gray-200">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              {/* Left Side - Filter Buttons */}
-              <div className="flex gap-2">
-                <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                  ALL
-                </button>
-                <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                  ACTIVE
-                </button>
-                <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                  EXPIRED
-                </button>
-                <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
-                  EXPIRING SOON
-                </button>
-              </div>
-
-              {/* Right Side - Add Insurance Button */}
+            <div className="flex justify-end">
+              {/* Add Insurance Button */}
               <button 
                 onClick={() => setShowAddInsuranceModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">ADD INSURANCE</span>
               </button>
             </div>
@@ -661,7 +635,7 @@ export default function InsurancePage() {
                   className={`px-3 py-1 border rounded text-sm ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-gray-100 border-gray-300 text-gray-900'
                   }`}
                 >
                   <option value={10}>10</option>
@@ -680,57 +654,61 @@ export default function InsurancePage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowFieldSelector(!showFieldSelector)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   SELECT COLUMNS ({selectedFields.length})
                 </button>
                 <button 
                   onClick={handleExportExcel}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to Excel"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <TableCellsIcon className="w-4 h-4" />
                   EXCEL
                 </button>
                 <button 
                   onClick={handleExportCSV}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to CSV"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   CSV
                 </button>
                 <button 
                   onClick={handleExportPDF}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to PDF"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   PDF
                 </button>
                 <button 
                   onClick={handlePrint}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Print Report"
                 >
-                  <Printer className="w-4 h-4" />
+                  <PrinterIcon className="w-4 h-4" />
                   PRINT
                 </button>
               </div>
@@ -743,13 +721,13 @@ export default function InsurancePage() {
                   Search:
                 </span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search insurance records..."
-                    className={`pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`pl-10 pr-4 py-2 border rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -771,7 +749,7 @@ export default function InsurancePage() {
               onClick={() => setShowFieldSelector(false)}
             >
               <div
-                className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-md`}
+                className={`relative ${themeMode === 'dark' ? 'bg-navy-800 text-white' : 'bg-white text-gray-900'} p-6 rounded-2xl w-full max-w-md`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-4">
@@ -780,7 +758,7 @@ export default function InsurancePage() {
                     onClick={() => setShowFieldSelector(false)}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
-                    <X className="w-5 h-5" />
+                    <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -855,21 +833,21 @@ export default function InsurancePage() {
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                           title="View Insurance"
                         >
-                          <Eye className="w-4 h-4" />
+                          <EyeIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleEditInsurance(record)}
                           className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                           title="Edit Insurance"
                         >
-                          <Edit className="w-4 h-4" />
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteInsurance(record)}
                           className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                           title="Delete Insurance"
                         >
-                          <X className="w-4 h-4" />
+                          <XMarkIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -941,6 +919,6 @@ export default function InsurancePage() {
         title={notification.title}
         message={notification.message}
       />
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

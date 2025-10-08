@@ -70,7 +70,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
+      <div className={`p-6 rounded-3xl shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
         themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -85,7 +85,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportExcel}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -96,7 +96,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
             </button>
             <button
               onClick={handleExportCSV}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -107,7 +107,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
             </button>
             <button
               onClick={handleExportPDF}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -118,7 +118,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
             </button>
             <button
               onClick={handlePrint}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                 themeMode === 'dark'
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -129,7 +129,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
             </button>
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-3xl transition-colors ${
                 themeMode === 'dark' 
                   ? 'text-gray-400 hover:bg-gray-700' 
                   : 'text-gray-500 hover:bg-gray-100'
@@ -143,7 +143,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
         {/* Content */}
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-4 rounded-3xl border ${
             themeMode === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
           }`}>
             <h3 className={`text-lg font-semibold mb-4 ${
@@ -204,7 +204,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
           </div>
 
           {/* Vehicle Information */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-4 rounded-3xl border ${
             themeMode === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
           }`}>
             <h3 className={`text-lg font-semibold mb-4 ${
@@ -265,7 +265,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
           </div>
 
           {/* Driver Information */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-4 rounded-3xl border ${
             themeMode === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
           }`}>
             <h3 className={`text-lg font-semibold mb-4 ${
@@ -314,7 +314,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
           </div>
 
           {/* Fuel Details */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-4 rounded-3xl border ${
             themeMode === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
           }`}>
             <h3 className={`text-lg font-semibold mb-4 ${
@@ -400,7 +400,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
 
           {/* Notes */}
           {fuelLog.notes && (
-            <div className={`p-4 rounded-lg border ${
+            <div className={`p-4 rounded-3xl border ${
               themeMode === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
             }`}>
               <h3 className={`text-lg font-semibold mb-4 ${
@@ -421,7 +421,7 @@ export default function ViewFuelLogModal({ isOpen, onClose, fuelLog }: ViewFuelL
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
               themeMode === 'dark' 
                 ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'

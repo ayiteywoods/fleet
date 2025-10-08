@@ -2,28 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Plus, 
-  Download, 
-  FileText, 
-  FileSpreadsheet, 
-  File, 
-  Printer, 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  ChevronUp, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight,
-  Fuel,
-  DollarSign,
-  Coins,
-  Calendar,
-  Truck,
-  User
-} from 'lucide-react'
-import DashboardLayout from '@/components/DashboardLayout'
+  PlusIcon,
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
+  DocumentIcon,
+  PrinterIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  BoltIcon,
+  CurrencyDollarIcon,
+  BanknotesIcon,
+  CalendarIcon,
+  TruckIcon,
+  UserIcon
+} from '@heroicons/react/24/outline'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import { useTheme } from '@/contexts/ThemeContext'
 import AddFuelLogModal from '../../components/AddFuelLogModal'
 import ViewFuelLogModal from '../../components/ViewFuelLogModal'
@@ -507,7 +507,7 @@ export default function FuelPage() {
   }
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className={`p-6 ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         {/* Header */}
         <div className="mb-6">
@@ -525,89 +525,77 @@ export default function FuelPage() {
           <div className="lg:col-span-1">
             <div className="grid grid-cols-2 gap-4">
               {/* Total Logs Card */}
-              <div className={`p-4 rounded-lg border ${
-                themeMode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              } shadow-sm`}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-3">
-                    <Fuel className="w-10 h-10 text-blue-600" />
+              <div className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <BoltIcon className="w-6 h-6 text-brand-500" />
                   </div>
-                  <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Logs</p>
-                  <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {loading ? '...' : totalFuelLogs}
-                  </p>
-                  <div className="flex items-center mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      totalFuelLogs > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {totalFuelLogs > 0 ? '↗' : ''} Active
-                    </span>
+                  <div className="ml-4">
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Logs</p>
+                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
+                      {loading ? '...' : totalFuelLogs}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Total Cost Card */}
-              <div className={`p-4 rounded-lg border ${
-                themeMode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              } shadow-sm`}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-3">
-                    <Coins className="w-10 h-10 text-blue-600" />
+              <div className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <BanknotesIcon className="w-6 h-6 text-brand-500" />
                   </div>
-                  <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Cost</p>
-                  <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {loading ? '...' : `₵${totalCost.toFixed(0)}`}
-                  </p>
-                  <div className="flex items-center mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      totalCost > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {totalCost > 0 ? '↗' : ''} Spent
-                    </span>
+                  <div className="ml-4">
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Cost</p>
+                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
+                      {loading ? '...' : `₵${totalCost.toFixed(0)}`}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Average Cost Card */}
-              <div className={`p-4 rounded-lg border ${
-                themeMode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              } shadow-sm`}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-3">
-                    <Coins className="w-10 h-10 text-blue-600" />
+              <div className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <CurrencyDollarIcon className="w-6 h-6 text-brand-500" />
                   </div>
-                  <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Avg Cost</p>
-                  <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {loading ? '...' : `₵${averageCost.toFixed(0)}`}
-                  </p>
-                  <div className="flex items-center mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      averageCost > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {averageCost > 0 ? '↗' : ''} Per Log
-                    </span>
+                  <div className="ml-4">
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Avg Cost</p>
+                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
+                      {loading ? '...' : `₵${averageCost.toFixed(0)}`}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Total Quantity Card */}
-              <div className={`p-4 rounded-lg border ${
-                themeMode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              } shadow-sm`}>
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-3">
-                    <Fuel className="w-10 h-10 text-blue-600" />
+              <div className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <BoltIcon className="w-6 h-6 text-brand-500" />
                   </div>
-                  <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Quantity</p>
-                  <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {loading ? '...' : `${totalQuantity.toFixed(0)}L`}
-                  </p>
-                  <div className="flex items-center mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      totalQuantity > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {totalQuantity > 0 ? '↗' : ''} Liters
-                    </span>
+                  <div className="ml-4">
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Quantity</p>
+                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
+                      {loading ? '...' : `${totalQuantity.toFixed(0)}L`}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -616,9 +604,9 @@ export default function FuelPage() {
 
           {/* Right Side - Chart */}
           <div className="lg:col-span-2">
-            <div className={`p-6 rounded-lg border ${
-              themeMode === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            } shadow-sm h-full`}>
+            <div className={`p-6 rounded-2xl ${
+              themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+            } h-full`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`text-lg font-semibold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                   Fuel Analytics
@@ -895,7 +883,7 @@ export default function FuelPage() {
             <div className="flex gap-2">
               <button 
                 onClick={() => setShowFuelExpenseLogModal(true)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -905,7 +893,7 @@ export default function FuelPage() {
               </button>
               <button 
                 onClick={() => setShowFuelRequestModal(true)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -918,13 +906,13 @@ export default function FuelPage() {
             {/* Right Side - Add Fuel Log Button */}
             <button
               onClick={() => setShowAddModal(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeColor === 'blue' 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
                   : 'bg-gray-600 text-white hover:bg-gray-700'
               }`}
             >
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
               ADD FUEL LOG
             </button>
           </div>
@@ -935,7 +923,7 @@ export default function FuelPage() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+              <MagnifyingGlassIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
                 themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
               }`} />
               <input
@@ -943,7 +931,7 @@ export default function FuelPage() {
                 placeholder="Search fuel logs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-800 border-gray-700 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -955,57 +943,57 @@ export default function FuelPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportExcel}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <FileSpreadsheet className="w-4 h-4" />
+                <TableCellsIcon className="w-4 h-4" />
                 Excel
               </button>
               <button
                 onClick={handleExportCSV}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <FileText className="w-4 h-4" />
+                <DocumentTextIcon className="w-4 h-4" />
                 CSV
               </button>
               <button
                 onClick={handleExportPDF}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <File className="w-4 h-4" />
+                <DocumentIcon className="w-4 h-4" />
                 PDF
               </button>
               <button
                 onClick={handlePrint}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <Printer className="w-4 h-4" />
+                <PrinterIcon className="w-4 h-4" />
                 Print
               </button>
               <button
                 onClick={() => setShowFieldSelector(true)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                <Eye className="w-4 h-4" />
+                <EyeIcon className="w-4 h-4" />
                 SELECT COLUMNS
               </button>
             </div>
@@ -1031,8 +1019,8 @@ export default function FuelPage() {
                         {field?.label || fieldKey}
                         {sortField === fieldKey && (
                           sortDirection === 'asc' ? 
-                            <ChevronUp className="w-4 h-4" /> : 
-                            <ChevronDown className="w-4 h-4" />
+                            <ChevronUpIcon className="w-4 h-4" /> : 
+                            <ChevronDownIcon className="w-4 h-4" />
                         )}
                       </div>
                     </th>
@@ -1065,7 +1053,7 @@ export default function FuelPage() {
                             : 'text-blue-600 hover:bg-gray-100'
                         }`}
                       >
-                        <Eye className="w-4 h-4" />
+                        <EyeIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleEdit(log)}
@@ -1075,7 +1063,7 @@ export default function FuelPage() {
                             : 'text-green-600 hover:bg-gray-100'
                         }`}
                       >
-                        <Edit className="w-4 h-4" />
+                        <PencilIcon className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(log.id)}
@@ -1085,7 +1073,7 @@ export default function FuelPage() {
                             : 'text-red-600 hover:bg-gray-100'
                         }`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -1107,7 +1095,7 @@ export default function FuelPage() {
               className={`px-2 py-1 border rounded text-sm ${
                 themeMode === 'dark' 
                   ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
+                  : 'bg-gray-100 border-gray-300 text-gray-900'
               }`}
             >
               <option value={5}>5</option>
@@ -1135,7 +1123,7 @@ export default function FuelPage() {
                     : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeftIcon className="w-4 h-4" />
             </button>
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
@@ -1148,7 +1136,7 @@ export default function FuelPage() {
                     : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRightIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -1162,8 +1150,8 @@ export default function FuelPage() {
               backdropFilter: 'blur(2px)'
             }}
           >
-            <div className={`p-6 rounded-lg shadow-lg max-w-md w-full mx-4 ${
-              themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+            <div className={`p-6 rounded-2xl max-w-md w-full mx-4 ${
+              themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
             }`}>
               <h3 className={`text-lg font-semibold mb-4 ${
                 themeMode === 'dark' ? 'text-white' : 'text-gray-900'
@@ -1270,6 +1258,6 @@ export default function FuelPage() {
           onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
         />
       </div>
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

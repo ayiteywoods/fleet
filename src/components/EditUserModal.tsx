@@ -178,7 +178,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
+      <div className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}>
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -193,7 +193,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-3xl">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <User className="w-5 h-5 text-blue-600" />
               Personal Information
@@ -268,7 +268,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
           </div>
 
           {/* Account Information */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-3xl">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-600" />
               Account Information
@@ -338,7 +338,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
           </div>
 
           {/* Location Information */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-3xl">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-blue-600" />
               Location Information
@@ -404,7 +404,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
           </div>
 
           {/* License Information */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-3xl">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Key className="w-5 h-5 text-blue-600" />
               License Information

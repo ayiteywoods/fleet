@@ -82,7 +82,7 @@ export default function Notification({
 
   return (
     <div className="fixed top-4 right-4 z-[10000] animate-in slide-in-from-right-5 duration-300">
-      <div className={`max-w-md w-full rounded-lg border shadow-lg ${getBackgroundColor()}`}>
+      <div className={`max-w-md w-full rounded-3xl border shadow-lg ${getBackgroundColor()}`}>
         <div className="p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">

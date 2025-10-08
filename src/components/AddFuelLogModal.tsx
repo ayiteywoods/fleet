@@ -147,7 +147,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
+      <div className={`p-6 rounded-3xl shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
         themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -161,7 +161,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
           </h2>
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-3xl transition-colors ${
               themeMode === 'dark' 
                 ? 'text-gray-400 hover:bg-gray-700' 
                 : 'text-gray-500 hover:bg-gray-100'
@@ -187,7 +187,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.refuel_date}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -207,7 +207,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.vehicle_id}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -234,7 +234,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.driver_id}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -263,7 +263,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.quantity}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -285,7 +285,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.unit_cost}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -307,7 +307,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.total_cost}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -328,7 +328,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.mileage_before}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -349,7 +349,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.mileage_after}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -369,7 +369,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.fuel_type}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -396,7 +396,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 value={formData.vendor}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -416,7 +416,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
                 name="receipt_number"
                 value={formData.receipt_number}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -437,7 +437,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
               value={formData.notes}
               onChange={handleInputChange}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 themeMode === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-white' 
                   : 'bg-white border-gray-300 text-gray-900'
@@ -450,7 +450,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeMode === 'dark' 
                   ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -461,7 +461,7 @@ export default function AddFuelLogModal({ isOpen, onClose, onSuccess }: AddFuelL
             <button
               type="submit"
               disabled={loading}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeColor === 'blue' 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
                   : 'bg-gray-600 text-white hover:bg-gray-700'

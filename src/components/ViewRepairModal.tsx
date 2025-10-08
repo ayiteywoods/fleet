@@ -119,7 +119,7 @@ export default function ViewRepairModal({ isOpen, onClose, repair, onEdit }: Vie
         className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-10`}>
+      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-10`}>
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-lg">
           <div className="flex items-center justify-between">
@@ -136,14 +136,14 @@ export default function ViewRepairModal({ isOpen, onClose, repair, onEdit }: Vie
               {onEdit && (
                 <button
                   onClick={() => onEdit(repair)}
-                  className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-3xl text-sm font-medium transition-colors"
                 >
                   Edit
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-3xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -222,7 +222,7 @@ export default function ViewRepairModal({ isOpen, onClose, repair, onEdit }: Vie
             <button
               onClick={handlePrint}
               disabled={isPrinting}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-3xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
             >
               <Printer className="w-4 h-4" />
               {isPrinting ? 'Printing...' : 'Print'}
@@ -230,7 +230,7 @@ export default function ViewRepairModal({ isOpen, onClose, repair, onEdit }: Vie
             <button
               onClick={handleDownloadPDF}
               disabled={isDownloading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
               {isDownloading ? 'Downloading...' : 'Download PDF'}

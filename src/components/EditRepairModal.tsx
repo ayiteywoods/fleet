@@ -64,7 +64,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
         className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto relative z-10 border-2 border-blue-500`}>
+      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto relative z-10 border-2 border-blue-500`}>
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-lg">
           <div className="flex items-center justify-between">
@@ -79,7 +79,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-3xl transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -101,7 +101,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
                 value={formData.service_date}
                 onChange={handleChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -124,7 +124,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
                 required
                 min="0"
                 step="0.01"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -143,7 +143,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -169,7 +169,7 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
                 onChange={handleChange}
                 placeholder="Enter vehicle ID (optional)"
                 min="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -183,14 +183,14 @@ export default function EditRepairModal({ isOpen, onClose, repair, onSave }: Edi
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-3xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               {isLoading ? 'Updating...' : 'Update Record'}
             </button>

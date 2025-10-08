@@ -1,10 +1,10 @@
-import DashboardLayout from '@/components/DashboardLayout'
-import Dashboard from '@/components/Dashboard'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
+import FleetDashboard from '@/components/FleetDashboard'
 
 export default function Home() {
   return (
-    <DashboardLayout>
-      <Dashboard />
-    </DashboardLayout>
+    <HorizonDashboardLayout>
+      <FleetDashboard />
+    </HorizonDashboardLayout>
   )
 }

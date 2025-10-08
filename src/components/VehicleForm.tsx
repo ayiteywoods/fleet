@@ -67,7 +67,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             value={formData.make}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -81,7 +81,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             value={formData.model}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -97,7 +97,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             required
             min="1900"
             max="2030"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -111,7 +111,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             value={formData.licensePlate}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -124,7 +124,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             name="vin"
             value={formData.vin}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -137,7 +137,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             name="color"
             value={formData.color}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
             value={formData.mileage}
             onChange={handleChange}
             min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -159,14 +159,14 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-3xl hover:bg-blue-700 disabled:opacity-50"
           >
             {isSubmitting ? 'Creating...' : 'Create Vehicle'}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+            className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-3xl hover:bg-gray-400"
           >
             Cancel
           </button>

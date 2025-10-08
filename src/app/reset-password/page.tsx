@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { LockClosedIcon } from '@heroicons/react/24/outline'
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('')
@@ -84,7 +85,7 @@ function ResetPasswordForm() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-brand-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Verifying reset token...</p>
         </div>
       </div>
@@ -104,38 +105,44 @@ function ResetPasswordForm() {
         </div>
 
         {message && (
-          <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+          <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-2xl">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-2xl">
             {error}
           </div>
         )}
 
         {isValidToken && (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <LockClosedIcon className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="New password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-6 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
 
-            <div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <LockClosedIcon className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-6 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
               />
             </div>
 
@@ -143,7 +150,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+                className="w-full bg-brand-500 text-white py-3 px-6 rounded-2xl font-semibold hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
               >
                 {isLoading ? 'Resetting...' : 'Reset Password'}
               </button>
@@ -152,7 +159,7 @@ function ResetPasswordForm() {
             <div className="text-center">
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-800 text-sm"
+                className="text-brand-500 hover:text-brand-600 text-sm"
               >
                 Back to Login
               </Link>
@@ -169,7 +176,7 @@ export default function ResetPasswordPage() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-brand-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>

@@ -104,7 +104,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'blur(2px)' }}>
-      <div className={`w-full max-w-6xl max-h-[90vh] rounded-lg shadow-lg ${
+      <div className={`w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-lg ${
         themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -118,7 +118,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
           </h2>
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-3xl transition-colors ${
               themeMode === 'dark' 
                 ? 'hover:bg-gray-700 text-gray-300' 
                 : 'hover:bg-gray-100 text-gray-500'
@@ -145,7 +145,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.registrationNumber}
                   onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
                   placeholder="e.g., ABC-123"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.registrationNumber
                       ? 'border-red-500'
                       : themeMode === 'dark'
@@ -168,7 +168,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                 <select
                   value={formData.vehicleType}
                   onChange={(e) => handleInputChange('vehicleType', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.vehicleType
                       ? 'border-red-500'
                       : themeMode === 'dark'
@@ -201,7 +201,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.currentMileage}
                   onChange={(e) => handleInputChange('currentMileage', e.target.value)}
                   placeholder="e.g., 15000"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -221,7 +221,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.location}
                   onChange={(e) => handleInputChange('location', e.target.value)}
                   placeholder="e.g., Main Depot, Branch A"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -241,7 +241,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleFileChange('insuranceDocument', e.target.files?.[0] || null)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark'
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
@@ -270,7 +270,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.vin}
                   onChange={(e) => handleInputChange('vin', e.target.value)}
                   placeholder="Vehicle Identification Number"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.vin
                       ? 'border-red-500'
                       : themeMode === 'dark'
@@ -295,7 +295,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.make}
                   onChange={(e) => handleInputChange('make', e.target.value)}
                   placeholder="e.g., Toyota, Ford"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.make
                       ? 'border-red-500'
                       : themeMode === 'dark'
@@ -320,7 +320,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.model}
                   onChange={(e) => handleInputChange('model', e.target.value)}
                   placeholder="e.g., Camry, F-150"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.model
                       ? 'border-red-500'
                       : themeMode === 'dark'
@@ -347,7 +347,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   placeholder="e.g., 2023"
                   min="1900"
                   max="2030"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -367,7 +367,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.color}
                   onChange={(e) => handleInputChange('color', e.target.value)}
                   placeholder="e.g., Red, Blue"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -389,7 +389,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   type="date"
                   value={formData.purchaseDate}
                   onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -409,7 +409,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.nextServiceKm}
                   onChange={(e) => handleInputChange('nextServiceKm', e.target.value)}
                   placeholder="e.g., 20000"
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -429,7 +429,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
                   placeholder="Any additional information about the vehicle"
                   rows={6}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -447,7 +447,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-3xl hover:bg-purple-700 transition-colors text-sm font-medium"
           >
             <X className="w-4 h-4" />
             CANCEL
@@ -455,7 +455,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors text-sm font-medium"
           >
             <Check className="w-4 h-4" />
             SUBMIT

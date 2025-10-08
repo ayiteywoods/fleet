@@ -2,30 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Truck, 
-  CheckCircle, 
-  User, 
-  Wrench, 
-  AlertTriangle, 
-  UserX,
-  Plus,
-  Download,
-  FileText,
-  FileSpreadsheet,
-  Printer,
-  Search,
-  Eye,
-  Edit,
-  X,
-  ChevronUp,
-  ChevronDown,
-  Settings
-} from 'lucide-react'
+  TruckIcon,
+  CheckCircleIcon,
+  UserIcon,
+  WrenchScrewdriverIcon,
+  ExclamationTriangleIcon,
+  UserMinusIcon,
+  PlusIcon,
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
+  PrinterIcon,
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilIcon,
+  XMarkIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon
+} from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
-import DashboardLayout from '@/components/DashboardLayout'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import AddVehicleModal from '@/components/AddVehicleModal'
 import ViewVehicleModal from '@/components/ViewVehicleModal'
 import EditVehicleModal from '@/components/EditVehicleModal'
@@ -139,12 +139,12 @@ export default function VehiclesPage() {
   const dispatchedVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'dispatched').length
 
   const kpiCards = [
-    { title: 'Total', value: totalVehicles.toString(), icon: Truck, color: 'blue' },
-    { title: 'Active', value: activeVehicles.toString(), icon: CheckCircle, color: 'green' },
-    { title: 'Maintenance', value: maintenanceVehicles.toString(), icon: Wrench, color: 'orange' },
-    { title: 'Repair', value: repairVehicles.toString(), icon: AlertTriangle, color: 'red' },
-    { title: 'Dispatched', value: dispatchedVehicles.toString(), icon: Truck, color: 'purple' },
-    { title: 'Inactive', value: inactiveVehicles.toString(), icon: UserX, color: 'gray' }
+    { title: 'Total', value: totalVehicles.toString(), icon: TruckIcon, color: 'blue' },
+    { title: 'Active', value: activeVehicles.toString(), icon: CheckCircleIcon, color: 'blue' },
+    { title: 'Maintenance', value: maintenanceVehicles.toString(), icon: WrenchScrewdriverIcon, color: 'blue' },
+    { title: 'Repair', value: repairVehicles.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
+    { title: 'Dispatched', value: dispatchedVehicles.toString(), icon: TruckIcon, color: 'blue' },
+    { title: 'Inactive', value: inactiveVehicles.toString(), icon: UserMinusIcon, color: 'blue' }
   ]
 
   const handleSort = (column: string) => {
@@ -281,19 +281,19 @@ export default function VehiclesPage() {
     if (sortColumn !== column) {
       return (
         <div className="flex flex-col">
-          <ChevronUp className="w-3 h-3 text-blue-300" />
-          <ChevronDown className="w-3 h-3 text-blue-300" />
+          <ChevronUpIcon className="w-3 h-3 text-blue-300" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-300" />
         </div>
       )
     }
     return sortDirection === 'asc' ? 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-white" />
-        <ChevronDown className="w-3 h-3 text-blue-300" />
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-300" />
       </div> : 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-blue-300" />
-        <ChevronDown className="w-3 h-3 text-white" />
+        <ChevronUpIcon className="w-3 h-3 text-blue-300" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
       </div>
   }
 
@@ -671,7 +671,7 @@ export default function VehiclesPage() {
   })
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
@@ -685,30 +685,36 @@ export default function VehiclesPage() {
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
-              <div key={index} className={`p-4 rounded-lg shadow-sm ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div key={index} className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="w-8 h-8 text-blue-600" />
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <IconComponent className={`w-6 h-6 text-brand-500`} />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-2xl font-bold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    }`}>
+                      {card.value}
+                    </p>
+                  </div>
                 </div>
-                <h3 className={`text-sm font-medium ${
-                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {card.title}
-                </h3>
-                <p className={`text-2xl font-bold ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {card.value}
-                </p>
               </div>
             )
           })}
         </div>
 
         {/* Main Content Area */}
-        <div className={`rounded-lg shadow-sm ${
-          themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+        <div className={`rounded-2xl ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
         }`} style={{
           width: '100%',
           maxWidth: '100%',
@@ -724,7 +730,7 @@ export default function VehiclesPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowVehicleMakesModal(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -732,7 +738,7 @@ export default function VehiclesPage() {
                 >
                   MAKE
                 </button>
-                <button className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                <button className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -741,7 +747,7 @@ export default function VehiclesPage() {
                 </button>
                 <button 
                   onClick={() => setShowVehicleTypesModal(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -754,9 +760,9 @@ export default function VehiclesPage() {
               {/* Right Side - Add Vehicle Button */}
               <button 
                 onClick={() => setShowAddVehicleModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">ADD VEHICLE</span>
               </button>
             </div>
@@ -776,7 +782,7 @@ export default function VehiclesPage() {
                   className={`px-3 py-1 border rounded text-sm ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-gray-100 border-gray-300 text-gray-900'
                   }`}
                 >
                   <option value={10}>10</option>
@@ -795,61 +801,61 @@ export default function VehiclesPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowFieldSelector(!showFieldSelector)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   SELECT COLUMNS ({selectedFields.length})
                 </button>
                 <button 
                   onClick={handleExportExcel}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to Excel"
                 >
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <TableCellsIcon className="w-4 h-4" />
                   EXCEL
                 </button>
                 <button 
                   onClick={handleExportCSV}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to CSV"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   CSV
                 </button>
                 <button 
                   onClick={handleExportPDF}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Export to PDF"
                 >
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   PDF
                 </button>
                 <button 
                   onClick={handlePrint}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                   title="Print Report"
                 >
-                  <Printer className="w-4 h-4" />
+                  <PrinterIcon className="w-4 h-4" />
                   PRINT
                 </button>
               </div>
@@ -862,13 +868,13 @@ export default function VehiclesPage() {
                   Search:
                 </span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search vehicles..."
-                    className={`pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`pl-10 pr-4 py-2 border rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -888,8 +894,8 @@ export default function VehiclesPage() {
                 backdropFilter: 'blur(2px)'
               }}
             >
-              <div className={`w-96 max-h-96 rounded-lg shadow-lg ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div className={`w-96 max-h-96 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
                 <div className={`p-4 border-b ${
                   themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
@@ -906,7 +912,7 @@ export default function VehiclesPage() {
                         themeMode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                       }`}
                     >
-                      <X className="w-5 h-5" />
+                      <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
                   <p className={`text-sm mt-1 ${
@@ -1040,21 +1046,21 @@ export default function VehiclesPage() {
                           className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                           title="View Vehicle Details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <EyeIcon className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleEditVehicle(vehicle)}
                           className="p-1 text-green-600 hover:text-green-800 transition-colors"
                           title="Edit Vehicle"
                         >
-                          <Edit className="w-4 h-4" />
+                          <PencilIcon className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleDeleteVehicle(vehicle)}
                           className="p-1 text-red-600 hover:text-red-800 transition-colors"
                           title="Delete Vehicle"
                         >
-                          <X className="w-4 h-4" />
+                          <XMarkIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -1182,6 +1188,6 @@ export default function VehiclesPage() {
           duration={notification.type === 'success' ? 10000 : 8000}
         />
       </div>
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

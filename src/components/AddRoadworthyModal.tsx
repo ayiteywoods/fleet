@@ -66,13 +66,13 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
       onClick={onClose}
     >
       <div
-        className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}
+        className={`relative ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'} p-6 rounded-3xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2 bg-blue-100 rounded-3xl">
               <FileCheck className="w-6 h-6 text-blue-600" />
             </div>
             <div>
@@ -82,7 +82,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-3xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -104,7 +104,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                   value={formData.company}
                   onChange={handleChange}
                   required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -127,7 +127,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                   value={formData.vehicle_number}
                   onChange={handleChange}
                   required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -146,7 +146,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                 name="vehicle_type"
                 value={formData.vehicle_type}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-800 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -177,7 +177,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                   value={formData.date_issued}
                   onChange={handleChange}
                   required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -199,7 +199,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                   value={formData.date_expired}
                   onChange={handleChange}
                   required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -218,7 +218,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                 value={formData.roadworth_status}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full px-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark'
                     ? 'bg-gray-800 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
@@ -244,7 +244,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
                   value={formData.updated_by}
                   onChange={handleChange}
                   required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -260,14 +260,14 @@ export default function AddRoadworthyModal({ isOpen, onClose, onAdd }: AddRoadwo
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-3xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               CANCEL
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-3xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'ADDING...' : 'ADD ROADWORTHY'}
             </button>

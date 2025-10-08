@@ -3,20 +3,20 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
-  Truck, 
-  Users, 
-  Anchor, 
-  Wrench, 
-  MapPin, 
-  Navigation,
-  Square,
-  Clock,
-  AlertCircle,
-  Eye,
-  Settings,
-  ChevronRight,
-  MapPin as MapPinIcon
-} from 'lucide-react'
+  TruckIcon,
+  UserGroupIcon,
+  ShieldCheckIcon,
+  WrenchScrewdriverIcon,
+  MapPinIcon,
+  PlayIcon,
+  StopIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  EyeIcon,
+  Cog6ToothIcon,
+  ChevronRightIcon,
+  BoltIcon
+} from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
 import { getIconColor } from '@/lib/themeUtils'
 import FleetMap from './FleetMap'
@@ -43,6 +43,26 @@ interface Alert {
   type: 'warning' | 'info' | 'error'
 }
 
+interface FuelLog {
+  id: string
+  refuel_date: string
+  quantity: number
+  unit_cost: number
+  total_cost: number
+  fuel_type: string
+  vendor: string
+  vehicles: {
+    reg_number: string
+  }
+}
+
+interface WeeklyFuelData {
+  week: string
+  baseCost: number
+  additionalCost: number
+  totalCost: number
+}
+
 export default function FleetDashboard() {
   const { themeColor, themeMode } = useTheme()
   const [vehiclesCount, setVehiclesCount] = useState(0)
@@ -50,7 +70,11 @@ export default function FleetDashboard() {
   const [insuranceCount, setInsuranceCount] = useState(0)
   const [onRoadCount, setOnRoadCount] = useState(0)
   const [offRoadCount, setOffRoadCount] = useState(0)
+  const [maintenanceCount, setMaintenanceCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [weeklyFuelData, setWeeklyFuelData] = useState<WeeklyFuelData[]>([])
+  const [isLoadingFuelData, setIsLoadingFuelData] = useState(true)
+  const [hoveredWeek, setHoveredWeek] = useState<string | null>(null)
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([
     {
       id: '1',
@@ -151,15 +175,74 @@ export default function FleetDashboard() {
           const insuranceData = await insuranceResponse.json()
           setInsuranceCount(insuranceData.length)
         }
+
+        // Fetch maintenance data
+        const maintenanceResponse = await fetch('/api/maintenance')
+        if (maintenanceResponse.ok) {
+          const maintenanceData = await maintenanceResponse.json()
+          setMaintenanceCount(maintenanceData.length)
+        }
+
+          // Fetch fuel logs data for weekly chart
+          const fuelResponse = await fetch('/api/fuel-logs')
+          if (fuelResponse.ok) {
+            const fuelData = await fuelResponse.json()
+            const weeklyData = processWeeklyFuelData(fuelData)
+            setWeeklyFuelData(weeklyData)
+          }
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
         setLoading(false)
+        setIsLoadingFuelData(false)
       }
     }
 
     fetchDashboardData()
   }, [])
+
+  // Process fuel data into weekly format
+  const processWeeklyFuelData = (fuelLogs: FuelLog[]): WeeklyFuelData[] => {
+    // Simple approach: group by week number (1-10) based on recency
+    const weeklyData: { [key: string]: { baseCost: number; additionalCost: number } } = {}
+    
+    // Initialize 10 weeks
+    for (let i = 1; i <= 10; i++) {
+      weeklyData[i.toString()] = { baseCost: 0, additionalCost: 0 }
+    }
+    
+    // Sort fuel logs by date (newest first)
+    const sortedLogs = [...fuelLogs].sort((a, b) => 
+      new Date(b.refuel_date).getTime() - new Date(a.refuel_date).getTime()
+    )
+    
+    // Distribute logs across the 10 weeks (most recent logs get higher week numbers)
+    sortedLogs.forEach((log, index) => {
+      const weekNumber = Math.min(10, Math.max(1, Math.ceil((index + 1) / Math.ceil(sortedLogs.length / 10))))
+      const weekKey = weekNumber.toString()
+      
+      const totalCost = Number(log.total_cost) || 0
+      const baseCost = totalCost * 0.7
+      const additionalCost = totalCost * 0.3
+      
+      weeklyData[weekKey].baseCost += baseCost
+      weeklyData[weekKey].additionalCost += additionalCost
+    })
+    
+    // Convert to array format
+    const result = Array.from({ length: 10 }, (_, i) => {
+      const weekNumber = (i + 1).toString()
+      const data = weeklyData[weekNumber]
+      return {
+        week: weekNumber,
+        baseCost: data.baseCost,
+        additionalCost: data.additionalCost,
+        totalCost: data.baseCost + data.additionalCost
+      }
+    })
+    
+    return result
+  }
 
   const kpiCards = [
     {
@@ -167,7 +250,7 @@ export default function FleetDashboard() {
       value: loading ? '...' : vehiclesCount.toString(),
       subtitle: 'All Vehicles',
       subtitleLink: '/vehicles',
-      icon: Truck,
+      icon: TruckIcon,
       color: 'blue'
     },
     {
@@ -175,7 +258,7 @@ export default function FleetDashboard() {
       value: loading ? '...' : driversCount.toString(),
       subtitle: 'All Drivers',
       subtitleLink: '/drivers',
-      icon: Users,
+      icon: UserGroupIcon,
       color: 'blue'
     },
     {
@@ -183,32 +266,40 @@ export default function FleetDashboard() {
       value: loading ? '...' : insuranceCount.toString(),
       subtitle: 'All Insurances',
       subtitleLink: '/insurance',
-      icon: Anchor,
+      icon: ShieldCheckIcon,
       color: 'blue'
     },
     {
-      title: 'On Road',
+      title: 'Active Vehicles',
       value: loading ? '...' : onRoadCount.toString(),
-      subtitle: 'All On Road',
+      subtitle: 'All Active Vehicles',
       subtitleLink: '/vehicles',
-      icon: Truck,
+      icon: TruckIcon,
       color: 'blue'
     },
     {
-      title: 'Off Road',
+      title: 'Inactive Vehicles',
       value: loading ? '...' : offRoadCount.toString(),
-      subtitle: 'All Off Road',
+      subtitle: 'All Inactive Vehicles',
       subtitleLink: '/vehicles',
-      icon: Truck,
+      icon: TruckIcon,
+      color: 'blue'
+    },
+    {
+      title: 'Maintenance',
+      value: loading ? '...' : maintenanceCount.toString(),
+      subtitle: 'All Maintenance',
+      subtitleLink: '/maintenance',
+      icon: WrenchScrewdriverIcon,
       color: 'blue'
     }
   ]
 
   const getStatusIcon = (status: string) => {
     if (status === 'Start') {
-      return <Navigation className="w-5 h-5 text-green-600" />
+      return <PlayIcon className="w-5 h-5 text-green-600" />
     }
-    return <Square className="w-5 h-5 text-blue-600" />
+    return <StopIcon className="w-5 h-5 text-blue-600" />
   }
 
   const getStatusColor = (status: string) => {
@@ -216,42 +307,50 @@ export default function FleetDashboard() {
   }
 
   return (
-    <div className={`space-y-6 ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+    <div className={`space-y-6 mt-4 ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
       {/* KPI Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpiCards.map((card, index) => {
           const IconComponent = card.icon
           return (
-            <div key={index} className={`p-4 rounded-lg border ${
+            <div key={index} className={`p-6 rounded-2xl ${
               themeMode === 'dark' 
-                ? 'bg-gray-800 border-gray-700' 
-                : 'bg-white border-gray-200'
-            } shadow-sm`}>
-              <div className="flex items-center justify-between mb-2">
-                <IconComponent className={`w-8 h-8 ${
-                  card.color === 'blue' ? 'text-blue-600' : getIconColor(themeColor)
+                ? 'bg-navy-800' 
+                : 'bg-white'
+            }`}>
+              <div className="flex items-center">
+                <div className={`p-3 rounded-full ${
+                  themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                }`}>
+                  <IconComponent className={`w-6 h-6 ${
+                    card.color === 'blue' ? 'text-brand-500' : getIconColor(themeColor)
                 }`} />
               </div>
+                <div className="ml-4">
               <h3 className={`text-sm font-medium ${
                 themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
                 {card.title}
               </h3>
               <p className={`text-2xl font-bold ${
-                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+                    themeMode === 'dark' ? 'text-white' : 'text-navy-700'
               }`}>
                 {card.value}
               </p>
+                </div>
+              </div>
+              <div className="flex justify-end mt-2">
               <Link 
                 href={card.subtitleLink} 
-                className="flex items-center text-xs text-blue-600 hover:text-blue-800 transition-colors"
-                title={card.title === 'On Road' ? 'View all vehicles (filter by Active status)' : 
-                       card.title === 'Off Road' ? 'View all vehicles (filter by Inactive status)' : 
+                  className="flex items-center text-xs text-brand-500 hover:text-brand-600 transition-colors"
+                  title={card.title === 'Active Vehicles' ? 'View all vehicles (filter by Active status)' : 
+                         card.title === 'Inactive Vehicles' ? 'View all vehicles (filter by Inactive status)' : 
                        `View all ${card.title.toLowerCase()}`}
               >
-                <ChevronRight className="w-3 h-3 mr-1" />
+                  <ChevronRightIcon className="w-3 h-3 mr-1" />
                 {card.subtitle}
               </Link>
+              </div>
             </div>
           )
         })}
@@ -261,22 +360,120 @@ export default function FleetDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Map Section */}
         <div className="lg:col-span-2">
-          <div className={`p-4 rounded-lg border ${
+          {/* Weekly Fuel Expenses Chart */}
+          <div className={`p-6 rounded-2xl mb-6 ${
             themeMode === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          } shadow-sm`}>
+              ? 'bg-navy-800' 
+              : 'bg-white'
+          }`}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className={`text-lg font-semibold ${
+                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                Weekly Fuel Expenses
+              </h3>
+              <div className="p-2 rounded-3xl bg-blue-100">
+                <BoltIcon className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+
+            {/* Chart Container */}
+            <div className="relative">
+              {isLoadingFuelData ? (
+                <div className="flex items-center justify-center h-48">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                </div>
+              ) : (
+                <div className="flex items-end justify-between h-48 px-2">
+                  {weeklyFuelData.map((weekData, index) => {
+                    const maxCost = Math.max(...weeklyFuelData.map(w => w.totalCost))
+                    const baseHeight = maxCost > 0 ? (weekData.baseCost / maxCost) * 100 : 0
+                    const additionalHeight = maxCost > 0 ? (weekData.additionalCost / maxCost) * 100 : 0
+                    const isHovered = hoveredWeek === weekData.week
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className="flex flex-col items-center space-y-1 cursor-pointer group"
+                        onMouseEnter={() => setHoveredWeek(weekData.week)}
+                        onMouseLeave={() => setHoveredWeek(null)}
+                        onClick={() => {
+                          // Navigate to fuel logs page with week filter
+                          window.location.href = `/fuel?week=${weekData.week}`
+                        }}
+                      >
+                        <div className="relative w-8 h-40">
+                          <div className="absolute bottom-0 w-full bg-gray-200 rounded-t"></div>
+                          <div 
+                            className={`absolute bottom-0 w-full bg-blue-500 rounded-t transition-all duration-200 ${
+                              isHovered ? 'opacity-90 scale-105' : ''
+                            }`}
+                            style={{height: `${additionalHeight}%`}}
+                          ></div>
+                          <div 
+                            className={`absolute bottom-0 w-full bg-blue-400 rounded-t transition-all duration-200 ${
+                              isHovered ? 'opacity-90 scale-105' : ''
+                            }`}
+                            style={{height: `${baseHeight}%`}}
+                          ></div>
+                          
+                          {/* Tooltip */}
+                          {isHovered && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-3xl shadow-lg whitespace-nowrap z-10">
+                              <div className="text-center">
+                                <div className="font-semibold">Week {weekData.week}</div>
+                                <div>Base: ${weekData.baseCost.toFixed(2)}</div>
+                                <div>Additional: ${weekData.additionalCost.toFixed(2)}</div>
+                                <div className="font-semibold border-t border-gray-700 pt-1 mt-1">
+                                  Total: ${weekData.totalCost.toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-xs transition-colors duration-200 ${
+                          isHovered ? 'text-blue-600 font-semibold' : 'text-gray-500'
+                        }`}>
+                          {weekData.week}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center space-x-6 mt-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-400 rounded"></div>
+                <span className="text-sm text-gray-600">Base Fuel Cost</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                <span className="text-sm text-gray-600">Additional Fuel Cost</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Map */}
+          <div className={`p-6 rounded-2xl ${
+            themeMode === 'dark' 
+              ? 'bg-navy-800' 
+              : 'bg-white'
+          }`}>
             <FleetMap />
           </div>
           
           {/* Maintenance and Reminders Tables under Map */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             {/* Maintenance Due */}
-            <div className={`p-4 rounded-lg border ${
+          <div className={`p-6 rounded-2xl ${
               themeMode === 'dark' 
-                ? 'bg-gray-800 border-gray-700' 
+              ? 'bg-navy-800 border-navy-700' 
                 : 'bg-white border-gray-200'
-            } shadow-sm`}>
+          }`}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className={`text-lg font-semibold ${
                   themeMode === 'dark' ? 'text-white' : 'text-gray-900'
@@ -294,24 +491,24 @@ export default function FleetDashboard() {
                   href="/maintenance" 
                   className="flex items-center text-xs text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  <ChevronRight className="w-3 h-3 mr-1" />
+                  <ChevronRightIcon className="w-3 h-3 mr-1" />
                   All
                 </Link>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Osei&apos;s Van - Checking Transmission</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Ansah&apos;s Honda - Change rear brakes and...</p>
                     <p className="text-xs text-gray-500">54 Days left</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Changing of Oil Tank...</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
@@ -321,11 +518,11 @@ export default function FleetDashboard() {
             </div>
 
             {/* Reminders Due */}
-            <div className={`p-4 rounded-lg border ${
+          <div className={`p-6 rounded-2xl  ${
               themeMode === 'dark' 
-                ? 'bg-gray-800 border-gray-700' 
+              ? 'bg-navy-800 border-navy-700' 
                 : 'bg-white border-gray-200'
-            } shadow-sm`}>
+          }`}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className={`text-lg font-semibold ${
                   themeMode === 'dark' ? 'text-white' : 'text-gray-900'
@@ -343,24 +540,24 @@ export default function FleetDashboard() {
                   href="/reminders" 
                   className="flex items-center text-xs text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  <ChevronRight className="w-3 h-3 mr-1" />
+                  <ChevronRightIcon className="w-3 h-3 mr-1" />
                   All
                 </Link>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Ike&apos;s BMW - Insurance</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Ansah&apos;s VW - MOT</p>
                     <p className="text-xs text-gray-500">54 Days left</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Road Tax</p>
                     <p className="text-xs text-gray-500">30 Days left</p>
@@ -369,16 +566,17 @@ export default function FleetDashboard() {
               </div>
             </div>
           </div>
+
         </div>
 
         {/* Right Column - Recent Trips and Alerts */}
         <div className="lg:col-span-1 space-y-6">
           {/* Recent Trips Section */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-6 rounded-2xl ${
             themeMode === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          } shadow-sm`}>
+              ? 'bg-navy-800' 
+              : 'bg-white'
+          }`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-semibold ${
@@ -407,9 +605,9 @@ export default function FleetDashboard() {
             {/* Trips List */}
             <div className="space-y-3">
               {recentTrips.map((trip) => (
-                <div key={trip.id} className={`p-3 rounded border ${
+                <div key={trip.id} className={`p-4 rounded-2xl border ${
                   themeMode === 'dark' 
-                    ? 'bg-gray-700 border-gray-600' 
+                    ? 'bg-navy-700 border-navy-600' 
                     : 'bg-gray-50 border-gray-200'
                 }`}>
                   {/* Trip Header */}
@@ -439,7 +637,7 @@ export default function FleetDashboard() {
                   {/* Driver and Vehicle */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-1">
-                      <Users className="w-4 h-4 text-blue-600" />
+                      <UserGroupIcon className="w-4 h-4 text-brand-500" />
                       <span className={`text-xs ${
                         themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                       }`}>
@@ -447,7 +645,7 @@ export default function FleetDashboard() {
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Truck className="w-4 h-4 text-blue-600" />
+                      <TruckIcon className="w-4 h-4 text-brand-500" />
                       <span className={`text-xs ${
                         themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                       }`}>
@@ -463,19 +661,19 @@ export default function FleetDashboard() {
                     }`}>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4 text-blue-600" />
+                          <ClockIcon className="w-4 h-4 text-brand-500" />
                           <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
                             {trip.details.time}
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <MapPin className="w-4 h-4 text-blue-600" />
+                          <MapPinIcon className="w-4 h-4 text-brand-500" />
                           <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
                             {trip.details.distance}
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <AlertCircle className="w-4 h-4 text-red-500" />
+                          <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
                           <span className="text-red-500">
                             {trip.details.incidents}
                           </span>
@@ -492,17 +690,17 @@ export default function FleetDashboard() {
               <button className={`p-2 rounded hover:bg-opacity-10 ${
                 themeMode === 'dark' ? 'hover:bg-white' : 'hover:bg-gray-100'
               }`}>
-                <Settings className="w-5 h-5 text-blue-600" />
+                <Cog6ToothIcon className="w-5 h-5 text-brand-500" />
               </button>
             </div>
           </div>
 
           {/* Recent Alerts Section */}
-          <div className={`p-4 rounded-lg border ${
+          <div className={`p-6 rounded-2xl ${
             themeMode === 'dark' 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-white border-gray-200'
-          } shadow-sm`}>
+              ? 'bg-navy-800' 
+              : 'bg-white'
+          }`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-semibold ${
@@ -516,11 +714,11 @@ export default function FleetDashboard() {
             </div>
 
             {/* Alerts List */}
-            <div className="space-y-3">
+            <div className="space-y-3 pb-10">
               {recentAlerts.map((alert) => (
-                <div key={alert.id} className={`p-3 rounded border ${
+                <div key={alert.id} className={`p-4 rounded-2xl border ${
                   themeMode === 'dark' 
-                    ? 'bg-gray-700 border-gray-600' 
+                    ? 'bg-navy-700 border-navy-600' 
                     : 'bg-gray-50 border-gray-200'
                 }`}>
                   {/* Alert Header */}
@@ -530,7 +728,7 @@ export default function FleetDashboard() {
                     }`}>
                       {alert.vehicleName}
                     </h4>
-                    <MapPinIcon className="w-4 h-4 text-blue-600" />
+                    <MapPinIcon className="w-4 h-4 text-brand-500" />
                   </div>
 
                   {/* Timestamp */}
@@ -542,7 +740,7 @@ export default function FleetDashboard() {
 
                   {/* Alert Message */}
                   <div className="flex items-start space-x-2">
-                    <Clock className={`w-4 h-4 mt-0.5 ${
+                    <ClockIcon className={`w-4 h-4 mt-0.5 ${
                       alert.type === 'warning' ? 'text-orange-500' :
                       alert.type === 'error' ? 'text-red-500' : 'text-blue-500'
                     }`} />

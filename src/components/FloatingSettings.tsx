@@ -15,7 +15,7 @@ export default function FloatingSettings() {
   ]
 
   const getThemeClasses = () => {
-    const baseClasses = 'bg-white border border-gray-200 shadow-lg rounded-lg'
+    const baseClasses = 'bg-white border border-gray-200 shadow-lg rounded-3xl'
     const darkClasses = themeMode === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : ''
     return `${baseClasses} ${darkClasses}`
   }
@@ -33,7 +33,7 @@ export default function FloatingSettings() {
   const getPanelClasses = () => {
     const baseClasses = 'fixed bottom-20 right-6 w-80 p-6 z-50 transition-all duration-300'
     const darkClasses = themeMode === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'
-    return `${baseClasses} ${darkClasses} border shadow-xl rounded-lg`
+    return `${baseClasses} ${darkClasses} border shadow-xl rounded-3xl`
   }
 
   return (
@@ -73,7 +73,7 @@ export default function FloatingSettings() {
                   <button
                     key={color.value}
                     onClick={() => setThemeColor(color.value)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    className={`p-3 rounded-3xl border-2 transition-all ${
                       themeColor === color.value
                         ? 'border-blue-500 ring-2 ring-blue-200'
                         : 'border-gray-200 hover:border-gray-300'
@@ -99,7 +99,7 @@ export default function FloatingSettings() {
               <div className="flex space-x-3">
                 <button
                   onClick={() => setThemeMode('light')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  className={`flex-1 p-3 rounded-3xl border-2 transition-all ${
                     themeMode === 'light'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
                       : 'border-gray-200 hover:border-gray-300 dark:border-gray-600'
@@ -110,7 +110,7 @@ export default function FloatingSettings() {
                 </button>
                 <button
                   onClick={() => setThemeMode('dark')}
-                  className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                  className={`flex-1 p-3 rounded-3xl border-2 transition-all ${
                     themeMode === 'dark'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
                       : 'border-gray-200 hover:border-gray-300 dark:border-gray-600'
@@ -126,7 +126,7 @@ export default function FloatingSettings() {
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={toggleThemeMode}
-                className="w-full p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-3xl transition-colors"
               >
                 <div className="flex items-center justify-center">
                   {themeMode === 'light' ? (

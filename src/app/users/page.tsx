@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import DashboardLayout from '@/components/DashboardLayout'
+import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import { 
-  Users, 
-  UserCheck, 
-  UserX, 
-  Shield, 
-  Plus, 
-  Search, 
-  Settings, 
-  X,
-  ChevronUp,
-  ChevronDown,
-  Eye,
-  Edit,
-  Trash2,
-  FileSpreadsheet,
-  FileText,
-  Printer
-} from 'lucide-react'
+  UserGroupIcon, 
+  CheckIcon, 
+  UserMinusIcon, 
+  ShieldCheckIcon, 
+  PlusIcon, 
+  MagnifyingGlassIcon, 
+  Cog6ToothIcon, 
+  XMarkIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+  TableCellsIcon,
+  DocumentTextIcon,
+  PrinterIcon
+} from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -31,9 +31,9 @@ import RolesModal from '@/components/RolesModal'
 import PermissionsModal from '@/components/PermissionsModal'
 import Notification from '@/components/Notification'
 
-export default function UsersPage() {
+export default function UserGroupIconPage() {
   const { themeMode } = useTheme()
-  const [users, setUsers] = useState([])
+  const [users, setUserGroupIcon] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [entriesPerPage, setEntriesPerPage] = useState(10)
@@ -78,13 +78,13 @@ export default function UsersPage() {
 
   // Fetch users data from API
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchUserGroupIcon = async () => {
       try {
         setLoading(true)
         const response = await fetch('/api/users')
         if (response.ok) {
           const data = await response.json()
-          setUsers(data)
+          setUserGroupIcon(data)
         }
       } catch (error) {
         console.error('Error fetching users:', error)
@@ -93,7 +93,7 @@ export default function UsersPage() {
       }
     }
 
-    fetchUsers()
+    fetchUserGroupIcon()
   }, [])
 
   // Calculate KPI values from users data
@@ -105,12 +105,12 @@ export default function UsersPage() {
   const usersWithLicense = users.filter(u => u.license_number).length
 
   const kpiCards = [
-    { title: 'Total Users', value: totalUsers.toString(), icon: Users, color: 'blue' },
-    { title: 'Active Users', value: activeUsers.toString(), icon: UserCheck, color: 'green' },
-    { title: 'Inactive Users', value: inactiveUsers.toString(), icon: UserX, color: 'red' },
-    { title: 'Admin Users', value: adminUsers.toString(), icon: Shield, color: 'purple' },
-    { title: 'Regular Users', value: regularUsers.toString(), icon: Users, color: 'orange' },
-    { title: 'With License', value: usersWithLicense.toString(), icon: Shield, color: 'indigo' }
+    { title: 'Total Users', value: totalUsers.toString(), icon: UserGroupIcon, color: 'blue' },
+    { title: 'Active Users', value: activeUsers.toString(), icon: CheckIcon, color: 'blue' },
+    { title: 'Inactive Users', value: inactiveUsers.toString(), icon: UserMinusIcon, color: 'blue' },
+    { title: 'Admin Users', value: adminUsers.toString(), icon: ShieldCheckIcon, color: 'blue' },
+    { title: 'Regular Users', value: regularUsers.toString(), icon: UserGroupIcon, color: 'blue' },
+    { title: 'With License', value: usersWithLicense.toString(), icon: ShieldCheckIcon, color: 'blue' }
   ]
 
   // Utility functions
@@ -187,19 +187,19 @@ export default function UsersPage() {
     if (sortColumn !== column) {
       return (
         <div className="flex flex-col">
-          <ChevronUp className="w-3 h-3 text-blue-300" />
-          <ChevronDown className="w-3 h-3 text-blue-300" />
+          <ChevronUpIcon className="w-3 h-3 text-blue-300" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-300" />
         </div>
       )
     }
     return sortDirection === 'asc' ? 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-white" />
-        <ChevronDown className="w-3 h-3 text-blue-300" />
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-300" />
       </div> : 
       <div className="flex flex-col">
-        <ChevronUp className="w-3 h-3 text-blue-300" />
-        <ChevronDown className="w-3 h-3 text-white" />
+        <ChevronUpIcon className="w-3 h-3 text-blue-300" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
       </div>
   }
 
@@ -221,7 +221,7 @@ export default function UsersPage() {
           const response = await fetch('/api/users')
           if (response.ok) {
             const data = await response.json()
-            setUsers(data)
+            setUserGroupIcon(data)
           }
         } catch (error) {
           console.error('Error refreshing users:', error)
@@ -243,7 +243,7 @@ export default function UsersPage() {
     setShowViewUserModal(true)
   }
 
-  const handleEditUser = (user: any) => {
+  const handlePencilIconUser = (user: any) => {
     setSelectedUser(user)
     setShowEditUserModal(true)
   }
@@ -266,7 +266,7 @@ export default function UsersPage() {
           const response = await fetch('/api/users')
           if (response.ok) {
             const data = await response.json()
-            setUsers(data)
+            setUserGroupIcon(data)
           }
         } catch (error) {
           console.error('Error refreshing users:', error)
@@ -307,7 +307,7 @@ export default function UsersPage() {
             const response = await fetch('/api/users')
             if (response.ok) {
               const data = await response.json()
-              setUsers(data)
+              setUserGroupIcon(data)
             }
           } catch (error) {
             console.error('Error refreshing users:', error)
@@ -334,7 +334,7 @@ export default function UsersPage() {
   }
 
   // Filter users based on search query
-  const filteredUsers = users.filter(user => {
+  const filteredUserGroupIcon = users.filter(user => {
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -344,17 +344,17 @@ export default function UsersPage() {
   })
 
   // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / entriesPerPage)
+  const totalPages = Math.ceil(filteredUserGroupIcon.length / entriesPerPage)
   const startIndex = (currentPage - 1) * entriesPerPage
   const endIndex = startIndex + entriesPerPage
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex)
+  const paginatedUserGroupIcon = filteredUserGroupIcon.slice(startIndex, endIndex)
 
   return (
-    <DashboardLayout>
+    <HorizonDashboardLayout>
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
-        overflowX: 'hidden',
+        overflowXMarkIcon: 'hidden',
         boxSizing: 'border-box',
         minWidth: '0',
         flexShrink: 1
@@ -364,34 +364,40 @@ export default function UsersPage() {
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
-              <div key={index} className={`p-4 rounded-lg shadow-sm ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div key={index} className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className="w-8 h-8 text-blue-600" />
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <IconComponent className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-2xl font-bold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    }`}>
+                      {card.value}
+                    </p>
+                  </div>
                 </div>
-                <h3 className={`text-sm font-medium ${
-                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                }`}>
-                  {card.title}
-                </h3>
-                <p className={`text-2xl font-bold ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {card.value}
-                </p>
               </div>
             )
           })}
         </div>
 
         {/* Main Content Area */}
-        <div className={`rounded-lg shadow-sm ${
-          themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+        <div className={`rounded-2xl ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
         }`} style={{
           width: '100%',
           maxWidth: '100%',
-          overflowX: 'hidden',
+          overflowXMarkIcon: 'hidden',
           boxSizing: 'border-box',
           minWidth: '0',
           flexShrink: 1
@@ -403,7 +409,7 @@ export default function UsersPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowRolesModal(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -413,7 +419,7 @@ export default function UsersPage() {
                 </button>
                 <button 
                   onClick={() => setShowPermissionsModal(true)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -426,9 +432,9 @@ export default function UsersPage() {
               {/* Right Side - Add User Button */}
               <button 
                 onClick={() => setShowAddUserModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <PlusIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">ADD USER</span>
               </button>
             </div>
@@ -448,7 +454,7 @@ export default function UsersPage() {
                   className={`px-3 py-1 border rounded text-sm ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
+                      : 'bg-gray-100 border-gray-300 text-gray-900'
                   }`}
                 >
                   <option value={10}>10</option>
@@ -467,41 +473,41 @@ export default function UsersPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setShowFieldSelector(!showFieldSelector)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                  className="flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors bg-orange-600 text-white hover:bg-orange-700"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   SELECT COLUMNS ({selectedFields.length})
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}>
-                  <FileSpreadsheet className="w-4 h-4" />
+                  <TableCellsIcon className="w-4 h-4" />
                   EXCEL
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}>
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   CSV
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}>
-                  <FileText className="w-4 h-4" />
+                  <DocumentTextIcon className="w-4 h-4" />
                   PDF
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}>
-                  <Printer className="w-4 h-4" />
+                  <PrinterIcon className="w-4 h-4" />
                   PRINT
                 </button>
               </div>
@@ -514,13 +520,13 @@ export default function UsersPage() {
                   Search:
                 </span>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search users..."
-                    className={`pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`pl-10 pr-4 py-2 border rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -540,8 +546,8 @@ export default function UsersPage() {
                 backdropFilter: 'blur(2px)'
               }}
             >
-              <div className={`w-96 max-h-96 rounded-lg shadow-lg ${
-                themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+              <div className={`w-96 max-h-96 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
               }`}>
                 <div className={`p-4 border-b ${
                   themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
@@ -558,7 +564,7 @@ export default function UsersPage() {
                         themeMode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                       }`}
                     >
-                      <X className="w-5 h-5" />
+                      <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
                   <p className={`text-sm mt-1 ${
@@ -619,11 +625,11 @@ export default function UsersPage() {
             </div>
           )}
 
-          {/* Users Table */}
+          {/* UserGroupIcon Table */}
           <div style={{ 
             width: '100%',
             maxWidth: '100%',
-            overflowX: 'auto',
+            overflowXMarkIcon: 'auto',
             overflowY: 'hidden',
             border: '1px solid #e5e7eb',
             boxSizing: 'border-box',
@@ -702,14 +708,14 @@ export default function UsersPage() {
                       </div>
                     </td>
                   </tr>
-                ) : paginatedUsers.length === 0 ? (
+                ) : paginatedUserGroupIcon.length === 0 ? (
                   <tr>
                     <td colSpan={selectedFields.length + 2} className="px-4 py-8 text-center text-gray-500">
                       {searchQuery ? 'No users match your search.' : 'No users found.'}
                     </td>
                   </tr>
                 ) : (
-                  paginatedUsers.map((user, index) => (
+                  paginatedUserGroupIcon.map((user, index) => (
                     <tr key={user.id || index} className="hover:bg-gray-50">
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
@@ -718,21 +724,21 @@ export default function UsersPage() {
                             className="text-blue-600 hover:text-blue-900 transition-colors"
                             title="View"
                           >
-                            <Eye className="w-4 h-4" />
+                            <EyeIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleEditUser(user)}
+                            onClick={() => handlePencilIconUser(user)}
                             className="text-green-600 hover:text-green-900 transition-colors"
-                            title="Edit"
+                            title="PencilIcon"
                           >
-                            <Edit className="w-4 h-4" />
+                            <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id, user.name)}
                             className="text-red-600 hover:text-red-900 transition-colors"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -774,8 +780,8 @@ export default function UsersPage() {
                 <div>
                   <p className="text-sm text-gray-700">
                     Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(endIndex, filteredUsers.length)}</span> of{' '}
-                    <span className="font-medium">{filteredUsers.length}</span> results
+                    <span className="font-medium">{Math.min(endIndex, filteredUserGroupIcon.length)}</span> of{' '}
+                    <span className="font-medium">{filteredUserGroupIcon.length}</span> results
                   </p>
                 </div>
                 <div>
@@ -808,7 +814,7 @@ export default function UsersPage() {
         onUserAdded={handleAddUser}
       />
 
-      {/* Edit User Modal */}
+      {/* PencilIcon User Modal */}
       <EditUserModal
         isOpen={showEditUserModal}
         onClose={() => {
@@ -827,7 +833,7 @@ export default function UsersPage() {
           setSelectedUser(null)
         }}
         user={selectedUser}
-        onEdit={(user) => {
+        onPencilIcon={(user) => {
           setShowViewUserModal(false)
           setSelectedUser(user)
           setShowEditUserModal(true)
@@ -854,6 +860,6 @@ export default function UsersPage() {
         title={notification.title}
         message={notification.message}
       />
-    </DashboardLayout>
+    </HorizonDashboardLayout>
   )
 }

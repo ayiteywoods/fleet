@@ -387,7 +387,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
         backdropFilter: 'blur(2px)'
       }}
     >
-      <div className={`p-6 rounded-lg shadow-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
+      <div className={`p-6 rounded-3xl shadow-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto ${
         themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -402,7 +402,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
           <div className="flex items-center gap-2">
             <button
               onClick={handleAdd}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                 themeColor === 'blue' 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
                   : 'bg-gray-600 text-white hover:bg-gray-700'
@@ -413,7 +413,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
             </button>
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded-3xl transition-colors ${
                 themeMode === 'dark' 
                   ? 'text-gray-400 hover:bg-gray-700' 
                   : 'text-gray-500 hover:bg-gray-100'
@@ -437,7 +437,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                 placeholder="Search fuel requests..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   themeMode === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
@@ -449,7 +449,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportExcel}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -460,7 +460,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
               </button>
               <button
                 onClick={handleExportCSV}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -471,7 +471,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
               </button>
               <button
                 onClick={handleExportPDF}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -482,7 +482,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
               </button>
               <button
                 onClick={handlePrint}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-3xl transition-colors ${
                   themeMode === 'dark'
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -741,7 +741,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
               backdropFilter: 'blur(2px)'
             }}
           >
-            <div className={`p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 ${
+            <div className={`p-6 rounded-3xl shadow-lg max-w-2xl w-full mx-4 ${
               themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
             }`}>
               <h3 className={`text-lg font-semibold mb-4 ${
@@ -763,7 +763,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       value={formData.vehicle_id}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark' 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -789,7 +789,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       value={formData.status}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark' 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -814,7 +814,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       value={formData.quantity}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark' 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -835,7 +835,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       value={formData.unit_cost}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark' 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -856,7 +856,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       value={formData.total_cost}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark' 
                           ? 'bg-gray-700 border-gray-600 text-white' 
                           : 'bg-white border-gray-300 text-gray-900'
@@ -877,7 +877,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                     onChange={handleInputChange}
                     required
                     rows={3}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
@@ -892,7 +892,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                       setShowAddModal(false)
                       setShowEditModal(false)
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -902,7 +902,7 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
                   </button>
                   <button
                     type="submit"
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
                       themeColor === 'blue' 
                         ? 'bg-blue-600 text-white hover:bg-blue-700' 
                         : 'bg-gray-600 text-white hover:bg-gray-700'
