@@ -1,22 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Fetch all vehicle types
+// Helper function to serialize BigInt values
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+  
+  if (typeof obj === 'bigint') {
+    return obj.toString()
+  }
+  
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt)
+  }
+  
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  
+  return obj
+}
+
 export async function GET() {
   try {
     const vehicleTypes = await prisma.vehicle_types.findMany({
-      orderBy: { type: 'asc' }
+      orderBy: {
+        created_at: 'desc'
+      }
     })
 
-    // Serialize BigInt values
-    const serializedTypes = vehicleTypes.map(type => ({
-      ...type,
-      id: type.id.toString(),
-      created_by: type.created_by?.toString() || null,
-      updated_by: type.updated_by?.toString() || null
-    }))
-
-    return NextResponse.json(serializedTypes)
+    return NextResponse.json(serializeBigInt(vehicleTypes))
   } catch (error) {
     console.error('Error fetching vehicle types:', error)
     return NextResponse.json(
@@ -26,12 +48,12 @@ export async function GET() {
   }
 }
 
-// POST - Create new vehicle type
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { type, description } = body
 
+    // Validate required fields
     if (!type) {
       return NextResponse.json(
         { error: 'Type is required' },
@@ -39,30 +61,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const newType = await prisma.vehicle_types.create({
+    const vehicleType = await prisma.vehicle_types.create({
       data: {
         type,
-        description: description || null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        created_by: 1, // Default user ID
-        updated_by: 1  // Default user ID
+        description: description || null
       }
     })
 
-    // Serialize BigInt values
-    const serializedType = {
-      ...newType,
-      id: newType.id.toString(),
-      created_by: newType.created_by?.toString() || null,
-      updated_by: newType.updated_by?.toString() || null
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Vehicle type added successfully!',
-      type: serializedType
-    })
+    return NextResponse.json(serializeBigInt(vehicleType), { status: 201 })
   } catch (error) {
     console.error('Error creating vehicle type:', error)
     return NextResponse.json(
@@ -72,11 +78,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update vehicle type
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const body = await request.json()
+    const { id, type, description } = body
 
     if (!id) {
       return NextResponse.json(
@@ -85,39 +90,17 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { type, description } = body
-
-    if (!type) {
-      return NextResponse.json(
-        { error: 'Type is required' },
-        { status: 400 }
-      )
-    }
-
-    const updatedType = await prisma.vehicle_types.update({
-      where: { id: BigInt(id) },
+    const vehicleType = await prisma.vehicle_types.update({
+      where: {
+        id: BigInt(id)
+      },
       data: {
         type,
-        description: description || null,
-        updated_at: new Date(),
-        updated_by: 1 // Default user ID
+        description: description || null
       }
     })
 
-    // Serialize BigInt values
-    const serializedType = {
-      ...updatedType,
-      id: updatedType.id.toString(),
-      created_by: updatedType.created_by?.toString() || null,
-      updated_by: updatedType.updated_by?.toString() || null
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Vehicle type updated successfully!',
-      type: serializedType
-    })
+    return NextResponse.json(serializeBigInt(vehicleType))
   } catch (error) {
     console.error('Error updating vehicle type:', error)
     return NextResponse.json(
@@ -127,7 +110,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete vehicle type
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -141,13 +123,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.vehicle_types.delete({
-      where: { id: BigInt(id) }
+      where: {
+        id: BigInt(id)
+      }
     })
 
-    return NextResponse.json({
-      success: true,
-      message: 'Vehicle type deleted successfully!'
-    })
+    return NextResponse.json({ message: 'Vehicle type deleted successfully' })
   } catch (error) {
     console.error('Error deleting vehicle type:', error)
     return NextResponse.json(

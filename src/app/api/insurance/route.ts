@@ -2,30 +2,55 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET - Fetch all insurance records
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const vehicleId = searchParams.get('vehicle_id')
+
+    // Build the query with optional vehicle filter
+    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+
     const insuranceRecords = await prisma.insurance.findMany({
+      where: whereClause, // Apply the filter here
       include: {
         vehicles: {
           select: {
+            id: true,
             reg_number: true,
             trim: true,
             year: true,
-            status: true
+            status: true,
+            color: true
           }
         }
       },
       orderBy: { created_at: 'desc' }
     })
 
-    // Serialize BigInt values
+    // Serialize BigInt values and add vehicle name
     const serializedInsurance = insuranceRecords.map(record => ({
-      ...record,
       id: record.id.toString(),
-      vehicle_id: record.vehicle_id.toString(),
+      policy_number: record.policy_number,
+      insurance_company: record.insurance_company,
+      start_date: record.start_date,
+      end_date: record.end_date,
       premium_amount: record.premium_amount.toString(),
-      created_by: record.created_by?.toString(),
-      updated_by: record.updated_by?.toString()
+      coverage_type: record.coverage_type,
+      notes: record.notes,
+      vehicle_id: record.vehicle_id.toString(),
+      created_at: record.created_at,
+      updated_at: record.updated_at,
+      created_by: record.created_by?.toString() || null,
+      updated_by: record.updated_by?.toString() || null,
+      vehicle_name: record.vehicles ? `${record.vehicles.reg_number} - ${record.vehicles.trim} (${record.vehicles.year})` : null,
+      vehicle: record.vehicles ? {
+        id: record.vehicles.id.toString(),
+        reg_number: record.vehicles.reg_number,
+        trim: record.vehicles.trim,
+        year: record.vehicles.year,
+        status: record.vehicles.status,
+        color: record.vehicles.color
+      } : null
     }))
 
     return NextResponse.json(serializedInsurance)

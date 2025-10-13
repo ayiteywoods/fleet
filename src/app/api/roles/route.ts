@@ -1,20 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Fetch all roles
+// Helper function to serialize BigInt values
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+  
+  if (typeof obj === 'bigint') {
+    return obj.toString()
+  }
+  
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt)
+  }
+  
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  
+  return obj
+}
+
 export async function GET() {
   try {
     const roles = await prisma.roles.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: {
+        created_at: 'desc'
+      }
     })
-
-    // Serialize BigInt values
-    const serializedRoles = roles.map(role => ({
-      ...role,
-      id: role.id.toString()
-    }))
-
-    return NextResponse.json(serializedRoles)
+    return NextResponse.json(serializeBigInt(roles))
   } catch (error) {
     console.error('Error fetching roles:', error)
     return NextResponse.json(
@@ -24,35 +47,20 @@ export async function GET() {
   }
 }
 
-// POST - Create new role
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, guard_name = 'web' } = body
+    const { name, guard_name } = body
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Role name is required' },
-        { status: 400 }
-      )
-    }
-
-    const newRole = await prisma.roles.create({
+    const role = await prisma.roles.create({
       data: {
-        name,
-        guard_name,
+        name: name || '',
+        guard_name: guard_name || '',
         created_at: new Date(),
         updated_at: new Date()
       }
     })
-
-    // Serialize BigInt values
-    const serializedRole = {
-      ...newRole,
-      id: newRole.id.toString()
-    }
-
-    return NextResponse.json(serializedRole, { status: 201 })
+    return NextResponse.json(serializeBigInt(role), { status: 201 })
   } catch (error) {
     console.error('Error creating role:', error)
     return NextResponse.json(
@@ -62,38 +70,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update role
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Role ID is required' },
-        { status: 400 }
-      )
-    }
-
     const body = await request.json()
-    const { name, guard_name } = body
+    const { id, name, guard_name } = body
 
-    const updatedRole = await prisma.roles.update({
+    const role = await prisma.roles.update({
       where: { id: BigInt(id) },
       data: {
-        name: name || undefined,
-        guard_name: guard_name || undefined,
+        name: name || '',
+        guard_name: guard_name || '',
         updated_at: new Date()
       }
     })
-
-    // Serialize BigInt values
-    const serializedRole = {
-      ...updatedRole,
-      id: updatedRole.id.toString()
-    }
-
-    return NextResponse.json(serializedRole)
+    return NextResponse.json(serializeBigInt(role))
   } catch (error) {
     console.error('Error updating role:', error)
     return NextResponse.json(
@@ -103,7 +93,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete role
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -120,10 +109,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: BigInt(id) }
     })
 
-    return NextResponse.json(
-      { message: 'Role deleted successfully' },
-      { status: 200 }
-    )
+    return NextResponse.json({ message: 'Role deleted successfully' })
   } catch (error) {
     console.error('Error deleting role:', error)
     return NextResponse.json(

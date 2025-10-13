@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Check } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
@@ -8,6 +8,79 @@ interface AddVehicleModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (vehicleData: any) => void
+}
+
+interface Cluster {
+  id: string
+  name: string
+  description: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+interface Subsidiary {
+  id: string
+  name: string
+  contact_no: string
+  address: string
+  location: string | null
+  contact_person: string
+  contact_person_no: string
+  cluster_id: string | null
+  description: string | null
+  notes: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+interface VehicleType {
+  id: string
+  type: string
+  description: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+interface VehicleMake {
+  id: string
+  name: string
+  model: string | null
+  created_at: string | null
+  updated_at: string | null
+  created_by: string | null
+  updated_by: string | null
+}
+
+interface VehicleModel {
+  id: string
+  name: string
+  description: string | null
+  vehicle_make_id: string
+  created_at: string | null
+  updated_at: string | null
+  created_by: number | null
+  updated_by: number | null
+  vehicle_make: {
+    id: string
+    name: string
+  }
+}
+
+interface Driver {
+  id: string
+  name: string
+  phone: string
+  license_number: string | null
+  license_category: string | null
+  license_expiry: string | null
+  region: string | null
+  district: string | null
+  spcode: number | null
+  email: string
+  role: string
+  is_active: boolean
+  created_at: string | null
+  updated_at: string | null
 }
 
 export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicleModalProps) {
@@ -25,16 +98,157 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
     purchaseDate: '',
     nextServiceKm: '',
     additionalNotes: '',
-    insuranceDocument: null as File | null
+    insuranceDocument: null as File | null,
+    cluster: '',
+    subsidiary: '',
+    assignedTo: ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [clusters, setClusters] = useState<Cluster[]>([])
+  const [subsidiaries, setSubsidiaries] = useState<Subsidiary[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
+  const [vehicleMakes, setVehicleMakes] = useState<VehicleMake[]>([])
+  const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Fetch all required data on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchClusters()
+      fetchVehicleTypes()
+      fetchVehicleMakes()
+    }
+  }, [isOpen])
+
+  const fetchClusters = async () => {
+    try {
+      const response = await fetch('/api/clusters')
+      if (response.ok) {
+        const data = await response.json()
+        setClusters(data)
+      } else {
+        console.error('Failed to fetch clusters')
+      }
+    } catch (error) {
+      console.error('Error fetching clusters:', error)
+    }
+  }
+
+  const fetchVehicleTypes = async () => {
+    try {
+      const response = await fetch('/api/vehicle-types')
+      if (response.ok) {
+        const data = await response.json()
+        setVehicleTypes(data)
+      } else {
+        console.error('Failed to fetch vehicle types')
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle types:', error)
+    }
+  }
+
+  const fetchVehicleMakes = async () => {
+    try {
+      const response = await fetch('/api/vehicle-makes')
+      if (response.ok) {
+        const data = await response.json()
+        setVehicleMakes(data)
+      } else {
+        console.error('Failed to fetch vehicle makes')
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle makes:', error)
+    }
+  }
+
+  const fetchVehicleModels = async (vehicleMakeId: string) => {
+    if (!vehicleMakeId) {
+      setVehicleModels([])
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/vehicle-models?vehicle_make_id=${vehicleMakeId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setVehicleModels(data)
+        setFormData(prev => ({ ...prev, model: '' }))
+      } else {
+        console.error('Failed to fetch vehicle models')
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle models:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchSubsidiaries = async (clusterId: string) => {
+    if (!clusterId) {
+      setSubsidiaries([])
+      setDrivers([])
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSubsidiaries(data)
+        setDrivers([]) // Clear drivers when cluster changes
+        setFormData(prev => ({ ...prev, subsidiary: '', assignedTo: '' }))
+      } else {
+        console.error('Failed to fetch subsidiaries')
+      }
+    } catch (error) {
+      console.error('Error fetching subsidiaries:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchDrivers = async (subsidiaryId: string) => {
+    if (!subsidiaryId) {
+      setDrivers([])
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/drivers?subsidiary_id=${subsidiaryId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setDrivers(data)
+        setFormData(prev => ({ ...prev, assignedTo: '' }))
+      } else {
+        console.error('Failed to fetch drivers')
+      }
+    } catch (error) {
+      console.error('Error fetching drivers:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
+    
+    // Handle cascade updates
+    if (field === 'cluster') {
+      fetchSubsidiaries(value as string)
+    } else if (field === 'subsidiary') {
+      fetchDrivers(value as string)
+    } else if (field === 'make') {
+      fetchVehicleModels(value as string)
+    }
     
     // Clear error when user starts typing
     if (errors[field]) {
@@ -70,6 +284,15 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
     if (!formData.model.trim()) {
       newErrors.model = 'Model is required'
     }
+    if (!formData.cluster) {
+      newErrors.cluster = 'Cluster is required'
+    }
+    if (!formData.subsidiary) {
+      newErrors.subsidiary = 'Subsidiary is required'
+    }
+    if (!formData.assignedTo) {
+      newErrors.assignedTo = 'Driver assignment is required'
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -94,8 +317,14 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
         purchaseDate: '',
         nextServiceKm: '',
         additionalNotes: '',
-        insuranceDocument: null
+        insuranceDocument: null,
+        cluster: '',
+        subsidiary: '',
+        assignedTo: ''
       })
+      setSubsidiaries([])
+      setDrivers([])
+      setVehicleModels([])
       onClose()
     }
   }
@@ -177,12 +406,11 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   }`}
                 >
                   <option value="">-- Select Vehicle Type --</option>
-                  <option value="sedan">Sedan</option>
-                  <option value="suv">SUV</option>
-                  <option value="truck">Truck</option>
-                  <option value="van">Van</option>
-                  <option value="bus">Bus</option>
-                  <option value="motorcycle">Motorcycle</option>
+                  {vehicleTypes.map(type => (
+                    <option key={type.id} value={type.id}>
+                      {type.type}
+                    </option>
+                  ))}
                 </select>
                 {errors.vehicleType && (
                   <p className="text-red-500 text-xs mt-1">{errors.vehicleType}</p>
@@ -290,19 +518,24 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                 }`}>
                   Make <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.make}
                   onChange={(e) => handleInputChange('make', e.target.value)}
-                  placeholder="e.g., Toyota, Ford"
                   className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.make
                       ? 'border-red-500'
                       : themeMode === 'dark'
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
                   }`}
-                />
+                >
+                  <option value="">-- Select Make --</option>
+                  {vehicleMakes.map(make => (
+                    <option key={make.id} value={make.id}>
+                      {make.name}
+                    </option>
+                  ))}
+                </select>
                 {errors.make && (
                   <p className="text-red-500 text-xs mt-1">{errors.make}</p>
                 )}
@@ -315,21 +548,30 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                 }`}>
                   Model <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.model}
                   onChange={(e) => handleInputChange('model', e.target.value)}
-                  placeholder="e.g., Camry, F-150"
+                  disabled={!formData.make || loading}
                   className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.model
                       ? 'border-red-500'
                       : themeMode === 'dark'
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
-                />
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${!formData.make ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Model --</option>
+                  {vehicleModels.map(model => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
                 {errors.model && (
                   <p className="text-red-500 text-xs mt-1">{errors.model}</p>
+                )}
+                {loading && (
+                  <p className="text-blue-500 text-xs mt-1">Loading models...</p>
                 )}
               </div>
 
@@ -428,13 +670,111 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.additionalNotes}
                   onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
                   placeholder="Any additional information about the vehicle"
-                  rows={6}
+                  rows={4}
                   className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   }`}
                 />
+              </div>
+
+              {/* Cluster */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Cluster <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.cluster}
+                  onChange={(e) => handleInputChange('cluster', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.cluster
+                      ? 'border-red-500'
+                      : themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">-- Select Cluster --</option>
+                  {clusters.map(cluster => (
+                    <option key={cluster.id} value={cluster.id}>
+                      {cluster.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.cluster && (
+                  <p className="text-red-500 text-xs mt-1">{errors.cluster}</p>
+                )}
+              </div>
+
+              {/* Subsidiary */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Subsidiary <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.subsidiary}
+                  onChange={(e) => handleInputChange('subsidiary', e.target.value)}
+                  disabled={!formData.cluster || loading}
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.subsidiary
+                      ? 'border-red-500'
+                      : themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${!formData.cluster ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Subsidiary --</option>
+                  {subsidiaries.map(subsidiary => (
+                    <option key={subsidiary.id} value={subsidiary.id}>
+                      {subsidiary.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.subsidiary && (
+                  <p className="text-red-500 text-xs mt-1">{errors.subsidiary}</p>
+                )}
+                {loading && (
+                  <p className="text-blue-500 text-xs mt-1">Loading subsidiaries...</p>
+                )}
+              </div>
+
+              {/* Assigned To (Driver) */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Assigned To <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.assignedTo}
+                  onChange={(e) => handleInputChange('assignedTo', e.target.value)}
+                  disabled={!formData.subsidiary || loading}
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.assignedTo
+                      ? 'border-red-500'
+                      : themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${!formData.subsidiary ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Driver --</option>
+                  {drivers.map(driver => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.name} ({driver.phone})
+                    </option>
+                  ))}
+                </select>
+                {errors.assignedTo && (
+                  <p className="text-red-500 text-xs mt-1">{errors.assignedTo}</p>
+                )}
+                {loading && (
+                  <p className="text-blue-500 text-xs mt-1">Loading drivers...</p>
+                )}
               </div>
             </div>
           </div>

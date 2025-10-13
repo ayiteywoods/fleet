@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Car, Calendar, MapPin, Wrench, FileText, Printer, Download, Edit, Plus, Settings } from 'lucide-react'
+import { X, Car, Calendar, MapPin, Wrench, FileText, Printer, Download, Edit, Plus, Settings, Building2 } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface Vehicle {
@@ -20,12 +20,21 @@ interface Vehicle {
   next_service_km?: number
   type_id?: number
   make_id?: number
+  vehicle_type_name?: string
+  vehicle_make_name?: string
   notes?: string
   created_at?: string
   updated_at?: string
   created_by?: number
   updated_by?: number
   spcode?: number
+  subsidiary_name?: string
+  assigned_driver?: {
+    id: string
+    name: string
+    phone: string
+    license_number: string
+  }
   [key: string]: any
 }
 
@@ -81,6 +90,11 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
               <div class="field"><span class="field-label">Next Service:</span><span class="field-value">${vehicle?.next_service_km ? vehicle.next_service_km.toLocaleString() + ' km' : 'N/A'}</span></div>
             </div>
             <div class="section">
+              <h2>Assignment Information</h2>
+              <div class="field"><span class="field-label">Subsidiary:</span><span class="field-value">${vehicle?.subsidiary_name || 'Not assigned'}</span></div>
+              <div class="field"><span class="field-label">Assigned Driver:</span><span class="field-value">${vehicle?.assigned_driver ? vehicle.assigned_driver.name + ' (' + vehicle.assigned_driver.license_number + ')' : 'Not assigned'}</span></div>
+            </div>
+            <div class="section">
               <h2>System Information</h2>
               <div class="field"><span class="field-label">Created:</span><span class="field-value">${vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'N/A'}</span></div>
               <div class="field"><span class="field-label">Last Updated:</span><span class="field-value">${vehicle?.updated_at ? new Date(vehicle.updated_at).toLocaleDateString() : 'N/A'}</span></div>
@@ -114,6 +128,10 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
       - Current Mileage: ${vehicle?.current_mileage ? vehicle.current_mileage.toLocaleString() + ' km' : 'N/A'}
       - Last Service: ${vehicle?.last_service_date ? new Date(vehicle.last_service_date).toLocaleDateString() : 'N/A'}
       - Next Service: ${vehicle?.next_service_km ? vehicle.next_service_km.toLocaleString() + ' km' : 'N/A'}
+      
+      Assignment Information:
+      - Subsidiary: ${vehicle?.subsidiary_name || 'Not assigned'}
+      - Assigned Driver: ${vehicle?.assigned_driver ? vehicle.assigned_driver.name + ' (' + vehicle.assigned_driver.license_number + ')' : 'Not assigned'}
       
       System Information:
       - Created: ${vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'N/A'}
@@ -370,6 +388,18 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
                   <span className="text-gray-600 dark:text-gray-400">Last Updated:</span>
                   <span className="text-gray-900 dark:text-white">
                     {vehicle.updated_at ? new Date(vehicle.updated_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Subsidiary:</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {vehicle.subsidiary_name || 'Not assigned'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Assigned Driver:</span>
+                  <span className="text-gray-900 dark:text-white">
+                    {vehicle.assigned_driver ? `${vehicle.assigned_driver.name} (${vehicle.assigned_driver.license_number})` : 'Not assigned'}
                   </span>
                 </div>
                 <div className="flex justify-between">

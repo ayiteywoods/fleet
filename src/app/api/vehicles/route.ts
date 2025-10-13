@@ -1,23 +1,117 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const simple = searchParams.get('simple');
+    
+    if (simple === 'true') {
+      // Simple list for dropdowns
+      const vehicles = await prisma.vehicles.findMany({
+        select: {
+          id: true,
+          reg_number: true,
+          trim: true,
+          year: true,
+          status: true,
+          color: true
+        },
+        orderBy: {
+          reg_number: 'asc'
+        }
+      });
+      
+      const serializedVehicles = vehicles.map(vehicle => ({
+        id: vehicle.id.toString(),
+        reg_number: vehicle.reg_number,
+        trim: vehicle.trim,
+        year: vehicle.year,
+        status: vehicle.status,
+        color: vehicle.color,
+        name: `${vehicle.reg_number} - ${vehicle.trim} (${vehicle.year})`
+      }));
+      
+      return NextResponse.json(serializedVehicles);
+    }
+    
+    // Full list with relations
     const vehicles = await prisma.vehicles.findMany({
+      include: {
+        subsidiary: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        driver_operators: {
+          where: {
+            vehicle_id: {
+              not: null
+            }
+          },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            license_number: true
+          }
+        },
+        vehicle_types: {
+          select: {
+            id: true,
+            type: true
+          }
+        },
+        vehicle_makes: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
       orderBy: {
         created_at: 'desc'
       }
     });
     
-    // Convert BigInt values to strings for JSON serialization
+    // Convert BigInt values to strings for JSON serialization and add subsidiary name
     const serializedVehicles = vehicles.map(vehicle => ({
-      ...vehicle,
       id: vehicle.id.toString(),
+      reg_number: vehicle.reg_number,
+      vin_number: vehicle.vin_number,
+      trim: vehicle.trim,
+      year: vehicle.year,
+      status: vehicle.status,
+      color: vehicle.color,
+      engine_number: vehicle.engine_number,
+      chassis_number: vehicle.chassis_number,
+      current_region: vehicle.current_region,
+      current_district: vehicle.current_district,
+      current_mileage: vehicle.current_mileage,
+      last_service_date: vehicle.last_service_date,
+      next_service_km: vehicle.next_service_km,
       type_id: vehicle.type_id?.toString() || null,
       make_id: vehicle.make_id?.toString() || null,
+      notes: vehicle.notes,
+      created_at: vehicle.created_at,
+      updated_at: vehicle.updated_at,
       created_by: vehicle.created_by?.toString() || null,
       updated_by: vehicle.updated_by?.toString() || null,
-      spcode: vehicle.spcode?.toString() || null
+      spcode: vehicle.spcode?.toString() || null,
+      subsidiary_name: vehicle.subsidiary?.name || null,
+      vehicle_type_name: vehicle.vehicle_types?.type || null,
+      vehicle_make_name: vehicle.vehicle_makes?.name || null,
+      assigned_driver: vehicle.driver_operators.length > 0 ? {
+        id: vehicle.driver_operators[0].id.toString(),
+        name: vehicle.driver_operators[0].name,
+        phone: vehicle.driver_operators[0].phone,
+        license_number: vehicle.driver_operators[0].license_number
+      } : null,
+      subsidiary: vehicle.subsidiary ? {
+        id: vehicle.subsidiary.id.toString(),
+        name: vehicle.subsidiary.name
+      } : null
     }));
     
     return NextResponse.json(serializedVehicles);
@@ -46,8 +140,8 @@ export async function POST(request: Request) {
       current_mileage: parseFloat(body.currentMileage) || 0,
       last_service_date: body.purchaseDate ? new Date(body.purchaseDate) : null,
       next_service_km: parseInt(body.nextServiceKm) || 0,
-      type_id: 1, // Default type ID
-      make_id: 1, // Default make ID
+      type_id: body.vehicleType ? BigInt(body.vehicleType) : null,
+      make_id: body.make ? BigInt(body.make) : null,
       notes: body.additionalNotes,
       created_at: new Date(),
       updated_at: new Date(),
@@ -55,7 +149,7 @@ export async function POST(request: Request) {
       updated_by: 1, // Default user ID (integer)
       deleted_at: null,
       deleted_by: null,
-      spcode: 1 // Default SP code (integer)
+      spcode: body.subsidiary ? parseInt(body.subsidiary) : 1 // Use selected subsidiary as spcode
     };
 
     const newVehicle = await prisma.vehicles.create({

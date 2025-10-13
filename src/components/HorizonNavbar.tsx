@@ -21,14 +21,57 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: NavbarProps) => {
-  const { isDarkMode, toggleThemeMode } = useTheme();
+  const { themeMode, toggleThemeMode } = useTheme();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const getPageDescription = (pageTitle: string) => {
+    const descriptions: { [key: string]: string } = {
+      'Dashboard': 'Real-time insights into your fleet operations',
+      'Vehicles': 'Manage and track your vehicle fleet',
+      'Drivers': 'Driver management and performance tracking',
+      'Fuel Management': 'Monitor fuel consumption and expenses',
+      'Maintenance': 'Schedule and track vehicle maintenance',
+      'Repairs': 'Manage vehicle repairs and service records',
+      'Insurance': 'Insurance policies and coverage management',
+      'Roadworthy': 'Vehicle roadworthiness certificates',
+      'Users': 'User accounts and permissions management',
+      'Settings': 'System configuration and preferences'
+    };
+    return descriptions[pageTitle] || 'Manage your fleet operations';
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     router.push('/login');
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    try {
+      // Search for vehicle or driver
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.type === 'vehicle') {
+          router.push(`/vehicle-profile/${data.id}`);
+        } else if (data.type === 'driver') {
+          router.push(`/driver-profile/${data.id}`);
+        } else {
+          // Show not found message
+          alert('No vehicle or driver found with that ID or registration number');
+        }
+      } else {
+        alert('No vehicle or driver found with that ID or registration number');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      alert('Error searching. Please try again.');
+    }
   };
 
   // Close dropdown when clicking outside
@@ -51,39 +94,22 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
       right: '0'
     }}>
       <div className="ml-6">
-        <div className="h-6 w-[224px] pt-1">
-          <a
-            className="text-sm font-normal text-navy-700 hover:underline dark:text-white dark:hover:text-white"
-            href="#"
-          >
-            Pages
-            <span className="mx-1 text-sm text-navy-700 hover:text-navy-700 dark:text-white">
-              {" "}
-              /{" "}
-            </span>
-          </a>
-          <span className="text-sm font-normal capitalize text-navy-700 hover:underline dark:text-white dark:hover:text-white">
-            {brandText}
-          </span>
-        </div>
-        <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
-          <span className="font-bold capitalize hover:text-navy-700 dark:hover:text-white">
-            {brandText}
-          </span>
-        </p>
+        {/* Header text removed - now only on pages */}
       </div>
 
-      <div className="relative mt-[3px] flex h-[61px] w-[355px] flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none md:w-[365px] md:flex-grow-0 md:gap-1 xl:w-[365px] xl:gap-2">
-        <div className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[225px]">
+      <div className="relative mt-[3px] flex h-[61px] w-[550px] flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none md:w-[570px] md:flex-grow-0 md:gap-1 xl:w-[570px] xl:gap-2">
+        <form onSubmit={handleSearch} className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[400px]">
           <p className="pl-3 pr-2 text-xl">
             <FiSearch className="h-4 w-4 text-gray-400 dark:text-white" />
           </p>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Vehicle or Driver (ID, Reg No, License No)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit"
           />
-        </div>
+        </form>
         <span
           className="flex cursor-pointer text-xl text-gray-600 dark:text-white xl:hidden"
           onClick={onOpenSidenav}
@@ -110,7 +136,7 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
           className="cursor-pointer text-gray-600"
           onClick={toggleThemeMode}
         >
-          {isDarkMode ? (
+          {themeMode === 'dark' ? (
             <RiSunFill className="h-4 w-4 text-gray-600 dark:text-white" />
           ) : (
             <RiMoonFill className="h-4 w-4 text-gray-600 dark:text-white" />

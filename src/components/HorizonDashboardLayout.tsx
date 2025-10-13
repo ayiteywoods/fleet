@@ -67,7 +67,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     const routeMap: { [key: string]: string } = {
       '/': 'Dashboard',
       '/vehicles': 'Vehicles',
-      '/drivers': 'Drivers',
+      '/drivers': 'Driver Management',
       '/fuel': 'Fuel Management',
       '/maintenance': 'Maintenance',
       '/repairs': 'Repairs',
@@ -76,7 +76,14 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       '/users': 'Users',
     };
     
-    setCurrentRoute(routeMap[pathname] || 'Dashboard');
+    // Handle dynamic routes
+    if (pathname.startsWith('/vehicle-profile/')) {
+      setCurrentRoute('Vehicle Profile');
+    } else if (pathname.startsWith('/driver-profile/')) {
+      setCurrentRoute('Driver Profile');
+    } else {
+      setCurrentRoute(routeMap[pathname] || 'Dashboard');
+    }
   }, [pathname]);
 
   if (isLoading) {

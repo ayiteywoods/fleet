@@ -4,7 +4,14 @@ import { prisma } from '@/lib/prisma'
 // GET - Fetch all repair records
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const vehicleId = searchParams.get('vehicle_id')
+
+    // Build the query with optional vehicle filter
+    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+
     const repairRecords = await prisma.repair_history.findMany({
+      where: whereClause, // Apply the filter here
       include: {
         vehicles: {
           select: {

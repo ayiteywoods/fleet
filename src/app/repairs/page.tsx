@@ -616,8 +616,16 @@ export default function RepairsPage() {
         minWidth: '0',
         flexShrink: 1
       }}>
+        {/* Header */}
+        <div className="flex items-center mb-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">Repair Management</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Manage vehicle repairs and service records</p>
+          </div>
+          <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+        </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
@@ -632,7 +640,7 @@ export default function RepairsPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className={`text-sm font-medium ${
-                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
                     }`}>
                       {card.title}
                     </h3>
@@ -1000,17 +1008,17 @@ export default function RepairsPage() {
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-3 py-1 text-sm border rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Previous
               </button>
-              <span className="px-3 py-1 text-sm">
-                Page {currentPage} of {totalPages}
+              <span className="px-3 py-1 text-sm bg-blue-600 text-white rounded-full">
+                {currentPage}
               </span>
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border rounded-3xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-3 py-1 text-sm border rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Next
               </button>

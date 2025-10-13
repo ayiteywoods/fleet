@@ -28,6 +28,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import Notification from '@/components/Notification'
 import AddInsuranceModal from '@/components/AddInsuranceModal'
+import EditInsuranceModal from '@/components/EditInsuranceModal'
 import ViewInsuranceModal from '@/components/ViewInsuranceModal'
 
 export default function InsurancePage() {
@@ -39,6 +40,7 @@ export default function InsurancePage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [showFieldSelector, setShowFieldSelector] = useState(false)
   const [showAddInsuranceModal, setShowAddInsuranceModal] = useState(false)
+  const [showEditInsuranceModal, setShowEditInsuranceModal] = useState(false)
   const [showViewInsuranceModal, setShowViewInsuranceModal] = useState(false)
   const [selectedInsurance, setSelectedInsurance] = useState(null)
   const [insuranceRecords, setInsuranceRecords] = useState([])
@@ -62,30 +64,30 @@ export default function InsurancePage() {
     { key: 'premium_amount', label: 'Premium Amount', type: 'currency' },
     { key: 'coverage_type', label: 'Coverage Type', type: 'text' },
     { key: 'notes', label: 'Notes', type: 'text' },
-    { key: 'vehicle_id', label: 'Vehicle ID', type: 'number' },
+    { key: 'vehicle_id', label: 'Vehicle', type: 'text' },
     { key: 'created_at', label: 'Created At', type: 'date' },
     { key: 'updated_at', label: 'Updated At', type: 'date' }
   ]
 
   // Fetch insurance records from API
-  useEffect(() => {
-    const fetchInsuranceRecords = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/insurance')
-        if (response.ok) {
-          const data = await response.json()
-          setInsuranceRecords(data)
-        } else {
-          console.error('Failed to fetch insurance records')
-        }
-      } catch (error) {
-        console.error('Error fetching insurance records:', error)
-      } finally {
-        setLoading(false)
+  const fetchInsuranceRecords = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/insurance')
+      if (response.ok) {
+        const data = await response.json()
+        setInsuranceRecords(data)
+      } else {
+        console.error('Failed to fetch insurance records')
       }
+    } catch (error) {
+      console.error('Error fetching insurance records:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchInsuranceRecords()
   }, [])
 
@@ -142,12 +144,17 @@ export default function InsurancePage() {
     ).filter(Boolean)
   }
 
-  const formatFieldValue = (fieldKey: string, value: any, type: string) => {
+  const formatFieldValue = (fieldKey: string, value: any, type: string, record?: any) => {
     if (!value && value !== 0) return '-'
     
     // Handle case where value might be an object or array
     if (typeof value === 'object' && value !== null) {
       return '-'
+    }
+    
+    // Special handling for vehicle_id field - display vehicle name instead of ID
+    if (fieldKey === 'vehicle_id' && record?.vehicle_name) {
+      return record.vehicle_name
     }
     
     // Convert to string and clean up
@@ -228,7 +235,7 @@ export default function InsurancePage() {
       const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
-        row.push(formatFieldValue(field.key, value, field.type))
+        row.push(formatFieldValue(field.key, value, field.type, record))
       })
       return row
     })
@@ -265,7 +272,7 @@ export default function InsurancePage() {
       const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
-        row.push(formatFieldValue(field.key, value, field.type))
+        row.push(formatFieldValue(field.key, value, field.type, record))
       })
       return row
     })
@@ -300,7 +307,7 @@ export default function InsurancePage() {
       const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
-        row.push(formatFieldValue(field.key, value, field.type))
+        row.push(formatFieldValue(field.key, value, field.type, record))
       })
       return row
     })
@@ -343,7 +350,7 @@ export default function InsurancePage() {
       const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
-        row.push(formatFieldValue(field.key, value, field.type))
+        row.push(formatFieldValue(field.key, value, field.type, record))
       })
       return row
     })
@@ -423,16 +430,8 @@ export default function InsurancePage() {
         })
         
         // Refresh the insurance data after a short delay
-        setTimeout(async () => {
-          try {
-            const response = await fetch('/api/insurance')
-            if (response.ok) {
-              const data = await response.json()
-              setInsuranceRecords(data)
-            }
-          } catch (error) {
-            console.error('Error refreshing insurance:', error)
-          }
+        setTimeout(() => {
+          fetchInsuranceRecords()
         }, 2000) // 2 second delay to let user see the notification
       } else {
         setNotification({
@@ -458,9 +457,41 @@ export default function InsurancePage() {
     setShowViewInsuranceModal(true)
   }
 
+  const handleUpdateInsurance = async (insuranceData: any) => {
+    try {
+      const response = await fetch(`/api/insurance?id=${selectedInsurance?.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(insuranceData),
+      })
+
+      if (response.ok) {
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Insurance policy updated successfully!'
+        })
+        fetchInsuranceRecords()
+      } else {
+        throw new Error('Failed to update insurance policy')
+      }
+    } catch (error) {
+      console.error('Error updating insurance:', error)
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update insurance policy. Please try again.'
+      })
+    }
+  }
+
   const handleEditInsurance = (record: any) => {
     setSelectedInsurance(record)
-    console.log('Edit insurance:', record)
+    setShowEditInsuranceModal(true)
   }
 
   const handleDeleteInsurance = async (record: any) => {
@@ -479,16 +510,8 @@ export default function InsurancePage() {
           })
           
           // Refresh the insurance data
-          setTimeout(async () => {
-            try {
-              const response = await fetch('/api/insurance')
-              if (response.ok) {
-                const data = await response.json()
-                setInsuranceRecords(data)
-              }
-            } catch (error) {
-              console.error('Error refreshing insurance:', error)
-            }
+          setTimeout(() => {
+            fetchInsuranceRecords()
           }, 1000)
         } else {
           const result = await response.json()
@@ -564,8 +587,16 @@ export default function InsurancePage() {
         minWidth: '0',
         flexShrink: 1
       }}>
+        {/* Header */}
+        <div className="flex items-center mb-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">Insurance Management</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Insurance policies and coverage management</p>
+          </div>
+          <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+        </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             return (
@@ -580,7 +611,7 @@ export default function InsurancePage() {
                   </div>
                   <div className="ml-4">
                     <h3 className={`text-sm font-medium ${
-                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
                     }`}>
                       {card.title}
                     </h3>
@@ -856,7 +887,7 @@ export default function InsurancePage() {
                     </td>
                     {getSelectedFieldsData().map((field, fieldIndex) => (
                       <td key={fieldIndex} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {field ? formatFieldValue(field.key, record[field.key], field.type) : '-'}
+                        {field ? formatFieldValue(field.key, record[field.key], field.type, record) : '-'}
                       </td>
                     ))}
                   </tr>
@@ -875,17 +906,17 @@ export default function InsurancePage() {
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="px-3 py-1 text-sm">
-                  Page {currentPage} of {totalPages}
+                <span className="px-3 py-1 text-sm bg-blue-600 text-white rounded-full">
+                  {currentPage}
                 </span>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -901,6 +932,16 @@ export default function InsurancePage() {
         onClose={() => setShowAddInsuranceModal(false)}
         onAdd={handleAddInsurance}
       />
+
+      {/* Edit Insurance Modal */}
+      {showEditInsuranceModal && selectedInsurance && (
+        <EditInsuranceModal
+          isOpen={showEditInsuranceModal}
+          onClose={() => setShowEditInsuranceModal(false)}
+          onUpdate={handleUpdateInsurance}
+          insurance={selectedInsurance}
+        />
+      )}
 
       {/* View Insurance Modal */}
       {showViewInsuranceModal && selectedInsurance && (

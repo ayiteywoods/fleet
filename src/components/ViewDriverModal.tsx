@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, User, Phone, CreditCard, MapPin, Calendar, Car, Edit, Printer, Download } from 'lucide-react'
+import { X, User, Phone, CreditCard, MapPin, Calendar, Car, Edit, Printer, Download, Building2 } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface ViewDriverModalProps {
@@ -98,6 +98,12 @@ export default function ViewDriverModal({ isOpen, onClose, driver, onEdit }: Vie
                   <span class="value">${driver.vehicle_id || 'Not assigned'}</span>
                 </div>
               </div>
+              <div class="row">
+                <div class="col">
+                  <span class="label">Subsidiary ID:</span>
+                  <span class="value">${driver.spcode || 'Not assigned'}</span>
+                </div>
+              </div>
             </div>
           </body>
         </html>
@@ -131,6 +137,7 @@ District: ${driver.district}
 Status & Assignment:
 Status: ${driver.status}
 Vehicle ID: ${driver.vehicle_id || 'Not assigned'}
+Subsidiary ID: ${driver.spcode || 'Not assigned'}
     `
     
     const blob = new Blob([content], { type: 'text/plain' })
@@ -279,6 +286,13 @@ Vehicle ID: ${driver.vehicle_id || 'Not assigned'}
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle ID</p>
                   <p className="font-medium">{driver.vehicle_id || 'Not assigned'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Subsidiary ID</p>
+                  <p className="font-medium">{driver.spcode || 'Not assigned'}</p>
                 </div>
               </div>
             </div>

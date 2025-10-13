@@ -1,20 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Helper function to serialize BigInt and Date objects
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'bigint') return obj.toString()
+  if (obj instanceof Date) return obj.toISOString()
+  if (Array.isArray(obj)) return obj.map(serializeBigInt)
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  return obj
+}
+
 // GET /api/drivers/[id] - Get a specific driver
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const driver = await prisma.driver.findUnique({
-      where: { id: params.id },
+    const { id } = await params
+    const driver = await prisma.driver_operators.findUnique({
+      where: { id: BigInt(id) },
       include: {
-        reservations: {
-          include: {
-            vehicle: true
-          }
-        }
+        vehicles: true
       }
     })
 
@@ -25,7 +38,21 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(driver)
+    // Fetch subsidiary if spcode exists
+    let subsidiary = null
+    if (driver.spcode) {
+      subsidiary = await prisma.subsidiary.findUnique({
+        where: { id: BigInt(driver.spcode) }
+      })
+    }
+
+    // Add subsidiary to driver object
+    const driverWithSubsidiary = {
+      ...driver,
+      subsidiary
+    }
+
+    return NextResponse.json(serializeBigInt(driverWithSubsidiary))
   } catch (error) {
     console.error('Error fetching driver:', error)
     return NextResponse.json(
@@ -38,26 +65,45 @@ export async function GET(
 // PUT /api/drivers/[id] - Update a specific driver
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const { firstName, lastName, email, phone, licenseNumber, licenseExpiry, status } = body
+    const { 
+      name, 
+      phone, 
+      license_number, 
+      license_category, 
+      license_expire, 
+      region, 
+      district, 
+      status, 
+      subsidiary_id 
+    } = body
 
-    const driver = await prisma.driver.update({
-      where: { id: params.id },
-      data: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        licenseNumber,
-        licenseExpiry: licenseExpiry ? new Date(licenseExpiry) : null,
-        status
-      }
+    const updateData: any = {
+      name,
+      phone,
+      license_number,
+      license_category,
+      license_expire,
+      region,
+      district,
+      status
+    }
+
+    // Add spcode if subsidiary_id is provided
+    if (subsidiary_id) {
+      updateData.spcode = parseInt(subsidiary_id)
+    }
+
+    const driver = await prisma.driver_operators.update({
+      where: { id: BigInt(id) },
+      data: updateData
     })
 
-    return NextResponse.json(driver)
+    return NextResponse.json(serializeBigInt(driver))
   } catch (error) {
     console.error('Error updating driver:', error)
     return NextResponse.json(
@@ -70,11 +116,12 @@ export async function PUT(
 // DELETE /api/drivers/[id] - Delete a specific driver
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await prisma.driver.delete({
-      where: { id: params.id }
+    const { id } = await params
+    await prisma.driver_operators.delete({
+      where: { id: BigInt(id) }
     })
 
     return NextResponse.json({ message: 'Driver deleted successfully' })

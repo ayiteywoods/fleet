@@ -1,300 +1,542 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Wrench, Calendar, Banknote, FileText, User, Building, Printer, Download } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, FileSpreadsheet, FileText, FileImage, Printer } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
+import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import 'jspdf-autotable'
 
 interface ViewMaintenanceModalProps {
   isOpen: boolean
   onClose: () => void
-  maintenance: any
-  onEdit?: (maintenance: any) => void
+  maintenanceRecord: any
 }
 
-export default function ViewMaintenanceModal({ isOpen, onClose, maintenance, onEdit }: ViewMaintenanceModalProps) {
+export default function ViewMaintenanceModal({ isOpen, onClose, maintenanceRecord }: ViewMaintenanceModalProps) {
   const { themeMode } = useTheme()
-  const [isPrinting, setIsPrinting] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
 
-  if (!isOpen || !maintenance) return null
+  if (!isOpen || !maintenanceRecord) return null
 
-  const handlePrint = () => {
-    setIsPrinting(true)
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Maintenance Record - ${maintenance.id}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-              .section { margin-bottom: 20px; }
-              .field { margin-bottom: 10px; }
-              .label { font-weight: bold; color: #374151; }
-              .value { color: #6b7280; }
-              .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-              .completed { background-color: #d1fae5; color: #065f46; }
-              .pending { background-color: #fef3c7; color: #92400e; }
-              .in_progress { background-color: #dbeafe; color: #1e40af; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Maintenance Record #${maintenance.id}</h1>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            </div>
-            
-            <div class="section">
-              <h2>Service Details</h2>
-              <div class="field"><span class="label">Service Date:</span> <span class="value">${new Date(maintenance.service_date).toLocaleDateString()}</span></div>
-              <div class="field"><span class="label">Service Type:</span> <span class="value">${maintenance.service_type || 'N/A'}</span></div>
-              <div class="field"><span class="label">Cost:</span> <span class="value">₵${Number(maintenance.cost).toLocaleString()}</span></div>
-              <div class="field"><span class="label">Status:</span> <span class="value status ${maintenance.status?.toLowerCase().replace(' ', '_')}">${maintenance.status || 'N/A'}</span></div>
-              <div class="field"><span class="label">Mileage at Service:</span> <span class="value">${maintenance.mileage_at_service || 0} km</span></div>
-            </div>
+  const handleExportExcel = () => {
+    if (!maintenanceRecord) return
 
-            <div class="section">
-              <h2>Service Information</h2>
-              <div class="field"><span class="label">Service Details:</span> <span class="value">${maintenance.service_details || 'N/A'}</span></div>
-              <div class="field"><span class="label">Parts Replaced:</span> <span class="value">${maintenance.parts_replaced || 'N/A'}</span></div>
-            </div>
+    const data = [
+      ['Field', 'Value'],
+      ['Service Date', maintenanceRecord.service_date ? new Date(maintenanceRecord.service_date).toLocaleDateString() : 'N/A'],
+      ['Service Type', maintenanceRecord.service_type || 'N/A'],
+      ['Status', maintenanceRecord.status || 'N/A'],
+      ['Cost', `₵${maintenanceRecord.cost || 'N/A'}`],
+      ['Registration Number', maintenanceRecord.vehicle_name?.split(' - ')[0] || 'N/A'],
+      ['Vehicle Model', maintenanceRecord.vehicle_name?.split(' - ')[1]?.split(' (')[0] || 'N/A'],
+      ['Year', maintenanceRecord.vehicle_name?.split('(')[1]?.split(')')[0] || 'N/A'],
+      ['Mileage at Service', maintenanceRecord.mileage_at_service ? `${maintenanceRecord.mileage_at_service} km` : 'N/A'],
+      ['Mechanic Name', maintenanceRecord.mechanic_name || 'N/A'],
+      ['Workshop', maintenanceRecord.workshop_name || 'N/A'],
+      ['Service Details', maintenanceRecord.service_details || 'No details provided'],
+      ['Parts Replaced', maintenanceRecord.parts_replaced || 'No parts replaced'],
+      ['Created At', maintenanceRecord.created_at ? new Date(maintenanceRecord.created_at).toLocaleString() : 'N/A'],
+      ['Last Updated', maintenanceRecord.updated_at ? new Date(maintenanceRecord.updated_at).toLocaleString() : 'N/A']
+    ]
 
-            <div class="section">
-              <h2>Vehicle Information</h2>
-              <div class="field"><span class="label">Vehicle ID:</span> <span class="value">${maintenance.vehicle_id}</span></div>
-              <div class="field"><span class="label">Registration:</span> <span class="value">${maintenance.vehicles?.reg_number || 'N/A'}</span></div>
-              <div class="field"><span class="label">Model:</span> <span class="value">${maintenance.vehicles?.trim || 'N/A'}</span></div>
-              <div class="field"><span class="label">Year:</span> <span class="value">${maintenance.vehicles?.year || 'N/A'}</span></div>
-            </div>
-
-            <div class="section">
-              <h2>Service Personnel</h2>
-              <div class="field"><span class="label">Mechanic ID:</span> <span class="value">${maintenance.mechanic_id || 'N/A'}</span></div>
-              <div class="field"><span class="label">Workshop ID:</span> <span class="value">${maintenance.workshop_id || 'N/A'}</span></div>
-            </div>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
-      printWindow.close()
-    }
-    setIsPrinting(false)
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Maintenance Details')
+    
+    const fileName = `maintenance-${maintenanceRecord.id || 'record'}-${new Date().toISOString().split('T')[0]}.xlsx`
+    XLSX.writeFile(wb, fileName)
   }
 
-  const handleDownloadPDF = async () => {
-    setIsDownloading(true)
-    try {
-      const doc = new jsPDF()
-      
-      // Header
-      doc.setFontSize(20)
-      doc.setTextColor(102, 126, 234)
-      doc.text('Maintenance Record', 14, 22)
-      
-      doc.setFontSize(12)
-      doc.setTextColor(100, 100, 100)
-      doc.text(`Record ID: ${maintenance.id}`, 14, 32)
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 37)
-      
-      // Service Details
-      const serviceData = [
-        ['Service Date', new Date(maintenance.service_date).toLocaleDateString()],
-        ['Service Type', maintenance.service_type || 'N/A'],
-        ['Cost', `₵${Number(maintenance.cost).toLocaleString()}`],
-        ['Status', maintenance.status || 'N/A'],
-        ['Mileage at Service', `${maintenance.mileage_at_service || 0} km`],
-        ['Service Details', maintenance.service_details || 'N/A'],
-        ['Parts Replaced', maintenance.parts_replaced || 'N/A'],
-        ['Vehicle ID', maintenance.vehicle_id],
-        ['Registration', maintenance.vehicles?.reg_number || 'N/A'],
-        ['Model', maintenance.vehicles?.trim || 'N/A'],
-        ['Year', maintenance.vehicles?.year || 'N/A'],
-        ['Mechanic ID', maintenance.mechanic_id || 'N/A'],
-        ['Workshop ID', maintenance.workshop_id || 'N/A']
-      ]
-      
-      autoTable(doc, {
-        startY: 45,
-        head: [['Field', 'Value']],
-        body: serviceData,
-        theme: 'grid',
-        headStyles: { fillColor: [102, 126, 234] },
-        styles: { fontSize: 10 }
+  const handleExportCSV = () => {
+    if (!maintenanceRecord) return
+
+    const data = [
+      ['Field', 'Value'],
+      ['Service Date', maintenanceRecord.service_date ? new Date(maintenanceRecord.service_date).toLocaleDateString() : 'N/A'],
+      ['Service Type', maintenanceRecord.service_type || 'N/A'],
+      ['Status', maintenanceRecord.status || 'N/A'],
+      ['Cost', `₵${maintenanceRecord.cost || 'N/A'}`],
+      ['Registration Number', maintenanceRecord.vehicle_name?.split(' - ')[0] || 'N/A'],
+      ['Vehicle Model', maintenanceRecord.vehicle_name?.split(' - ')[1]?.split(' (')[0] || 'N/A'],
+      ['Year', maintenanceRecord.vehicle_name?.split('(')[1]?.split(')')[0] || 'N/A'],
+      ['Mileage at Service', maintenanceRecord.mileage_at_service ? `${maintenanceRecord.mileage_at_service} km` : 'N/A'],
+      ['Mechanic Name', maintenanceRecord.mechanic_name || 'N/A'],
+      ['Workshop', maintenanceRecord.workshop_name || 'N/A'],
+      ['Service Details', maintenanceRecord.service_details || 'No details provided'],
+      ['Parts Replaced', maintenanceRecord.parts_replaced || 'No parts replaced'],
+      ['Created At', maintenanceRecord.created_at ? new Date(maintenanceRecord.created_at).toLocaleString() : 'N/A'],
+      ['Last Updated', maintenanceRecord.updated_at ? new Date(maintenanceRecord.updated_at).toLocaleString() : 'N/A']
+    ]
+
+    const csvContent = data.map(row => row.map(field => `"${field}"`).join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `maintenance-${maintenanceRecord.id || 'record'}-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleExportPDF = () => {
+    if (!maintenanceRecord) return
+
+    const doc = new jsPDF()
+    
+    // Add title
+    doc.setFontSize(18)
+    doc.text('Maintenance Record Details', 20, 20)
+    
+    // Add basic information
+    doc.setFontSize(12)
+    doc.text('Basic Information:', 20, 40)
+    doc.setFontSize(10)
+    
+    let yPosition = 50
+    const lineHeight = 7
+    
+    const basicInfo = [
+      `Service Date: ${maintenanceRecord.service_date ? new Date(maintenanceRecord.service_date).toLocaleDateString() : 'N/A'}`,
+      `Service Type: ${maintenanceRecord.service_type || 'N/A'}`,
+      `Status: ${maintenanceRecord.status || 'N/A'}`,
+      `Cost: ₵${maintenanceRecord.cost || 'N/A'}`
+    ]
+    
+    basicInfo.forEach(info => {
+      doc.text(info, 20, yPosition)
+      yPosition += lineHeight
+    })
+    
+    // Add vehicle information
+    yPosition += 5
+    doc.setFontSize(12)
+    doc.text('Vehicle Information:', 20, yPosition)
+    doc.setFontSize(10)
+    yPosition += lineHeight
+    
+    const vehicleInfo = [
+      `Registration Number: ${maintenanceRecord.vehicle_name?.split(' - ')[0] || 'N/A'}`,
+      `Vehicle Model: ${maintenanceRecord.vehicle_name?.split(' - ')[1]?.split(' (')[0] || 'N/A'}`,
+      `Year: ${maintenanceRecord.vehicle_name?.split('(')[1]?.split(')')[0] || 'N/A'}`,
+      `Mileage at Service: ${maintenanceRecord.mileage_at_service ? `${maintenanceRecord.mileage_at_service} km` : 'N/A'}`
+    ]
+    
+    vehicleInfo.forEach(info => {
+      doc.text(info, 20, yPosition)
+      yPosition += lineHeight
+    })
+    
+    // Add mechanic information
+    yPosition += 5
+    doc.setFontSize(12)
+    doc.text('Mechanic Information:', 20, yPosition)
+    doc.setFontSize(10)
+    yPosition += lineHeight
+    
+    const mechanicInfo = [
+      `Mechanic Name: ${maintenanceRecord.mechanic_name || 'N/A'}`,
+      `Workshop: ${maintenanceRecord.workshop_name || 'N/A'}`
+    ]
+    
+    mechanicInfo.forEach(info => {
+      doc.text(info, 20, yPosition)
+      yPosition += lineHeight
+    })
+    
+    // Add service details
+    yPosition += 5
+    doc.setFontSize(12)
+    doc.text('Service Details:', 20, yPosition)
+    doc.setFontSize(10)
+    yPosition += lineHeight
+    
+    const serviceDetails = [
+      `Service Description: ${maintenanceRecord.service_details || 'No details provided'}`,
+      `Parts Replaced: ${maintenanceRecord.parts_replaced || 'No parts replaced'}`
+    ]
+    
+    serviceDetails.forEach(info => {
+      // Split long text into multiple lines
+      const lines = doc.splitTextToSize(info, 170)
+      lines.forEach((line: string) => {
+        doc.text(line, 20, yPosition)
+        yPosition += lineHeight
       })
-      
-      doc.save(`maintenance-record-${maintenance.id}.pdf`)
-    } catch (error) {
-      console.error('Error generating PDF:', error)
-    }
-    setIsDownloading(false)
+    })
+    
+    // Add timestamps
+    yPosition += 5
+    doc.setFontSize(12)
+    doc.text('Record Information:', 20, yPosition)
+    doc.setFontSize(10)
+    yPosition += lineHeight
+    
+    const recordInfo = [
+      `Created At: ${maintenanceRecord.created_at ? new Date(maintenanceRecord.created_at).toLocaleString() : 'N/A'}`,
+      `Last Updated: ${maintenanceRecord.updated_at ? new Date(maintenanceRecord.updated_at).toLocaleString() : 'N/A'}`
+    ]
+    
+    recordInfo.forEach(info => {
+      doc.text(info, 20, yPosition)
+      yPosition += lineHeight
+    })
+    
+    const fileName = `maintenance-${maintenanceRecord.id || 'record'}-${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(fileName)
+  }
+
+  const handlePrint = () => {
+    if (!maintenanceRecord) return
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Maintenance Record - ${maintenanceRecord.id || 'Record'}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .section {
+              margin-bottom: 25px;
+              page-break-inside: avoid;
+            }
+            .section-title {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              color: #333;
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 5px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+            }
+            .info-item {
+              margin-bottom: 8px;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #666;
+            }
+            .info-value {
+              margin-left: 10px;
+            }
+            @media print {
+              body { margin: 0; }
+              .section { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Maintenance Record Details</h1>
+            <p>Generated on ${new Date().toLocaleDateString()}</p>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Basic Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Service Date:</span>
+                <span class="info-value">${maintenanceRecord.service_date ? new Date(maintenanceRecord.service_date).toLocaleDateString() : 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Service Type:</span>
+                <span class="info-value">${maintenanceRecord.service_type || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value">${maintenanceRecord.status || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Cost:</span>
+                <span class="info-value">₵${maintenanceRecord.cost || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Vehicle Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Registration Number:</span>
+                <span class="info-value">${maintenanceRecord.vehicle_name?.split(' - ')[0] || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Vehicle Model:</span>
+                <span class="info-value">${maintenanceRecord.vehicle_name?.split(' - ')[1]?.split(' (')[0] || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Year:</span>
+                <span class="info-value">${maintenanceRecord.vehicle_name?.split('(')[1]?.split(')')[0] || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Mileage at Service:</span>
+                <span class="info-value">${maintenanceRecord.mileage_at_service ? `${maintenanceRecord.mileage_at_service} km` : 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Mechanic Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Mechanic Name:</span>
+                <span class="info-value">${maintenanceRecord.mechanic_name || 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Workshop:</span>
+                <span class="info-value">${maintenanceRecord.workshop_name || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Service Details</div>
+            <div class="info-item">
+              <span class="info-label">Service Description:</span>
+              <div class="info-value" style="margin-top: 5px;">${maintenanceRecord.service_details || 'No details provided'}</div>
+            </div>
+            <div class="info-item" style="margin-top: 10px;">
+              <span class="info-label">Parts Replaced:</span>
+              <div class="info-value" style="margin-top: 5px;">${maintenanceRecord.parts_replaced || 'No parts replaced'}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Record Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Created At:</span>
+                <span class="info-value">${maintenanceRecord.created_at ? new Date(maintenanceRecord.created_at).toLocaleString() : 'N/A'}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Updated:</span>
+                <span class="info-value">${maintenanceRecord.updated_at ? new Date(maintenanceRecord.updated_at).toLocaleString() : 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    
+    // Wait for content to load then print
+    setTimeout(() => {
+      printWindow.print()
+    }, 500)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto relative z-10`}>
+    <div 
+      className="fixed inset-0 z-[10001] flex items-center justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backdropFilter: 'blur(2px)'
+      }}
+    >
+      <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <Wrench className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Maintenance Record #{maintenance.id}</h2>
-                <p className="text-blue-100">Service Date: {new Date(maintenance.service_date).toLocaleDateString()}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {onEdit && (
-                <button
-                  onClick={() => onEdit(maintenance)}
-                  className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-3xl text-sm font-medium transition-colors"
-                >
-                  Edit
-                </button>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-3xl transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Maintenance Details</h2>
+          
+          <div className="flex items-center gap-3">
+            {/* Export Buttons */}
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="text-sm font-medium">Excel</span>
+            </button>
+            
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="text-sm font-medium">CSV</span>
+            </button>
+            
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors"
+            >
+              <FileImage className="w-4 h-4" />
+              <span className="text-sm font-medium">PDF</span>
+            </button>
+            
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="text-sm font-medium">Print</span>
+            </button>
+            
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ml-2"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Service Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Wrench className="w-5 h-5" />
-                Service Details
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Service Type:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{maintenance.service_type || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Cost:</span>
-                  <span className="font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                    <Banknote className="w-4 h-4" />
-                    ₵{Number(maintenance.cost).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    maintenance.status?.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
-                    maintenance.status?.toLowerCase() === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    maintenance.status?.toLowerCase() === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {maintenance.status || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Mileage at Service:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{maintenance.mileage_at_service || 0} km</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Service Information
-              </h3>
+          {/* Basic Information Card */}
+          <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div>
-                  <span className="text-gray-600 dark:text-gray-400 block">Service Details:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{maintenance.service_details || 'N/A'}</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Service Date:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.service_date ? new Date(maintenanceRecord.service_date).toLocaleDateString() : 'N/A'}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-gray-600 dark:text-gray-400 block">Parts Replaced:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{maintenance.parts_replaced || 'N/A'}</span>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Service Type:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.service_type || 'N/A'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.status || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Cost:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    ₵{maintenanceRecord.cost || 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Vehicle Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Vehicle Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Vehicle ID:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.vehicle_id}</span>
+          {/* Vehicle Information Card */}
+          <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Vehicle Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Registration Number:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.vehicle_name?.split(' - ')[0] || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Vehicle Model:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.vehicle_name?.split(' - ')[1]?.split(' (')[0] || 'N/A'}
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Registration:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.vehicles?.reg_number || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Model:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.vehicles?.trim || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Year:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.vehicles?.year || 'N/A'}</span>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Year:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.vehicle_name?.split('(')[1]?.split(')')[0] || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Mileage at Service:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.mileage_at_service ? `${maintenanceRecord.mileage_at_service} km` : 'N/A'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Service Personnel */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Service Personnel
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Mechanic ID:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.mechanic_id || 'N/A'}</span>
+          {/* Mechanic Information Card */}
+          <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Mechanic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Name:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.mechanic_name || 'N/A'}
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Workshop ID:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{maintenance.workshop_id || 'N/A'}</span>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Workshop:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.workshop_name || 'N/A'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Created: {new Date(maintenance.created_at).toLocaleDateString()}
+          {/* Service Details Card */}
+          <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Service Details</h3>
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Service Description:</span>
+                <p className="text-sm text-gray-900 dark:text-white mt-1">
+                  {maintenanceRecord.service_details || 'No details provided'}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Parts Replaced:</span>
+                <p className="text-sm text-gray-900 dark:text-white mt-1">
+                  {maintenanceRecord.parts_replaced || 'No parts replaced'}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrint}
-              disabled={isPrinting}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-3xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-            >
-              <Printer className="w-4 h-4" />
-              {isPrinting ? 'Printing...' : 'Print'}
-            </button>
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isDownloading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              <Download className="w-4 h-4" />
-              {isDownloading ? 'Downloading...' : 'Download PDF'}
-            </button>
+
+          {/* Timestamps Card */}
+          <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Record Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Created At:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.created_at ? new Date(maintenanceRecord.created_at).toLocaleString() : 'N/A'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Updated:</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {maintenanceRecord.updated_at ? new Date(maintenanceRecord.updated_at).toLocaleString() : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

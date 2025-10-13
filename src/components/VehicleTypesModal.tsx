@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, Car, FileText as DescriptionIcon, Search } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import Notification from './Notification'
+import ViewVehicleTypeModal from './ViewVehicleTypeModal'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -14,8 +15,6 @@ interface VehicleType {
   description: string | null
   created_at: string | null
   updated_at: string | null
-  created_by: string | null
-  updated_by: string | null
 }
 
 interface VehicleTypesModalProps {
@@ -29,6 +28,8 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingType, setEditingType] = useState<VehicleType | null>(null)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [selectedType, setSelectedType] = useState<VehicleType | null>(null)
   const [formData, setFormData] = useState({
     type: '',
     description: ''
@@ -44,7 +45,7 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
   const [sortField, setSortField] = useState<keyof VehicleType>('type')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch vehicle types
@@ -58,16 +59,14 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
     try {
       setLoading(true)
       const response = await fetch('/api/vehicle-types')
+      if (response.ok) {
       const data = await response.json()
       setVehicleTypes(data)
+      } else {
+        console.error('Failed to fetch vehicle types')
+      }
     } catch (error) {
       console.error('Error fetching vehicle types:', error)
-      setNotification({
-        isOpen: true,
-        type: 'error',
-        title: 'Error!',
-        message: 'Failed to fetch vehicle types.'
-      })
     } finally {
       setLoading(false)
     }
@@ -101,7 +100,7 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: result.error || 'Failed to add vehicle type.'
+          message: result.error || 'Failed to add vehicle type'
         })
       }
     } catch (error) {
@@ -110,21 +109,24 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
         isOpen: true,
         type: 'error',
         title: 'Error!',
-        message: 'Network error. Please try again.'
+        message: 'Failed to add vehicle type'
       })
     }
   }
 
-  const handleUpdate = async () => {
+  const handleEditType = async () => {
     if (!editingType) return
 
     try {
-      const response = await fetch(`/api/vehicle-types?id=${editingType.id}`, {
+      const response = await fetch('/api/vehicle-types', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: editingType.id,
+          ...formData,
+        }),
       })
 
       const result = await response.json()
@@ -138,15 +140,15 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
         })
         
         setFormData({ type: '', description: '' })
-        setEditingType(null)
         setShowAddForm(false)
+        setEditingType(null)
         fetchVehicleTypes()
       } else {
         setNotification({
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: result.error || 'Failed to update vehicle type.'
+          message: result.error || 'Failed to update vehicle type'
         })
       }
     } catch (error) {
@@ -155,15 +157,16 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
         isOpen: true,
         type: 'error',
         title: 'Error!',
-        message: 'Network error. Please try again.'
+        message: 'Failed to update vehicle type'
       })
     }
   }
 
-  const handleDelete = async (type: VehicleType) => {
-    if (confirm(`Are you sure you want to delete "${type.type}"?`)) {
+  const handleDeleteType = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this vehicle type?')) return
+
       try {
-        const response = await fetch(`/api/vehicle-types?id=${type.id}`, {
+      const response = await fetch(`/api/vehicle-types?id=${id}`, {
           method: 'DELETE',
         })
 
@@ -174,16 +177,15 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
             isOpen: true,
             type: 'success',
             title: 'Vehicle Type Deleted!',
-            message: `"${type.type}" has been deleted successfully.`
+          message: 'Vehicle type has been deleted successfully.'
           })
-          
           fetchVehicleTypes()
         } else {
           setNotification({
             isOpen: true,
             type: 'error',
             title: 'Error!',
-            message: result.error || 'Failed to delete vehicle type.'
+          message: result.error || 'Failed to delete vehicle type'
           })
         }
       } catch (error) {
@@ -192,28 +194,23 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: 'Network error. Please try again.'
+        message: 'Failed to delete vehicle type'
         })
       }
     }
+
+  const handleView = (type: VehicleType) => {
+    setSelectedType(type)
+    setShowViewModal(true)
   }
 
   const handleEdit = (type: VehicleType) => {
     setEditingType(type)
     setFormData({
-      type: type.type,
+      type: type.type || '',
       description: type.description || ''
     })
     setShowAddForm(true)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingType) {
-      handleUpdate()
-    } else {
-      handleAddType()
-    }
   }
 
   const handleCancel = () => {
@@ -222,13 +219,59 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
     setShowAddForm(false)
   }
 
+  const handleSort = (field: keyof VehicleType) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  // Filter and sort vehicle types
+  const filteredTypes = vehicleTypes.filter(type =>
+    type.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (type.description && type.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
+  const filteredAndSortedTypes = [...filteredTypes].sort((a, b) => {
+    const aValue = a[sortField] || ''
+    const bValue = b[sortField] || ''
+    
+    if (sortDirection === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+    }
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedTypes.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentTypes = filteredAndSortedTypes.slice(startIndex, endIndex)
+
   // Export functions
   const handleExportExcel = () => {
     const data = filteredAndSortedTypes.map(type => ({
       'Type': type.type,
       'Description': type.description || 'N/A',
-      'Created At': type.created_at ? new Date(type.created_at).toLocaleDateString() : 'N/A',
-      'Updated At': type.updated_at ? new Date(type.updated_at).toLocaleDateString() : 'N/A'
+      'Created At': type.created_at ? (() => {
+        try {
+          const date = new Date(type.created_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A',
+      'Updated At': type.updated_at ? (() => {
+        try {
+          const date = new Date(type.updated_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A'
     }))
 
     const ws = XLSX.utils.json_to_sheet(data)
@@ -241,81 +284,94 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
     const data = filteredAndSortedTypes.map(type => ({
       'Type': type.type,
       'Description': type.description || 'N/A',
-      'Created At': type.created_at ? new Date(type.created_at).toLocaleDateString() : 'N/A',
-      'Updated At': type.updated_at ? new Date(type.updated_at).toLocaleDateString() : 'N/A'
+      'Created At': type.created_at ? (() => {
+        try {
+          const date = new Date(type.created_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A',
+      'Updated At': type.updated_at ? (() => {
+        try {
+          const date = new Date(type.updated_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A'
     }))
 
     const ws = XLSX.utils.json_to_sheet(data)
     const csv = XLSX.utils.sheet_to_csv(ws)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', 'vehicle-types.csv')
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'vehicle-types.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   const handleExportPDF = () => {
     const doc = new jsPDF()
     
-    // Add title
-    doc.setFontSize(16)
+    doc.setFontSize(20)
     doc.text('Vehicle Types Report', 14, 22)
     
-    // Add date
-    doc.setFontSize(10)
+    doc.setFontSize(12)
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30)
+    doc.text(`Total Records: ${filteredAndSortedTypes.length}`, 14, 38)
     
-    // Prepare table data
     const tableData = filteredAndSortedTypes.map(type => [
       type.type,
       type.description || 'N/A',
-      type.created_at ? new Date(type.created_at).toLocaleDateString() : 'N/A',
-      type.updated_at ? new Date(type.updated_at).toLocaleDateString() : 'N/A'
+      type.created_at ? (() => {
+        try {
+          const date = new Date(type.created_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A',
+      type.updated_at ? (() => {
+        try {
+          const date = new Date(type.updated_at)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+        } catch (error) {
+          return 'N/A'
+        }
+      })() : 'N/A'
     ])
     
     autoTable(doc, {
       head: [['Type', 'Description', 'Created At', 'Updated At']],
       body: tableData,
-      startY: 35,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] }
+      startY: 45,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [71, 85, 105] }
     })
     
     doc.save('vehicle-types.pdf')
   }
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      const tableData = filteredAndSortedTypes.map(type => `
-        <tr>
-          <td>${type.type}</td>
-          <td>${type.description || 'N/A'}</td>
-          <td>${type.created_at ? new Date(type.created_at).toLocaleDateString() : 'N/A'}</td>
-          <td>${type.updated_at ? new Date(type.updated_at).toLocaleDateString() : 'N/A'}</td>
-        </tr>
-      `).join('')
-
-      printWindow.document.write(`
+    const printContent = `
         <html>
           <head>
             <title>Vehicle Types Report</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #3b82f6; }
+            h1 { color: #333; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #3b82f6; color: white; }
-              tr:nth-child(even) { background-color: #f2f2f2; }
+            th { background-color: #475569; color: white; }
             </style>
           </head>
           <body>
             <h1>Vehicle Types Report</h1>
             <p>Generated on: ${new Date().toLocaleDateString()}</p>
+          <p>Total Records: ${filteredAndSortedTypes.length}</p>
             <table>
               <thead>
                 <tr>
@@ -326,52 +382,49 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                 </tr>
               </thead>
               <tbody>
-                ${tableData}
+              ${filteredAndSortedTypes.map(type => `
+                <tr>
+                  <td>${type.type}</td>
+                  <td>${type.description || 'N/A'}</td>
+                  <td>${type.created_at ? (() => {
+                    try {
+                      const date = new Date(type.created_at)
+                      return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+                    } catch (error) {
+                      return 'N/A'
+                    }
+                  })() : 'N/A'}</td>
+                  <td>${type.updated_at ? (() => {
+                    try {
+                      const date = new Date(type.updated_at)
+                      return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+                    } catch (error) {
+                      return 'N/A'
+                    }
+                  })() : 'N/A'}</td>
+                </tr>
+              `).join('')}
               </tbody>
             </table>
           </body>
         </html>
-      `)
+    `
+
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(printContent)
       printWindow.document.close()
       printWindow.print()
     }
   }
 
-  // Sorting and filtering logic
-  const filteredAndSortedTypes = vehicleTypes
-    .filter(type => 
-      type.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (type.description && type.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-    .sort((a, b) => {
-      const aValue = a[sortField] || ''
-      const bValue = b[sortField] || ''
-      
-      if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
-      }
-    })
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredAndSortedTypes.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedTypes = filteredAndSortedTypes.slice(startIndex, endIndex)
-
-  const handleSort = (field: keyof VehicleType) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-    setCurrentPage(1)
-  }
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   if (!isOpen) return null
@@ -385,112 +438,36 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
           backdropFilter: 'blur(2px)'
         }}
       >
-        <div className={`relative w-full max-w-6xl mx-4 max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
+        <div className={`relative w-full max-w-7xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
           themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
         }`}>
           {/* Header */}
-          <div className={`flex items-center justify-between p-6 border-b ${
-            themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          <div className={`flex items-center justify-between p-6 border-b border-gray-200 ${
+            themeMode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
           }`}>
-            <h2 className={`text-xl font-semibold ${
-              themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h2 className="text-xl font-semibold text-gray-900">
               Vehicle Types Management
             </h2>
             <button
               onClick={onClose}
-              className={`p-2 rounded-md transition-colors ${
-                themeMode === 'dark' 
-                  ? 'text-gray-400 hover:text-white hover:bg-gray-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            {/* Add Form */}
-            {showAddForm && (
-              <div className={`mb-6 p-4 border rounded-3xl ${
-                themeMode === 'dark' 
-                  ? 'border-gray-600 bg-gray-700' 
-                  : 'border-gray-200 bg-gray-50'
-              }`}>
-                <h3 className={`text-lg font-medium mb-4 ${
-                  themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {editingType ? 'Edit Vehicle Type' : 'Add New Vehicle Type'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${
-                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Type *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          themeMode === 'dark' 
-                            ? 'border-gray-600 bg-gray-600 text-white' 
-                            : 'border-gray-300 bg-white'
-                        }`}
-                        placeholder="e.g., Sedan, SUV, Truck"
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${
-                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          themeMode === 'dark' 
-                            ? 'border-gray-600 bg-gray-600 text-white' 
-                            : 'border-gray-300 bg-white'
-                        }`}
-                        placeholder="Optional description"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      {editingType ? 'Update Type' : 'Add Type'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
+          <div className="p-6 max-h-[70vh] overflow-y-auto">
 
             {/* Add Button */}
             {!showAddForm && (
-              <div className="mb-4">
+              <div className="mb-4 flex justify-end">
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-3xl hover:bg-brand-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  Add New Type
+                  Add New Vehicle Type
                 </button>
               </div>
             )}
@@ -499,18 +476,43 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
             <div className="mb-6 space-y-4">
               {/* Search Bar */}
               <div className="flex items-center gap-4">
-                <div className="flex-1">
+                <div className="relative max-w-64">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
                   <input
                     type="text"
                     placeholder="Search vehicle types..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full pl-10 pr-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'border-gray-600 bg-gray-700 text-white' 
                         : 'border-gray-300 bg-white'
                     }`}
                   />
+                </div>
+                
+                {/* Items Per Page Selector */}
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Show:
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className={`px-3 py-1 border rounded-2xl text-sm ${
+                      themeMode === 'dark'
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-100 border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value={2}>2</option>
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
                 </div>
                 
                 {/* Export Buttons */}
@@ -567,30 +569,85 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
               </div>
             </div>
 
-            {/* Vehicle Types Table */}
+            {/* Add/Edit Form */}
+            {showAddForm && (
+              <div className={`mb-6 p-6 rounded-3xl ${
+                themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
+              }`}>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {editingType ? 'Edit Vehicle Type' : 'Add New Vehicle Type'}
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Car className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.type}
+                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter vehicle type"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <DescriptionIcon className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter description"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={editingType ? handleEditType : handleAddType}
+                    className="px-4 py-2 bg-brand-500 text-white rounded-3xl hover:bg-brand-600 transition-colors"
+                  >
+                    {editingType ? 'Update Vehicle Type' : 'Add Vehicle Type'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Table */}
             <div className="overflow-x-auto">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Loading vehicle types...</p>
-                </div>
-              ) : filteredAndSortedTypes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {searchQuery ? 'No vehicle types match your search.' : 'No vehicle types found. Add some to get started.'}
-                </div>
-              ) : (
-                <>
                   <table className={`min-w-full border-collapse ${
                     themeMode === 'dark' ? 'text-white' : 'text-gray-900'
                   }`}>
                     <thead>
                       <tr className={`${
                         themeMode === 'dark' 
-                          ? 'bg-gray-700 border-gray-600' 
-                          : 'bg-gray-50 border-gray-200'
+                      ? 'bg-gray-600 border-gray-600' 
+                      : 'bg-gray-500 border-gray-600'
                       }`}>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b">
+                      Actions
+                    </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('type')}
                         >
                           <div className="flex items-center gap-1">
@@ -601,7 +658,7 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                           </div>
                         </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('description')}
                         >
                           <div className="flex items-center gap-1">
@@ -612,7 +669,7 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                           </div>
                         </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('created_at')}
                         >
                           <div className="flex items-center gap-1">
@@ -623,7 +680,7 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                           </div>
                         </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('updated_at')}
                         >
                           <div className="flex items-center gap-1">
@@ -633,98 +690,111 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                             )}
                           </div>
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                          Actions
-                        </th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${
-                      themeMode === 'dark' 
-                        ? 'divide-gray-600 bg-gray-800' 
-                        : 'divide-gray-200 bg-white'
-                    }`}>
-                      {paginatedTypes.map((type) => (
-                        <tr key={type.id} className="hover:bg-gray-50">
+                  themeMode === 'dark' ? 'divide-gray-600' : 'divide-gray-200'
+                }`}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        Loading...
+                          </td>
+                    </tr>
+                  ) : currentTypes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        No vehicle types found
+                          </td>
+                    </tr>
+                  ) : (
+                    currentTypes.map((type) => (
+                      <tr key={type.id} className={`hover:${
+                        themeMode === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                      }`}>
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            {type.type}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {type.description || 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {type.created_at ? new Date(type.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {type.updated_at ? new Date(type.updated_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleView(type)}
+                              className="text-green-600 hover:text-green-800 transition-colors"
+                              title="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
                               <button
                                 onClick={() => handleEdit(type)}
-                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
                               >
-                                <Edit className="w-4 h-4" />
+                              <Edit className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleDelete(type)}
-                                className="text-red-600 hover:text-red-900 transition-colors"
+                              onClick={() => handleDeleteType(type.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
                                 title="Delete"
                               >
-                                <Trash2 className="w-4 h-4" />
+                              <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {type.type}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {type.description || 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {type.created_at ? (() => {
+                            try {
+                              const date = new Date(type.created_at)
+                              return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+                            } catch (error) {
+                              return 'N/A'
+                            }
+                          })() : 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {type.updated_at ? (() => {
+                            try {
+                              const date = new Date(type.updated_at)
+                              return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+                            } catch (error) {
+                              return 'N/A'
+                            }
+                          })() : 'N/A'}
+                          </td>
                         </tr>
-                      ))}
+                    ))
+                  )}
                     </tbody>
                   </table>
+            </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200">
-                      <div className="flex-1 flex justify-between sm:hidden">
-                        <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedTypes.length)} of {filteredAndSortedTypes.length} results
+                </span>
                       </div>
-                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
-                            <span className="font-medium">{Math.min(endIndex, filteredAndSortedTypes.length)}</span> of{' '}
-                            <span className="font-medium">{filteredAndSortedTypes.length}</span> results
-                          </p>
-                        </div>
-                        <div>
-                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              
+              <div className="flex items-center gap-2">
                             <button
                               onClick={() => handlePageChange(currentPage - 1)}
                               disabled={currentPage === 1}
-                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                             >
-                              <ChevronLeft className="h-5 w-5" />
+                  Prev
                             </button>
                             
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                    className={`px-3 py-1 text-sm rounded-full ${
                                   page === currentPage
-                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        ? 'bg-brand-500 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                               >
                                 {page}
@@ -734,29 +804,32 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
                             <button
                               onClick={() => handlePageChange(currentPage + 1)}
                               disabled={currentPage === totalPages}
-                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                             >
-                              <ChevronRight className="h-5 w-5" />
+                  Next
                             </button>
-                          </nav>
-                        </div>
-                      </div>
                     </div>
-                  )}
-                </>
-              )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* View Modal */}
+      {showViewModal && selectedType && (
+        <ViewVehicleTypeModal
+          isOpen={showViewModal}
+          onClose={() => setShowViewModal(false)}
+          type={selectedType}
+        />
+      )}
+
       {/* Notification */}
       <Notification
         isOpen={notification.isOpen}
-        onClose={() => setNotification({ ...notification, isOpen: false })}
         type={notification.type}
         title={notification.title}
         message={notification.message}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
       />
     </>
   )

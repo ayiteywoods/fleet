@@ -28,6 +28,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import Notification from '@/components/Notification'
 import AddRoadworthyModal from '@/components/AddRoadworthyModal'
+import EditRoadworthyModal from '@/components/EditRoadworthyModal'
 import ViewRoadworthyModal from '@/components/ViewRoadworthyModal'
 
 export default function RoadworthyPage() {
@@ -39,6 +40,7 @@ export default function RoadworthyPage() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [showFieldSelector, setShowFieldSelector] = useState(false)
   const [showAddRoadworthyModal, setShowAddRoadworthyModal] = useState(false)
+  const [showEditRoadworthyModal, setShowEditRoadworthyModal] = useState(false)
   const [showViewRoadworthyModal, setShowViewRoadworthyModal] = useState(false)
   const [selectedRoadworthy, setSelectedRoadworthy] = useState(null)
   const [roadworthyRecords, setRoadworthyRecords] = useState([])
@@ -67,24 +69,24 @@ export default function RoadworthyPage() {
   ]
 
   // Fetch roadworthy records from API
-  useEffect(() => {
-    const fetchRoadworthyRecords = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/roadworthy')
-        if (response.ok) {
-          const data = await response.json()
-          setRoadworthyRecords(data)
-        } else {
-          console.error('Failed to fetch roadworthy records')
-        }
-      } catch (error) {
-        console.error('Error fetching roadworthy records:', error)
-      } finally {
-        setLoading(false)
+  const fetchRoadworthyRecords = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/roadworthy')
+      if (response.ok) {
+        const data = await response.json()
+        setRoadworthyRecords(data)
+      } else {
+        console.error('Failed to fetch roadworthy records')
       }
+    } catch (error) {
+      console.error('Error fetching roadworthy records:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchRoadworthyRecords()
   }, [])
 
@@ -420,16 +422,8 @@ export default function RoadworthyPage() {
         })
         
         // Refresh the roadworthy data after a short delay
-        setTimeout(async () => {
-          try {
-            const response = await fetch('/api/roadworthy')
-            if (response.ok) {
-              const data = await response.json()
-              setRoadworthyRecords(data)
-            }
-          } catch (error) {
-            console.error('Error refreshing roadworthy:', error)
-          }
+        setTimeout(() => {
+          fetchRoadworthyRecords()
         }, 2000) // 2 second delay to let user see the notification
       } else {
         setNotification({
@@ -455,9 +449,41 @@ export default function RoadworthyPage() {
     setShowViewRoadworthyModal(true)
   }
 
-  const handlePencilIconRoadworthy = (record: any) => {
+  const handleEditRoadworthy = (record: any) => {
     setSelectedRoadworthy(record)
-    console.log('PencilIcon roadworthy:', record)
+    setShowEditRoadworthyModal(true)
+  }
+
+  const handleUpdateRoadworthy = async (roadworthyData: any) => {
+    try {
+      const response = await fetch(`/api/roadworthy?id=${selectedRoadworthy?.id}&vehicle_number=${selectedRoadworthy?.vehicle_number}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(roadworthyData),
+      })
+
+      if (response.ok) {
+        setNotification({
+          isOpen: true,
+          type: 'success',
+          title: 'Success',
+          message: 'Roadworthy certificate updated successfully!'
+        })
+        fetchRoadworthyRecords()
+      } else {
+        throw new Error('Failed to update roadworthy certificate')
+      }
+    } catch (error) {
+      console.error('Error updating roadworthy:', error)
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to update roadworthy certificate. Please try again.'
+      })
+    }
   }
 
   const handleDeleteRoadworthy = async (record: any) => {
@@ -476,16 +502,8 @@ export default function RoadworthyPage() {
           })
           
           // Refresh the roadworthy data
-          setTimeout(async () => {
-            try {
-              const response = await fetch('/api/roadworthy')
-              if (response.ok) {
-                const data = await response.json()
-                setRoadworthyRecords(data)
-              }
-            } catch (error) {
-              console.error('Error refreshing roadworthy:', error)
-            }
+          setTimeout(() => {
+            fetchRoadworthyRecords()
           }, 1000)
         } else {
           const result = await response.json()
@@ -561,6 +579,14 @@ export default function RoadworthyPage() {
         minWidth: '0',
         flexShrink: 1
       }}>
+        {/* Header */}
+        <div className="flex items-center mb-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">Roadworthy Management</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle roadworthiness certificates</p>
+          </div>
+          <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+        </div>
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {kpiCards.map((card, index) => {
@@ -577,7 +603,7 @@ export default function RoadworthyPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className={`text-sm font-medium ${
-                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
                     }`}>
                       {card.title}
                     </h3>
@@ -833,9 +859,9 @@ export default function RoadworthyPage() {
                           <EyeIcon className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handlePencilIconRoadworthy(record)}
+                          onClick={() => handleEditRoadworthy(record)}
                           className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          title="PencilIcon Roadworthy"
+                          title="Edit Roadworthy"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
@@ -872,17 +898,17 @@ export default function RoadworthyPage() {
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="px-3 py-1 text-sm">
-                  Page {currentPage} of {totalPages}
+                <span className="px-3 py-1 text-sm bg-blue-600 text-white rounded-full">
+                  {currentPage}
                 </span>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -898,6 +924,16 @@ export default function RoadworthyPage() {
         onClose={() => setShowAddRoadworthyModal(false)}
         onAdd={handleAddRoadworthy}
       />
+
+      {/* Edit Roadworthy Modal */}
+      {showEditRoadworthyModal && selectedRoadworthy && (
+        <EditRoadworthyModal
+          isOpen={showEditRoadworthyModal}
+          onClose={() => setShowEditRoadworthyModal(false)}
+          onUpdate={handleUpdateRoadworthy}
+          roadworthy={selectedRoadworthy}
+        />
+      )}
 
       {/* View Roadworthy Modal */}
       {showViewRoadworthyModal && selectedRoadworthy && (

@@ -1,21 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Helper function to serialize BigInt and Date objects
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'bigint') return obj.toString()
+  if (obj instanceof Date) return obj.toISOString()
+  if (Array.isArray(obj)) return obj.map(serializeBigInt)
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  return obj
+}
+
 // GET /api/vehicles/[id] - Get a specific vehicle
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+    const { id } = await params
+    const vehicle = await prisma.vehicles.findUnique({
+      where: { id: BigInt(id) },
       include: {
-        reservations: {
-          include: {
-            driver: true
-          }
-        },
-        maintenance: true
+        vehicle_types: true,
+        vehicle_makes: true,
+        driver_operators: true,
+        subsidiary: true
       }
     })
 
@@ -26,7 +41,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(vehicle)
+    return NextResponse.json(serializeBigInt(vehicle))
   } catch (error) {
     console.error('Error fetching vehicle:', error)
     return NextResponse.json(
@@ -39,27 +54,80 @@ export async function GET(
 // PUT /api/vehicles/[id] - Update a specific vehicle
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
-    const { make, model, year, licensePlate, vin, color, mileage, status } = body
+    
+    const { 
+      name,
+      reg_number,
+      vehicle_type_id,
+      vehicle_make_id,
+      vin_number,
+      year,
+      color,
+      engine_number,
+      chassis_number,
+      current_region,
+      current_district,
+      current_mileage,
+      last_service_date,
+      next_service_km,
+      status,
+      spcode,
+      driver_id,
+      notes
+    } = body
 
-    const vehicle = await prisma.vehicle.update({
-      where: { id: params.id },
-      data: {
-        make,
-        model,
-        year: year ? parseInt(year) : undefined,
-        licensePlate,
-        vin,
-        color,
-        mileage: mileage ? parseInt(mileage) : undefined,
-        status
+    const updateData: any = {
+      reg_number,
+      vin_number,
+      color,
+      engine_number,
+      chassis_number,
+      current_region,
+      current_district,
+      current_mileage: current_mileage ? parseFloat(current_mileage) : undefined,
+      last_service_date: last_service_date ? new Date(last_service_date) : undefined,
+      next_service_km: next_service_km ? parseInt(next_service_km) : undefined,
+      status,
+      notes
+    }
+
+    // Add year if provided
+    if (year) {
+      updateData.year = parseInt(year)
+    }
+
+    // Add type_id if provided
+    if (vehicle_type_id) {
+      updateData.type_id = BigInt(vehicle_type_id)
+    }
+
+    // Add make_id if provided
+    if (vehicle_make_id) {
+      updateData.make_id = BigInt(vehicle_make_id)
+    }
+
+    // Add spcode if provided
+    if (spcode) {
+      updateData.spcode = BigInt(spcode)
+    }
+
+    const vehicle = await prisma.vehicles.update({
+      where: { id: BigInt(id) },
+      data: updateData,
+      include: {
+        vehicle_types: true,
+        vehicle_makes: true,
+        driver_operators: true,
+        subsidiary: true
       }
     })
 
-    return NextResponse.json(vehicle)
+    return NextResponse.json(serializeBigInt(vehicle))
   } catch (error) {
     console.error('Error updating vehicle:', error)
     return NextResponse.json(
@@ -72,11 +140,12 @@ export async function PUT(
 // DELETE /api/vehicles/[id] - Delete a specific vehicle
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await prisma.vehicle.delete({
-      where: { id: params.id }
+    const { id } = await params
+    await prisma.vehicles.delete({
+      where: { id: BigInt(id) }
     })
 
     return NextResponse.json({ message: 'Vehicle deleted successfully' })

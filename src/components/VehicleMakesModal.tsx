@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, Car, FileText as DescriptionIcon, Search } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import Notification from './Notification'
+import ViewVehicleMakeModal from './ViewVehicleMakeModal'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -11,11 +12,8 @@ import autoTable from 'jspdf-autotable'
 interface VehicleMake {
   id: string
   name: string
-  model: string
   created_at: string | null
   updated_at: string | null
-  created_by: string | null
-  updated_by: string | null
 }
 
 interface VehicleMakesModalProps {
@@ -29,9 +27,10 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingMake, setEditingMake] = useState<VehicleMake | null>(null)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [selectedMake, setSelectedMake] = useState<VehicleMake | null>(null)
   const [formData, setFormData] = useState({
-    name: '',
-    model: ''
+    name: ''
   })
   const [notification, setNotification] = useState({
     isOpen: false,
@@ -44,7 +43,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
   const [sortField, setSortField] = useState<keyof VehicleMake>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
 
   // Fetch vehicle makes
@@ -88,10 +87,10 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           isOpen: true,
           type: 'success',
           title: 'Vehicle Make Added!',
-          message: `"${formData.name} ${formData.model}" has been added successfully.`
+          message: `"${formData.name}" has been added successfully.`
         })
         
-        setFormData({ name: '', model: '' })
+        setFormData({ name: '' })
         setShowAddForm(false)
         fetchVehicleMakes()
       } else {
@@ -99,39 +98,32 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: result.error || 'Failed to add vehicle make.'
+          message: result.error || 'Failed to add vehicle make'
         })
       }
     } catch (error) {
-      console.error('Error adding vehicle make:', error)
       setNotification({
         isOpen: true,
         type: 'error',
         title: 'Error!',
-        message: 'Network error. Please try again.'
+        message: 'Failed to add vehicle make'
       })
     }
   }
 
-  const handleEdit = (make: VehicleMake) => {
-    setEditingMake(make)
-    setFormData({
-      name: make.name,
-      model: make.model
-    })
-    setShowAddForm(true)
-  }
-
-  const handleUpdate = async () => {
+  const handleEditMake = async () => {
     if (!editingMake) return
 
     try {
-      const response = await fetch(`/api/vehicle-makes?id=${editingMake.id}`, {
+      const response = await fetch('/api/vehicle-makes', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: editingMake.id,
+          ...formData
+        }),
       })
 
       const result = await response.json()
@@ -141,10 +133,10 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           isOpen: true,
           type: 'success',
           title: 'Vehicle Make Updated!',
-          message: `"${formData.name} ${formData.model}" has been updated successfully.`
+          message: `"${formData.name}" has been updated successfully.`
         })
         
-        setFormData({ name: '', model: '' })
+        setFormData({ name: '' })
         setEditingMake(null)
         setShowAddForm(false)
         fetchVehicleMakes()
@@ -153,78 +145,109 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: result.error || 'Failed to update vehicle make.'
+          message: result.error || 'Failed to update vehicle make'
         })
       }
     } catch (error) {
-      console.error('Error updating vehicle make:', error)
       setNotification({
         isOpen: true,
         type: 'error',
         title: 'Error!',
-        message: 'Network error. Please try again.'
+        message: 'Failed to update vehicle make'
       })
     }
   }
 
-  const handleDelete = async (make: VehicleMake) => {
-    if (confirm(`Are you sure you want to delete "${make.name} ${make.model}"?`)) {
+  const handleDeleteMake = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this vehicle make?')) return
+
       try {
-        const response = await fetch(`/api/vehicle-makes?id=${make.id}`, {
+      const response = await fetch(`/api/vehicle-makes?id=${id}`, {
           method: 'DELETE',
         })
-
-        const result = await response.json()
 
         if (response.ok) {
           setNotification({
             isOpen: true,
             type: 'success',
             title: 'Vehicle Make Deleted!',
-            message: `"${make.name} ${make.model}" has been deleted successfully.`
+          message: 'Vehicle make has been deleted successfully.'
           })
-          
           fetchVehicleMakes()
         } else {
-          setNotification({
-            isOpen: true,
-            type: 'error',
-            title: 'Error!',
-            message: result.error || 'Failed to delete vehicle make.'
-          })
-        }
-      } catch (error) {
-        console.error('Error deleting vehicle make:', error)
+        const result = await response.json()
         setNotification({
           isOpen: true,
           type: 'error',
           title: 'Error!',
-          message: 'Network error. Please try again.'
+          message: result.error || 'Failed to delete vehicle make'
         })
       }
+    } catch (error) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error!',
+        message: 'Failed to delete vehicle make'
+      })
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingMake) {
-      handleUpdate()
-    } else {
-      handleAddMake()
-    }
+  const handleView = (make: VehicleMake) => {
+    setSelectedMake(make)
+    setShowViewModal(true)
   }
+
+  const handleEdit = (make: VehicleMake) => {
+    setEditingMake(make)
+    setFormData({
+      name: make.name
+    })
+    setShowAddForm(true)
+  }
+
 
   const handleCancel = () => {
-    setFormData({ name: '', model: '' })
+    setFormData({ name: '' })
     setEditingMake(null)
     setShowAddForm(false)
   }
 
+  const handleSort = (field: keyof VehicleMake) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  // Filter and sort vehicle makes
+  const filteredMakes = vehicleMakes.filter(make =>
+    make.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredAndSortedMakes = [...filteredMakes].sort((a, b) => {
+    const aValue = a[sortField] || ''
+    const bValue = b[sortField] || ''
+    
+    if (sortDirection === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+    }
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedMakes.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentMakes = filteredAndSortedMakes.slice(startIndex, endIndex)
+
   // Export functions
   const handleExportExcel = () => {
     const data = filteredAndSortedMakes.map(make => ({
-      'Name': make.name,
-      'Model': make.model,
+      'Make Name': make.name,
       'Created At': make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A',
       'Updated At': make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'
     }))
@@ -237,139 +260,106 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
 
   const handleExportCSV = () => {
     const data = filteredAndSortedMakes.map(make => ({
-      'Name': make.name,
-      'Model': make.model,
+      'Make Name': make.name,
       'Created At': make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A',
       'Updated At': make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'
     }))
 
     const ws = XLSX.utils.json_to_sheet(data)
     const csv = XLSX.utils.sheet_to_csv(ws)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', 'vehicle-makes.csv')
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'vehicle-makes.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   const handleExportPDF = () => {
     const doc = new jsPDF()
     
-    // Add title
-    doc.setFontSize(16)
+    doc.setFontSize(20)
     doc.text('Vehicle Makes Report', 14, 22)
     
-    // Add date
-    doc.setFontSize(10)
+    doc.setFontSize(12)
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30)
+    doc.text(`Total Records: ${filteredAndSortedMakes.length}`, 14, 38)
     
-    // Prepare table data
     const tableData = filteredAndSortedMakes.map(make => [
       make.name,
-      make.model,
       make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A',
       make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'
     ])
     
     autoTable(doc, {
-      head: [['Name', 'Model', 'Created At', 'Updated At']],
+      head: [['Make Name', 'Created At', 'Updated At']],
       body: tableData,
-      startY: 35,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] }
+      startY: 45,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [71, 85, 105] }
     })
     
     doc.save('vehicle-makes.pdf')
   }
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      const tableData = filteredAndSortedMakes.map(make => `
-        <tr>
-          <td>${make.name}</td>
-          <td>${make.model}</td>
-          <td>${make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A'}</td>
-          <td>${make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'}</td>
-        </tr>
-      `).join('')
-
-      printWindow.document.write(`
+    const printContent = `
         <html>
           <head>
             <title>Vehicle Makes Report</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #3b82f6; }
+            h1 { color: #333; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #3b82f6; color: white; }
-              tr:nth-child(even) { background-color: #f2f2f2; }
+            th { background-color: #475569; color: white; }
+            .header { margin-bottom: 20px; }
             </style>
           </head>
           <body>
+          <div class="header">
             <h1>Vehicle Makes Report</h1>
             <p>Generated on: ${new Date().toLocaleDateString()}</p>
+            <p>Total Records: ${filteredAndSortedMakes.length}</p>
+          </div>
             <table>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Model</th>
+                <th>Make Name</th>
                   <th>Created At</th>
                   <th>Updated At</th>
                 </tr>
               </thead>
               <tbody>
-                ${tableData}
+              ${filteredAndSortedMakes.map(make => `
+                <tr>
+                  <td>${make.name}</td>
+                  <td>${make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A'}</td>
+                  <td>${make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'}</td>
+                </tr>
+              `).join('')}
               </tbody>
             </table>
           </body>
         </html>
-      `)
+    `
+
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(printContent)
       printWindow.document.close()
       printWindow.print()
     }
   }
 
-  // Sorting and filtering logic
-  const filteredAndSortedMakes = vehicleMakes
-    .filter(make => 
-      make.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      make.model.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aValue = a[sortField] || ''
-      const bValue = b[sortField] || ''
-      
-      if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
-      }
-    })
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredAndSortedMakes.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedMakes = filteredAndSortedMakes.slice(startIndex, endIndex)
-
-  const handleSort = (field: keyof VehicleMake) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-    setCurrentPage(1)
-  }
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+  }
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value)
+    setCurrentPage(1) // Reset to first page when changing items per page
   }
 
   if (!isOpen) return null
@@ -383,11 +373,13 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
           backdropFilter: 'blur(2px)'
         }}
       >
-        <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
+        <div className={`relative w-full max-w-7xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
           themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
         }`}>
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-blue-100">
+          <div className={`flex items-center justify-between p-6 border-b border-gray-200 ${
+            themeMode === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
+          }`}>
             <h2 className="text-xl font-semibold text-gray-900">
               Vehicle Makes Management
             </h2>
@@ -401,69 +393,16 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
 
           {/* Content */}
           <div className="p-6 max-h-[70vh] overflow-y-auto">
-            {/* Add/Edit Form */}
-            {showAddForm && (
-              <div className="mb-6 p-4 border border-gray-200 rounded-3xl bg-gray-50">
-                <h3 className="text-lg font-medium mb-4">
-                  {editingMake ? 'Edit Vehicle Make' : 'Add New Vehicle Make'}
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Make Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Toyota"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Model *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.model}
-                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Camry"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      {editingMake ? 'Update' : 'Add'} Make
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
 
             {/* Add Button */}
             {!showAddForm && (
-              <div className="mb-4">
+              <div className="mb-4 flex justify-end">
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-3xl hover:bg-brand-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  Add New Make
+                  Add New Vehicle Make
                 </button>
               </div>
             )}
@@ -472,18 +411,43 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
             <div className="mb-6 space-y-4">
               {/* Search Bar */}
               <div className="flex items-center gap-4">
-                <div className="flex-1">
+                <div className="relative max-w-64">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
                   <input
                     type="text"
                     placeholder="Search vehicle makes..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full pl-10 pr-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'border-gray-600 bg-gray-700 text-white' 
                         : 'border-gray-300 bg-white'
                     }`}
                   />
+                </div>
+                
+                {/* Items Per Page Selector */}
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Show:
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className={`px-3 py-1 border rounded-2xl text-sm ${
+                      themeMode === 'dark'
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-100 border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value={2}>2</option>
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
                 </div>
                 
                 {/* Export Buttons */}
@@ -540,52 +504,78 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
               </div>
             </div>
 
-            {/* Vehicle Makes Table */}
+            {/* Add/Edit Form */}
+            {showAddForm && (
+              <div className={`mb-6 p-6 rounded-3xl ${
+                themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
+              }`}>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {editingMake ? 'Edit Vehicle Make' : 'Add New Vehicle Make'}
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Make Name *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Car className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter make name"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={editingMake ? handleEditMake : handleAddMake}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    {editingMake ? 'Update Vehicle Make' : 'Add Vehicle Make'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Table */}
             <div className="overflow-x-auto">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Loading vehicle makes...</p>
-                </div>
-              ) : filteredAndSortedMakes.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {searchQuery ? 'No vehicle makes match your search.' : 'No vehicle makes found. Add some to get started.'}
-                </div>
-              ) : (
-                <>
                   <table className={`min-w-full border-collapse ${
                     themeMode === 'dark' ? 'text-white' : 'text-gray-900'
                   }`}>
                     <thead>
                       <tr className={`${
                         themeMode === 'dark' 
-                          ? 'bg-gray-700 border-gray-600' 
-                          : 'bg-gray-50 border-gray-200'
+                      ? 'bg-gray-600 border-gray-600' 
+                      : 'bg-gray-500 border-gray-600'
                       }`}>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b">
+                      Actions
+                    </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('name')}
                         >
                           <div className="flex items-center gap-1">
-                            Name
+                        Make Name
                             {sortField === 'name' && (
                               sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
                             )}
                           </div>
                         </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
-                          onClick={() => handleSort('model')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Model
-                            {sortField === 'model' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('created_at')}
                         >
                           <div className="flex items-center gap-1">
@@ -596,7 +586,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                           </div>
                         </th>
                         <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                           onClick={() => handleSort('updated_at')}
                         >
                           <div className="flex items-center gap-1">
@@ -606,98 +596,94 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                             )}
                           </div>
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                          Actions
-                        </th>
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${
-                      themeMode === 'dark' 
-                        ? 'divide-gray-600 bg-gray-800' 
-                        : 'divide-gray-200 bg-white'
-                    }`}>
-                      {paginatedMakes.map((make) => (
-                        <tr key={make.id} className="hover:bg-gray-50">
+                  themeMode === 'dark' ? 'divide-gray-600' : 'divide-gray-200'
+                }`}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        Loading...
+                          </td>
+                    </tr>
+                  ) : currentMakes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        No vehicle makes found
+                          </td>
+                    </tr>
+                  ) : (
+                    currentMakes.map((make) => (
+                      <tr key={make.id} className={`hover:${
+                        themeMode === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                      }`}>
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            {make.name}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {make.model}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleView(make)}
+                              className="text-green-600 hover:text-green-800 transition-colors"
+                              title="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
                               <button
                                 onClick={() => handleEdit(make)}
-                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
                               >
-                                <Edit className="w-4 h-4" />
+                              <Edit className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleDelete(make)}
-                                className="text-red-600 hover:text-red-900 transition-colors"
+                              onClick={() => handleDeleteMake(make.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
                                 title="Delete"
                               >
-                                <Trash2 className="w-4 h-4" />
+                              <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {make.name}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {make.created_at ? new Date(make.created_at).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {make.updated_at ? new Date(make.updated_at).toLocaleDateString() : 'N/A'}
+                        </td>
                         </tr>
-                      ))}
+                    ))
+                  )}
                     </tbody>
                   </table>
+            </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200">
-                      <div className="flex-1 flex justify-between sm:hidden">
-                        <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">
+                  Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedMakes.length)} of {filteredAndSortedMakes.length} results
+                </span>
                       </div>
-                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm text-gray-700">
-                            Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
-                            <span className="font-medium">{Math.min(endIndex, filteredAndSortedMakes.length)}</span> of{' '}
-                            <span className="font-medium">{filteredAndSortedMakes.length}</span> results
-                          </p>
-                        </div>
-                        <div>
-                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              
+              <div className="flex items-center gap-2">
                             <button
                               onClick={() => handlePageChange(currentPage - 1)}
                               disabled={currentPage === 1}
-                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                             >
-                              <ChevronLeft className="h-5 w-5" />
+                  Prev
                             </button>
                             
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                               <button
                                 key={page}
                                 onClick={() => handlePageChange(page)}
-                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                    className={`px-3 py-1 text-sm rounded-full ${
                                   page === currentPage
-                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        ? 'bg-brand-500 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                               >
                                 {page}
@@ -707,29 +693,32 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
                             <button
                               onClick={() => handlePageChange(currentPage + 1)}
                               disabled={currentPage === totalPages}
-                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                             >
-                              <ChevronRight className="h-5 w-5" />
+                  Next
                             </button>
-                          </nav>
-                        </div>
-                      </div>
                     </div>
-                  )}
-                </>
-              )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* View Modal */}
+      {showViewModal && selectedMake && (
+        <ViewVehicleMakeModal
+          isOpen={showViewModal}
+          onClose={() => setShowViewModal(false)}
+          make={selectedMake}
+        />
+      )}
+
       {/* Notification */}
       <Notification
         isOpen={notification.isOpen}
-        onClose={() => setNotification({ ...notification, isOpen: false })}
         type={notification.type}
         title={notification.title}
         message={notification.message}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
       />
     </>
   )

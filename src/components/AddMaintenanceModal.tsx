@@ -8,10 +8,42 @@ interface AddMaintenanceModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (maintenanceData: any) => void
+  vehicleId?: string
 }
 
-export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMaintenanceModalProps) {
+interface Vehicle {
+  id: string
+  reg_number: string
+  trim: string
+  year: number
+  status: string
+  color: string
+  name: string
+}
+
+interface Mechanic {
+  id: string
+  name: string
+  phone: string
+  specialization: string
+  experience_years: number
+  workshops: Workshop[]
+}
+
+interface Workshop {
+  id: string
+  name: string
+  location: string
+  phone: string
+  capacity: number
+}
+
+export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicleId }: AddMaintenanceModalProps) {
   const { themeMode } = useTheme()
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [mechanics, setMechanics] = useState<Mechanic[]>([])
+  const [workshops, setWorkshops] = useState<Workshop[]>([])
+  const [fetchLoading, setFetchLoading] = useState(false)
   const [formData, setFormData] = useState({
     service_date: '',
     cost: '',
@@ -20,11 +52,58 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
     service_type: '',
     mileage_at_service: '',
     parts_replaced: '',
-    vehicle_id: '',
+    vehicle_id: vehicleId || '',
     mechanic_id: '',
     workshop_id: ''
   })
   const [loading, setLoading] = useState(false)
+
+  // Update vehicle_id when vehicleId prop changes
+  useEffect(() => {
+    if (vehicleId) {
+      setFormData(prev => ({
+        ...prev,
+        vehicle_id: vehicleId
+      }))
+    }
+  }, [vehicleId])
+
+  // Fetch data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchData()
+    }
+  }, [isOpen])
+
+  const fetchData = async () => {
+    setFetchLoading(true)
+    try {
+      const [vehiclesResponse, mechanicsResponse, workshopsResponse] = await Promise.all([
+        fetch('/api/vehicles?simple=true'),
+        fetch('/api/mechanics'),
+        fetch('/api/workshops')
+      ])
+
+      if (vehiclesResponse.ok) {
+        const vehiclesData = await vehiclesResponse.json()
+        setVehicles(vehiclesData)
+      }
+
+      if (mechanicsResponse.ok) {
+        const mechanicsData = await mechanicsResponse.json()
+        setMechanics(mechanicsData)
+      }
+
+      if (workshopsResponse.ok) {
+        const workshopsData = await workshopsResponse.json()
+        setWorkshops(workshopsData)
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setFetchLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +119,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
         service_type: '',
         mileage_at_service: '',
         parts_replaced: '',
-        vehicle_id: '',
+        vehicle_id: vehicleId || '',
         mechanic_id: '',
         workshop_id: ''
       })
@@ -58,13 +137,39 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
       ...prev,
       [name]: value
     }))
+
+    // Handle cascading mechanic-workshop selection
+    if (name === 'mechanic_id' && value) {
+      const selectedMechanic = mechanics.find(mechanic => mechanic.id === value)
+      if (selectedMechanic && selectedMechanic.workshops) {
+        // Since each mechanic belongs to one workshop, auto-select it
+        setFormData(prev => ({
+          ...prev,
+          mechanic_id: value,
+          workshop_id: selectedMechanic.workshops.id
+        }))
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          mechanic_id: value,
+          workshop_id: ''
+        }))
+      }
+    } else if (name === 'mechanic_id' && !value) {
+      // Reset workshop when no mechanic is selected
+      setFormData(prev => ({
+        ...prev,
+        mechanic_id: '',
+        workshop_id: ''
+      }))
+    }
   }
 
   if (!isOpen) return null
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[10000] flex items-center justify-center"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         backdropFilter: 'blur(2px)'
@@ -72,28 +177,25 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
     >
       <div className={`${themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
-        <div className="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Wrench className="w-6 h-6" />
-              <h2 className="text-xl font-semibold">Add Maintenance Record</h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-blue-700 rounded-3xl p-1 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-3">
+            <Wrench className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add Maintenance Record</h2>
           </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Service Date */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Calendar className="w-4 h-4" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Service Date *
               </label>
               <input
@@ -112,8 +214,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
 
             {/* Cost */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Banknote className="w-4 h-4" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Cost (₵) *
               </label>
               <input
@@ -135,8 +236,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
 
             {/* Status */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Wrench className="w-4 h-4" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Status *
               </label>
               <select
@@ -159,8 +259,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
 
             {/* Service Type */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Wrench className="w-4 h-4" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Service Type *
               </label>
               <input
@@ -180,8 +279,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
 
             {/* Mileage at Service */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Wrench className="w-4 h-4" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Mileage at Service (Km)
               </label>
               <input
@@ -199,76 +297,68 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
               />
             </div>
 
-            {/* Vehicle ID */}
+            {/* Mechanic */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Wrench className="w-4 h-4" />
-                Vehicle ID (Optional)
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Mechanic *
               </label>
-              <input
-                type="number"
-                name="vehicle_id"
-                value={formData.vehicle_id}
-                onChange={handleChange}
-                placeholder="Enter vehicle ID (optional)"
-                min="1"
-                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  themeMode === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  name="mechanic_id"
+                  value={formData.mechanic_id}
+                  onChange={handleChange}
+                  required
+                  disabled={fetchLoading}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${fetchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Mechanic --</option>
+                  {mechanics.map(mechanic => (
+                    <option key={mechanic.id} value={mechanic.id}>
+                      {mechanic.name} - {mechanic.specialization}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Mechanic ID */}
+            {/* Workshop */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <User className="w-4 h-4" />
-                Mechanic ID *
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Workshop *
               </label>
-              <input
-                type="number"
-                name="mechanic_id"
-                value={formData.mechanic_id}
-                onChange={handleChange}
-                placeholder="Enter mechanic ID"
-                required
-                min="1"
-                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  themeMode === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              />
-            </div>
-
-            {/* Workshop ID */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Building className="w-4 h-4" />
-                Workshop ID *
-              </label>
-              <input
-                type="number"
-                name="workshop_id"
-                value={formData.workshop_id}
-                onChange={handleChange}
-                placeholder="Enter workshop ID"
-                required
-                min="1"
-                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  themeMode === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}
-              />
+              <div className="relative">
+                <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  name="workshop_id"
+                  value={formData.workshop_id}
+                  onChange={handleChange}
+                  required
+                  disabled={fetchLoading}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${fetchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Workshop --</option>
+                  {workshops.map(workshop => (
+                    <option key={workshop.id} value={workshop.id}>
+                      {workshop.name} - {workshop.district}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Service Details */}
           <div className="mt-6 space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <FileText className="w-4 h-4" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Service Details
             </label>
             <textarea
@@ -287,8 +377,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit }: AddMa
 
           {/* Parts Replaced */}
           <div className="mt-6 space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <Wrench className="w-4 h-4" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Parts Replaced
             </label>
             <textarea

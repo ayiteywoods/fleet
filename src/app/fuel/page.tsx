@@ -510,13 +510,12 @@ export default function FuelPage() {
     <HorizonDashboardLayout>
       <div className={`p-6 ${themeMode === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
         {/* Header */}
-        <div className="mb-6">
-          <h1 className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-            Fuel Management
-          </h1>
-          <p className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            Manage fuel logs, expenses, and requests
-          </p>
+        <div className="flex items-center mb-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">Fuel Management</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Monitor fuel consumption and expenses</p>
+          </div>
+          <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
         </div>
 
         {/* Main Content Grid */}
@@ -535,7 +534,7 @@ export default function FuelPage() {
                     <BoltIcon className="w-6 h-6 text-brand-500" />
                   </div>
                   <div className="ml-4">
-                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Logs</p>
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Logs</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
                       {loading ? '...' : totalFuelLogs}
                     </p>
@@ -543,6 +542,27 @@ export default function FuelPage() {
                 </div>
               </div>
 
+              {/* Total Quantity Card */}
+              <div className={`p-6 rounded-2xl ${
+                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`p-3 rounded-full ${
+                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  }`}>
+                    <BoltIcon className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div className="ml-4">
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Quantity</p>
+                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
+                      {loading ? '...' : `${totalQuantity.toFixed(0)}L`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4 mt-4">
               {/* Total Cost Card */}
               <div className={`p-6 rounded-2xl ${
                 themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
@@ -554,7 +574,7 @@ export default function FuelPage() {
                     <BanknotesIcon className="w-6 h-6 text-brand-500" />
                   </div>
                   <div className="ml-4">
-                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Cost</p>
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Cost</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
                       {loading ? '...' : `₵${totalCost.toFixed(0)}`}
                     </p>
@@ -573,28 +593,9 @@ export default function FuelPage() {
                     <CurrencyDollarIcon className="w-6 h-6 text-brand-500" />
                   </div>
                   <div className="ml-4">
-                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Avg Cost</p>
+                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Avg Cost</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
                       {loading ? '...' : `₵${averageCost.toFixed(0)}`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Total Quantity Card */}
-              <div className={`p-6 rounded-2xl ${
-                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-              }`}>
-                <div className="flex items-center">
-                  <div className={`p-3 rounded-full ${
-                    themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
-                  }`}>
-                    <BoltIcon className="w-6 h-6 text-brand-500" />
-                  </div>
-                  <div className="ml-4">
-                    <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Total Quantity</p>
-                    <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
-                      {loading ? '...' : `${totalQuantity.toFixed(0)}L`}
                     </p>
                   </div>
                 </div>
@@ -997,6 +998,103 @@ export default function FuelPage() {
                 SELECT COLUMNS
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Pie Chart Section */}
+        <div className={`p-6 rounded-2xl mb-6 ${
+          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Fuel Distribution
+            </h3>
+            <div className="flex items-center gap-2">
+              <select 
+                className={`px-3 py-1 rounded text-sm border ${
+                  themeMode === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                <option>Monthly</option>
+                <option>Weekly</option>
+                <option>Yearly</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-center">
+            <div className="relative w-48 h-48">
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                {(() => {
+                  const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
+                  let currentAngle = 0
+                  const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+                  
+                  return chartData.fuelTypes.map((item, index) => {
+                    const percentage = (item.count / total) * 100
+                    const angle = (percentage / 100) * 360
+                    const startAngle = currentAngle
+                    const endAngle = currentAngle + angle
+                    currentAngle += angle
+                    
+                    const startAngleRad = (startAngle - 90) * (Math.PI / 180)
+                    const endAngleRad = (endAngle - 90) * (Math.PI / 180)
+                    
+                    const x1 = 50 + 35 * Math.cos(startAngleRad)
+                    const y1 = 50 + 35 * Math.sin(startAngleRad)
+                    const x2 = 50 + 35 * Math.cos(endAngleRad)
+                    const y2 = 50 + 35 * Math.sin(endAngleRad)
+                    
+                    const largeArcFlag = angle > 180 ? 1 : 0
+                    
+                    const pathData = [
+                      `M 50 50`,
+                      `L ${x1} ${y1}`,
+                      `A 35 35 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                      `Z`
+                    ].join(' ')
+                    
+                    return (
+                      <path
+                        key={item.type}
+                        d={pathData}
+                        fill={colors[index % colors.length]}
+                        stroke="white"
+                        strokeWidth="2"
+                      />
+                    )
+                  })
+                })()}
+              </svg>
+            </div>
+          </div>
+          
+          {/* Legend */}
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            {chartData.fuelTypes.slice(0, 2).map((item, index) => {
+              const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
+              const percentage = ((item.count / total) * 100).toFixed(0)
+              const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+              
+              return (
+                <div key={item.type} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: colors[index % colors.length] }}
+                    ></div>
+                    <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {item.type}
+                    </span>
+                  </div>
+                  <span className={`text-lg font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {percentage}%
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
 

@@ -4,7 +4,14 @@ import { prisma } from '@/lib/prisma'
 // GET - Fetch all maintenance records
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const vehicleId = searchParams.get('vehicle_id')
+
+    // Build the query with optional vehicle filter
+    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+
     const maintenanceRecords = await prisma.maintenance_history.findMany({
+      where: whereClause,
       include: {
         vehicles: {
           select: {
@@ -13,6 +20,21 @@ export async function GET(request: NextRequest) {
             year: true,
             status: true
           }
+        },
+        mechanics: {
+          select: {
+            id: true,
+            name: true,
+            specialization: true
+          }
+        },
+        workshops: {
+          select: {
+            id: true,
+            name: true,
+            region: true,
+            district: true
+          }
         }
       },
       orderBy: { created_at: 'desc' }
@@ -20,18 +42,23 @@ export async function GET(request: NextRequest) {
 
     // Serialize BigInt values
     const serializedRecords = maintenanceRecords.map(record => ({
-      ...record,
       id: record.id.toString(),
+      service_date: record.service_date.toISOString(),
+      cost: record.cost.toString(),
+      status: record.status,
+      service_details: record.service_details,
+      service_type: record.service_type,
+      mileage_at_service: record.mileage_at_service.toString(),
       vehicle_id: record.vehicle_id.toString(),
       mechanic_id: record.mechanic_id.toString(),
       workshop_id: record.workshop_id.toString(),
-      cost: record.cost.toString(),
-      mileage_at_service: record.mileage_at_service.toString(),
-      created_by: record.created_by?.toString(),
-      updated_by: record.updated_by?.toString(),
       created_at: record.created_at?.toISOString(),
       updated_at: record.updated_at?.toISOString(),
-      service_date: record.service_date.toISOString()
+      created_by: record.created_by?.toString(),
+      updated_by: record.updated_by?.toString(),
+      vehicle_name: record.vehicles ? `${record.vehicles.reg_number} - ${record.vehicles.trim} (${record.vehicles.year})` : null,
+      mechanic_name: record.mechanics?.name || null,
+      workshop_name: record.workshops ? `${record.workshops.name} - ${record.workshops.region}, ${record.workshops.district}` : null
     }))
 
     return NextResponse.json(serializedRecords)

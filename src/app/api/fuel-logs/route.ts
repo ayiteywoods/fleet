@@ -11,9 +11,16 @@ function serializeBigInt(obj: any) {
 }
 
 // GET - Fetch all fuel logs
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const vehicleId = searchParams.get('vehicle_id')
+
+    // Build the query with optional vehicle filter
+    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+
     const fuelLogs = await prisma.fuel_logs.findMany({
+      where: whereClause, // Apply the filter here
       include: {
         vehicles: {
           select: {

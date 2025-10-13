@@ -1,20 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Fetch all permissions
+// Helper function to serialize BigInt values
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+  
+  if (typeof obj === 'bigint') {
+    return obj.toString()
+  }
+  
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt)
+  }
+  
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  
+  return obj
+}
+
 export async function GET() {
   try {
     const permissions = await prisma.permissions.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: {
+        created_at: 'desc'
+      }
     })
-
-    // Serialize BigInt values
-    const serializedPermissions = permissions.map(permission => ({
-      ...permission,
-      id: permission.id.toString()
-    }))
-
-    return NextResponse.json(serializedPermissions)
+    return NextResponse.json(serializeBigInt(permissions))
   } catch (error) {
     console.error('Error fetching permissions:', error)
     return NextResponse.json(
@@ -24,35 +47,20 @@ export async function GET() {
   }
 }
 
-// POST - Create new permission
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, guard_name = 'web' } = body
+    const { name, guard_name } = body
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Permission name is required' },
-        { status: 400 }
-      )
-    }
-
-    const newPermission = await prisma.permissions.create({
+    const permission = await prisma.permissions.create({
       data: {
-        name,
-        guard_name,
+        name: name || '',
+        guard_name: guard_name || 'web',
         created_at: new Date(),
         updated_at: new Date()
       }
     })
-
-    // Serialize BigInt values
-    const serializedPermission = {
-      ...newPermission,
-      id: newPermission.id.toString()
-    }
-
-    return NextResponse.json(serializedPermission, { status: 201 })
+    return NextResponse.json(serializeBigInt(permission), { status: 201 })
   } catch (error) {
     console.error('Error creating permission:', error)
     return NextResponse.json(
@@ -62,38 +70,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update permission
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Permission ID is required' },
-        { status: 400 }
-      )
-    }
-
     const body = await request.json()
-    const { name, guard_name } = body
+    const { id, name, guard_name } = body
 
-    const updatedPermission = await prisma.permissions.update({
+    const permission = await prisma.permissions.update({
       where: { id: BigInt(id) },
       data: {
-        name: name || undefined,
-        guard_name: guard_name || undefined,
+        name: name || '',
+        guard_name: guard_name || 'web',
         updated_at: new Date()
       }
     })
-
-    // Serialize BigInt values
-    const serializedPermission = {
-      ...updatedPermission,
-      id: updatedPermission.id.toString()
-    }
-
-    return NextResponse.json(serializedPermission)
+    return NextResponse.json(serializeBigInt(permission))
   } catch (error) {
     console.error('Error updating permission:', error)
     return NextResponse.json(
@@ -103,7 +93,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete permission
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -120,10 +109,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: BigInt(id) }
     })
 
-    return NextResponse.json(
-      { message: 'Permission deleted successfully' },
-      { status: 200 }
-    )
+    return NextResponse.json({ message: 'Permission deleted successfully' })
   } catch (error) {
     console.error('Error deleting permission:', error)
     return NextResponse.json(

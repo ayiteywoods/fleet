@@ -57,6 +57,7 @@ interface Vehicle {
   created_by?: number
   updated_by?: number
   spcode?: number
+  subsidiary_name?: string
   [key: string]: any // Add index signature for dynamic property access
 }
 
@@ -83,7 +84,7 @@ export default function VehiclesPage() {
     message: ''
   })
   const [selectedFields, setSelectedFields] = useState([
-    'reg_number', 'vin_number', 'trim', 'year', 'status', 'color', 'current_region'
+    'reg_number', 'vin_number', 'trim', 'year', 'status', 'color', 'vehicle_type_name', 'vehicle_make_name', 'spcode'
   ])
 
   // All available fields from the vehicles table
@@ -101,8 +102,9 @@ export default function VehiclesPage() {
     { key: 'current_mileage', label: 'Current Mileage (Km)', type: 'number' },
     { key: 'last_service_date', label: 'Last Service Date', type: 'date' },
     { key: 'next_service_km', label: 'Next Service (Km)', type: 'number' },
-    { key: 'type_id', label: 'Vehicle Type', type: 'number' },
-    { key: 'make_id', label: 'Make', type: 'number' },
+    { key: 'vehicle_type_name', label: 'Vehicle Type', type: 'text' },
+    { key: 'vehicle_make_name', label: 'Make', type: 'text' },
+    { key: 'spcode', label: 'Subsidiary', type: 'text' },
     { key: 'notes', label: 'Notes', type: 'text' },
     { key: 'created_at', label: 'Created At', type: 'date' },
     { key: 'updated_at', label: 'Updated At', type: 'date' }
@@ -170,12 +172,17 @@ export default function VehiclesPage() {
     ).filter((field): field is NonNullable<typeof field> => field !== undefined)
   }
 
-  const formatFieldValue = (fieldKey: string, value: any, fieldType?: string) => {
+  const formatFieldValue = (fieldKey: string, value: any, fieldType?: string, vehicle?: Vehicle) => {
     if (!value && value !== 0) return '-'
     
     // Handle case where value might be an object or array
     if (typeof value === 'object' && value !== null) {
       return '-'
+    }
+    
+    // Special handling for spcode field - display subsidiary name instead of ID
+    if (fieldKey === 'spcode' && vehicle?.subsidiary_name) {
+      return vehicle.subsidiary_name
     }
     
     // Convert to string and clean up
@@ -234,12 +241,17 @@ export default function VehiclesPage() {
   }
 
   // Format field value for export (always returns string)
-  const formatFieldValueForExport = (fieldKey: string, value: any, fieldType?: string) => {
+  const formatFieldValueForExport = (fieldKey: string, value: any, fieldType?: string, vehicle?: Vehicle) => {
     if (!value && value !== 0) return '-'
     
     // Handle case where value might be an object or array
     if (typeof value === 'object' && value !== null) {
       return '-'
+    }
+    
+    // Special handling for spcode field - export subsidiary name instead of ID
+    if (fieldKey === 'spcode' && vehicle?.subsidiary_name) {
+      return vehicle.subsidiary_name
     }
     
     // Convert to string and clean up
@@ -477,7 +489,7 @@ export default function VehiclesPage() {
       const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
-        row.push(formatFieldValueForExport(field.key, value, field.type))
+        row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
       })
       row.push('') // Actions column
       return row
@@ -515,7 +527,7 @@ export default function VehiclesPage() {
       const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
-        row.push(formatFieldValueForExport(field.key, value, field.type))
+        row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
       })
       row.push('') // Actions column
       return row
@@ -551,7 +563,7 @@ export default function VehiclesPage() {
       const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
-        row.push(formatFieldValueForExport(field.key, value, field.type))
+        row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
       })
       return row
     })
@@ -594,7 +606,7 @@ export default function VehiclesPage() {
       const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
-        row.push(formatFieldValueForExport(field.key, value, field.type))
+        row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
       })
       return row
     })
@@ -680,6 +692,14 @@ export default function VehiclesPage() {
         minWidth: '0',
         flexShrink: 1
       }}>
+        {/* Header */}
+        <div className="flex items-center mb-6">
+          <div className="flex-shrink-0">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">Vehicle Management</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Manage and track your vehicle fleet</p>
+          </div>
+          <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+        </div>
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {kpiCards.map((card, index) => {
@@ -696,7 +716,7 @@ export default function VehiclesPage() {
                   </div>
                   <div className="ml-4">
                     <h3 className={`text-sm font-medium ${
-                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
                     }`}>
                       {card.title}
                     </h3>
@@ -974,18 +994,16 @@ export default function VehiclesPage() {
           )}
 
           {/* Vehicle Table */}
-          <div style={{ 
+          <div className="overflow-x-auto" style={{ 
             width: '100%',
             maxWidth: '100%',
-            overflowX: 'auto',
-            overflowY: 'hidden',
             border: '1px solid #e5e7eb',
             boxSizing: 'border-box',
             position: 'relative'
           }}>
             <table style={{
-              minWidth: selectedFields.length > 7 ? '1400px' : '100%',
-              width: selectedFields.length > 7 ? '1400px' : '100%',
+              minWidth: selectedFields.length > 8 ? '1600px' : '100%',
+              width: selectedFields.length > 8 ? '1600px' : '100%',
               tableLayout: 'fixed',
               boxSizing: 'border-box',
               maxWidth: 'none'
@@ -1011,7 +1029,8 @@ export default function VehiclesPage() {
                                field.key === 'current_mileage' ? '120px' :
                                field.key === 'year' ? '80px' :
                                field.key === 'color' ? '100px' :
-                               field.key === 'trim' ? '120px' : '150px',
+                               field.key === 'trim' ? '120px' :
+                               field.key === 'spcode' ? '120px' : '150px',
                         minWidth: field.key === 'reg_number' ? '150px' : 
                                  field.key === 'vin_number' ? '180px' :
                                  field.key === 'status' ? '100px' :
@@ -1021,7 +1040,8 @@ export default function VehiclesPage() {
                                  field.key === 'current_mileage' ? '120px' :
                                  field.key === 'year' ? '80px' :
                                  field.key === 'color' ? '100px' :
-                                 field.key === 'trim' ? '120px' : '150px'
+                                 field.key === 'trim' ? '120px' :
+                                 field.key === 'spcode' ? '120px' : '150px'
                       }}
                     >
                       <div className="flex items-center gap-1">
@@ -1094,7 +1114,7 @@ export default function VehiclesPage() {
                                  field.key === 'color' ? '100px' :
                                  field.key === 'trim' ? '120px' : '150px'
                       }}>
-                        {formatFieldValue(field.key, vehicle[field.key as keyof typeof vehicle], field.type)}
+                        {formatFieldValue(field.key, vehicle[field.key as keyof typeof vehicle], field.type, vehicle)}
                       </td>
                     ))}
                   </tr>
@@ -1118,7 +1138,7 @@ export default function VehiclesPage() {
             <div className="flex items-center gap-2">
               <button 
                 disabled={currentPage === 1}
-                className={`px-3 py-1 rounded text-sm ${
+                className={`px-3 py-1 rounded-2xl text-sm ${
                   currentPage === 1 
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                     : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -1126,12 +1146,12 @@ export default function VehiclesPage() {
               >
                 Prev
               </button>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
+              <button className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
                 1
               </button>
               <button 
                 disabled={true}
-                className="px-3 py-1 bg-gray-100 text-gray-400 rounded text-sm cursor-not-allowed"
+                className="px-3 py-1 bg-gray-100 text-gray-400 rounded-2xl text-sm cursor-not-allowed"
               >
                 Next
               </button>

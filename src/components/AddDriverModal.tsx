@@ -1,13 +1,36 @@
 'use client'
 
-import { useState } from 'react'
-import { X, User, Phone, CreditCard, MapPin, Calendar, Car } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, User, Phone, CreditCard, MapPin, Calendar, Car, Building2 } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface AddDriverModalProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (driverData: any) => void
+}
+
+interface Cluster {
+  id: string
+  name: string
+  description: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+interface Subsidiary {
+  id: string
+  name: string
+  contact_no: string
+  address: string
+  location: string | null
+  contact_person: string
+  contact_person_no: string
+  cluster_id: string | null
+  description: string | null
+  notes: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModalProps) {
@@ -22,8 +45,70 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
     region: '',
     district: '',
     status: 'Active',
-    vehicle_id: ''
+    vehicle_id: '',
+    cluster: '',
+    subsidiary: ''
   })
+
+  const [clusters, setClusters] = useState<Cluster[]>([])
+  const [subsidiaries, setSubsidiaries] = useState<Subsidiary[]>([])
+  const [fetchLoading, setFetchLoading] = useState(false)
+
+  // Fetch clusters on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchClusters()
+    }
+  }, [isOpen])
+
+  const fetchClusters = async () => {
+    try {
+      const response = await fetch('/api/clusters')
+      if (response.ok) {
+        const data = await response.json()
+        setClusters(data)
+      } else {
+        console.error('Failed to fetch clusters')
+      }
+    } catch (error) {
+      console.error('Error fetching clusters:', error)
+    }
+  }
+
+  const fetchSubsidiaries = async (clusterId: string) => {
+    if (!clusterId) {
+      setSubsidiaries([])
+      return
+    }
+
+    try {
+      setFetchLoading(true)
+      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSubsidiaries(data)
+        setFormData(prev => ({ ...prev, subsidiary: '' }))
+      } else {
+        console.error('Failed to fetch subsidiaries')
+      }
+    } catch (error) {
+      console.error('Error fetching subsidiaries:', error)
+    } finally {
+      setFetchLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    
+    // Handle cascade updates
+    if (field === 'cluster') {
+      fetchSubsidiaries(value)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,8 +125,11 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
         region: '',
         district: '',
         status: 'Active',
-        vehicle_id: ''
+        vehicle_id: '',
+        cluster: '',
+        subsidiary: ''
       })
+      setSubsidiaries([])
       onClose()
     } catch (error) {
       console.error('Error adding driver:', error)
@@ -277,6 +365,66 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
                 <option value="Inactive">Inactive</option>
                 <option value="Suspended">Suspended</option>
               </select>
+            </div>
+
+            {/* Cluster */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Cluster *
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  name="cluster"
+                  value={formData.cluster}
+                  onChange={(e) => handleInputChange('cluster', e.target.value)}
+                  required
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">-- Select Cluster --</option>
+                  {clusters.map(cluster => (
+                    <option key={cluster.id} value={cluster.id}>
+                      {cluster.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Subsidiary */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Subsidiary *
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  name="subsidiary"
+                  value={formData.subsidiary}
+                  onChange={(e) => handleInputChange('subsidiary', e.target.value)}
+                  disabled={!formData.cluster || fetchLoading}
+                  required
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${!formData.cluster ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">-- Select Subsidiary --</option>
+                  {subsidiaries.map(subsidiary => (
+                    <option key={subsidiary.id} value={subsidiary.id}>
+                      {subsidiary.name}
+                    </option>
+                  ))}
+                </select>
+                {fetchLoading && (
+                  <p className="text-blue-500 text-xs mt-1">Loading subsidiaries...</p>
+                )}
+              </div>
             </div>
 
             {/* Vehicle ID */}

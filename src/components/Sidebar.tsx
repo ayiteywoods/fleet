@@ -58,13 +58,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       name: 'Vehicles',
       href: '/vehicles',
       icon: TruckIcon,
-      active: pathname === '/vehicles'
+      active: pathname === '/vehicles' || pathname.startsWith('/vehicle-profile/')
     },
     {
       name: 'Drivers',
       href: '/drivers',
       icon: UserGroupIcon,
-      active: pathname === '/drivers'
+      active: pathname === '/drivers' || pathname.startsWith('/driver-profile/')
     },
     {
       name: 'Fuel',
