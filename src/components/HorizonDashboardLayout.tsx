@@ -24,6 +24,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     // Check authentication
     const token = localStorage.getItem('token');
     if (!token) {
+      setIsLoading(false);
       router.push('/login');
       return;
     }
@@ -35,15 +36,19 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       }
     })
     .then(res => {
+      console.log('Auth response status:', res.status);
       if (!res.ok) {
-        throw new Error('Authentication failed');
+        console.log('Auth response not ok:', res.status, res.statusText);
+        throw new Error(`Authentication failed: ${res.status}`);
       }
       return res.json();
     })
     .then(data => {
+      console.log('Auth success:', data);
       if (data.user) {
         setUser(data.user);
       } else {
+        console.log('No user in response:', data);
         localStorage.removeItem('token');
         router.push('/login');
       }

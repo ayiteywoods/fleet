@@ -26,6 +26,8 @@ export default function ViewRepairModal({ isOpen, onClose, repairRecord }: ViewR
       ['Service Date', repairRecord.service_date ? new Date(repairRecord.service_date).toLocaleDateString() : 'N/A'],
       ['Status', repairRecord.status || 'N/A'],
       ['Cost', `₵${repairRecord.cost || 'N/A'}`],
+      ['Repair Details', repairRecord.details || 'N/A'],
+      ['Parts Replaced', repairRecord.part_replaced || 'N/A'],
       ['Vehicle Registration', repairRecord.vehicles?.reg_number || 'N/A'],
       ['Vehicle Model', repairRecord.vehicles?.trim || 'N/A'],
       ['Vehicle Year', repairRecord.vehicles?.year || 'N/A'],
@@ -49,6 +51,8 @@ export default function ViewRepairModal({ isOpen, onClose, repairRecord }: ViewR
       ['Service Date', repairRecord.service_date ? new Date(repairRecord.service_date).toLocaleDateString() : 'N/A'],
       ['Status', repairRecord.status || 'N/A'],
       ['Cost', `₵${repairRecord.cost || 'N/A'}`],
+      ['Repair Details', repairRecord.details || 'N/A'],
+      ['Parts Replaced', repairRecord.part_replaced || 'N/A'],
       ['Vehicle Registration', repairRecord.vehicles?.reg_number || 'N/A'],
       ['Vehicle Model', repairRecord.vehicles?.trim || 'N/A'],
       ['Vehicle Year', repairRecord.vehicles?.year || 'N/A'],
@@ -89,6 +93,8 @@ export default function ViewRepairModal({ isOpen, onClose, repairRecord }: ViewR
       `Service Date: ${repairRecord.service_date ? new Date(repairRecord.service_date).toLocaleDateString() : 'N/A'}`,
       `Status: ${repairRecord.status || 'N/A'}`,
       `Cost: ₵${repairRecord.cost || 'N/A'}`,
+      `Repair Details: ${repairRecord.details || 'N/A'}`,
+      `Parts Replaced: ${repairRecord.part_replaced || 'N/A'}`,
       `Vehicle Registration: ${repairRecord.vehicles?.reg_number || 'N/A'}`,
       `Vehicle Model: ${repairRecord.vehicles?.trim || 'N/A'}`,
       `Vehicle Year: ${repairRecord.vehicles?.year || 'N/A'}`,
@@ -145,6 +151,14 @@ export default function ViewRepairModal({ isOpen, onClose, repairRecord }: ViewR
               <div class="info-item">
                 <div class="label">Cost:</div>
                 <div class="value">₵${repairRecord.cost || 'N/A'}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">Repair Details:</div>
+                <div class="value">${repairRecord.details || 'N/A'}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">Parts Replaced:</div>
+                <div class="value">${repairRecord.part_replaced || 'N/A'}</div>
               </div>
               <div class="info-item">
                 <div class="label">Vehicle Registration:</div>
@@ -251,6 +265,18 @@ export default function ViewRepairModal({ isOpen, onClose, repairRecord }: ViewR
                 <div className="flex justify-between">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Cost:</span>
                   <span className="text-sm text-gray-900 dark:text-white">₵{repairRecord.cost || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Repair Details:</span>
+                  <span className="text-sm text-gray-900 dark:text-white max-w-xs text-right">
+                    {repairRecord.details || 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Parts Replaced:</span>
+                  <span className="text-sm text-gray-900 dark:text-white max-w-xs text-right">
+                    {repairRecord.part_replaced || 'N/A'}
+                  </span>
                 </div>
               </div>
             </div>

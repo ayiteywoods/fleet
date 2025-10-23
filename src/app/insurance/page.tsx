@@ -6,7 +6,6 @@ import {
   CheckCircleIcon, 
   ExclamationTriangleIcon, 
   ClockIcon, 
-  CurrencyDollarIcon, 
   DocumentTextIcon,
   PlusIcon,
   ArrowDownTrayIcon,
@@ -45,6 +44,7 @@ export default function InsurancePage() {
   const [selectedInsurance, setSelectedInsurance] = useState(null)
   const [insuranceRecords, setInsuranceRecords] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -61,7 +61,7 @@ export default function InsurancePage() {
     { key: 'insurance_company', label: 'Insurance Company', type: 'text' },
     { key: 'start_date', label: 'Start Date', type: 'date' },
     { key: 'end_date', label: 'End Date', type: 'date' },
-    { key: 'premium_amount', label: 'Premium Amount', type: 'currency' },
+    { key: 'premium_amount', label: 'Premium Amount (Ghc)', type: 'currency' },
     { key: 'coverage_type', label: 'Coverage Type', type: 'text' },
     { key: 'notes', label: 'Notes', type: 'text' },
     { key: 'vehicle_id', label: 'Vehicle', type: 'text' },
@@ -113,13 +113,18 @@ export default function InsurancePage() {
   const averagePremium = totalPolicies > 0 ? totalPremium / totalPolicies : 0
 
   const kpiCards = [
-    { title: 'Total Policies', value: totalPolicies.toString(), icon: ShieldCheckIcon, color: 'blue' },
-    { title: 'Active', value: activePolicies.toString(), icon: CheckCircleIcon, color: 'blue' },
-    { title: 'Expired', value: expiredPolicies.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue' },
-    { title: 'Total Premium', value: `₵${totalPremium.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
-    { title: 'Avg Premium', value: `₵${averagePremium.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
+    { title: 'Total Policies', value: totalPolicies.toString(), icon: ShieldCheckIcon, color: 'blue', status: null },
+    { title: 'Active', value: activePolicies.toString(), icon: CheckCircleIcon, color: 'blue', status: 'active' },
+    { title: 'Expired', value: expiredPolicies.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'expired' },
+    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue', status: 'expiring_soon' },
+    { title: 'Total Premium', value: `Ghc${totalPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue', status: 'total_premium' },
+    { title: 'Avg Premium', value: `Ghc${averagePremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue', status: 'avg_premium' }
   ]
+
+  const handleCardClick = (status: string | null) => {
+    setStatusFilter(status)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -138,6 +143,17 @@ export default function InsurancePage() {
     }
   }
 
+  // Handle select all fields
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      // If all are selected, deselect all
+      setSelectedFields([])
+    } else {
+      // If not all are selected, select all
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
+
   const getSelectedFieldsData = () => {
     return selectedFields.map(fieldKey => 
       availableFields.find(field => field.key === fieldKey)
@@ -152,9 +168,9 @@ export default function InsurancePage() {
       return '-'
     }
     
-    // Special handling for vehicle_id field - display vehicle name instead of ID
-    if (fieldKey === 'vehicle_id' && record?.vehicle_name) {
-      return record.vehicle_name
+    // Special handling for vehicle_id field - display only vehicle registration number
+    if (fieldKey === 'vehicle_id' && record?.vehicle?.reg_number) {
+      return record.vehicle.reg_number
     }
     
     // Convert to string and clean up
@@ -172,10 +188,10 @@ export default function InsurancePage() {
       case 'number':
         return Number(stringValue).toLocaleString()
       case 'currency':
-        return `₵${Number(stringValue).toLocaleString()}`
+        return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -539,8 +555,36 @@ export default function InsurancePage() {
     setSearchQuery(query)
   }
 
-  // Filter insurance records based on search query
+  // Filter insurance records based on search query and status filter
   const filteredRecords = insuranceRecords.filter(record => {
+    // Apply status filter
+    if (statusFilter) {
+      if (statusFilter === 'active') {
+        // Filter for active policies (not expired)
+        const endDate = new Date(record.end_date)
+        const today = new Date()
+        if (endDate <= today) return false
+      } else if (statusFilter === 'expired') {
+        // Filter for expired policies
+        const endDate = new Date(record.end_date)
+        const today = new Date()
+        if (endDate > today) return false
+      } else if (statusFilter === 'expiring_soon') {
+        // Filter for policies expiring soon (within 30 days)
+        const endDate = new Date(record.end_date)
+        const today = new Date()
+        const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+        if (endDate <= today || endDate > thirtyDaysFromNow) return false
+      } else if (statusFilter === 'total_premium') {
+        // Filter for policies with premium amount > 0
+        if (!record.premium_amount || Number(record.premium_amount) <= 0) return false
+      } else if (statusFilter === 'avg_premium') {
+        // Filter for policies with premium amount > average
+        if (!record.premium_amount || Number(record.premium_amount) <= averagePremium) return false
+      }
+    }
+    
+    // Apply search filter
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -599,24 +643,42 @@ export default function InsurancePage() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
+            const isActive = statusFilter === card.status
             return (
-              <div key={index} className={`p-6 rounded-2xl ${
-                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-              }`}>
+              <div 
+                key={index} 
+                onClick={() => handleCardClick(card.status)}
+                className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 ${
+                  themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+                } ${
+                  isActive 
+                    ? 'ring-2 ring-blue-500 shadow-lg transform scale-105' 
+                    : 'hover:shadow-md hover:transform hover:scale-102'
+                }`}
+              >
                 <div className="flex items-center">
-                  <div className={`p-3 rounded-full ${
+                  <div className={`p-3 rounded-full transition-colors ${
                     themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  } ${
+                    isActive ? 'bg-blue-100' : ''
                   }`}>
-                    <IconComponent className="w-6 h-6 text-brand-500" />
+                    <IconComponent className={`w-6 h-6 transition-colors ${
+                      isActive ? 'text-blue-600' : 
+                      card.status === 'expired' ? 'text-red-500' : 'text-brand-500'
+                    }`} />
                   </div>
                   <div className="ml-4">
-                    <h3 className={`text-sm font-medium ${
+                    <h3 className={`text-sm font-medium transition-colors ${
                       themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.title}
                     </h3>
-                    <p className={`text-2xl font-bold ${
+                    <p className={`text-2xl font-bold transition-colors ${
                       themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.value}
                     </p>
@@ -792,6 +854,29 @@ export default function InsurancePage() {
                     <XMarkIcon className="w-5 h-5" />
                   </button>
                 </div>
+                
+                {/* Select All Checkbox */}
+                <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.length === availableFields.length}
+                      onChange={handleSelectAllFields}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <span className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Select All Columns
+                    </span>
+                  </label>
+                  <p className={`text-xs mt-1 ml-7 ${
+                    themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {selectedFields.length} of {availableFields.length} columns selected
+                  </p>
+                </div>
+                
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {availableFields.map((field) => (
                     <label key={field.key} className="flex items-center space-x-2">
@@ -901,6 +986,11 @@ export default function InsurancePage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-700 dark:text-gray-300">
                 Showing {startIndex + 1} to {Math.min(endIndex, sortedRecords.length)} of {sortedRecords.length} entries
+                {(searchQuery || statusFilter) && (
+                  <span className="ml-2 text-blue-600">
+                    (filtered from {insuranceRecords.length} total)
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -948,7 +1038,7 @@ export default function InsurancePage() {
         <ViewInsuranceModal
           isOpen={showViewInsuranceModal}
           onClose={() => setShowViewInsuranceModal(false)}
-          insurance={selectedInsurance}
+          insuranceRecord={selectedInsurance}
         />
       )}
 

@@ -137,9 +137,11 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       }`}>
         <div className="flex items-center">
           {!isCollapsed && (
-            <h1 className={`text-lg font-bold ${
-              themeMode === 'dark' ? 'text-gray-900' : 'text-gray-900'
-            }`}>neraFleet Logo</h1>
+            <img 
+              src="/nerafleet_logo.png" 
+              alt="neraFleet Logo" 
+              className="h-8 w-auto"
+            />
           )}
           {isCollapsed && (
             <div className={`w-8 h-7 rounded-lg flex items-center justify-center ${

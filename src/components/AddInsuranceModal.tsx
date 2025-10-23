@@ -1,17 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, DollarSign, Building, FileText, Car } from 'lucide-react'
+import { X, Calendar, Coins, Building, FileText, Car } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
+
+interface Vehicle {
+  id: string
+  reg_number: string
+  trim: string | null
+  year: number | null
+  status: string | null
+}
 
 interface AddInsuranceModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (insuranceData: any) => void
+  onAdd: (insuranceData: any) => void
   vehicleId?: string
 }
 
-export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId }: AddInsuranceModalProps) {
+export default function AddInsuranceModal({ isOpen, onClose, onAdd, vehicleId }: AddInsuranceModalProps) {
   const { themeMode } = useTheme()
   const [formData, setFormData] = useState({
     policy_number: '',
@@ -24,6 +32,7 @@ export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId
     vehicle_id: vehicleId || ''
   })
   const [loading, setLoading] = useState(false)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
 
   useEffect(() => {
     if (vehicleId) {
@@ -33,6 +42,26 @@ export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId
       }))
     }
   }, [vehicleId])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchVehicles()
+    }
+  }, [isOpen])
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await fetch('/api/vehicles')
+      if (response.ok) {
+        const data = await response.json()
+        setVehicles(data)
+      } else {
+        console.error('Failed to fetch vehicles')
+      }
+    } catch (error) {
+      console.error('Error fetching vehicles:', error)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -44,7 +73,7 @@ export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId
     setLoading(true)
 
     try {
-      await onSubmit(formData)
+      await onAdd(formData)
       setFormData({
         policy_number: '',
         insurance_company: '',
@@ -176,7 +205,7 @@ export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId
                 Premium Amount (₵) *
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Coins className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="number"
                   name="premium_amount"
@@ -190,6 +219,36 @@ export default function AddInsuranceModal({ isOpen, onClose, onSubmit, vehicleId
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
+              </div>
+            </div>
+
+            {/* Vehicle Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Vehicle *
+              </label>
+              <div className="relative">
+                <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  name="vehicle_id"
+                  value={formData.vehicle_id}
+                  onChange={handleChange}
+                  required
+                  className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">Select a vehicle</option>
+                  {vehicles.length > 0 ? vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.reg_number}{vehicle.trim ? ` (${vehicle.trim})` : ''}{vehicle.year ? ` - ${vehicle.year}` : ''}
+                    </option>
+                  )) : (
+                    <option disabled>No vehicles available</option>
+                  )}
+                </select>
               </div>
             </div>
 

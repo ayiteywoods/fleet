@@ -77,10 +77,10 @@ export default function FuelExpenseLogModal({ isOpen, onClose }: FuelExpenseLogM
     }
   }
 
-  // Fetch fuel requests
+  // Fetch fuel requests (including those already converted to expense logs)
   const fetchFuelRequests = async () => {
     try {
-      const response = await fetch('/api/fuel-request')
+      const response = await fetch('/api/fuel-request?include_converted=true')
       if (response.ok) {
         const data = await response.json()
         setFuelRequests(data)

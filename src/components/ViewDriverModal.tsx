@@ -68,8 +68,20 @@ export default function ViewDriverModal({ isOpen, onClose, driver, onEdit }: Vie
               </div>
               <div class="row">
                 <div class="col">
+                  <span class="label">Issue Date:</span>
+                  <span class="value">${driver.date_issued || 'Not specified'}</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
                   <span class="label">Expiry Date:</span>
                   <span class="value">${driver.license_expire}</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <span class="label">Date of Birth:</span>
+                  <span class="value">${driver.dob || 'Not specified'}</span>
                 </div>
               </div>
             </div>
@@ -128,7 +140,9 @@ Phone: ${driver.phone}
 License Information:
 License Number: ${driver.license_number}
 Category: ${driver.license_category}
+Issue Date: ${driver.date_issued || 'Not specified'}
 Expiry Date: ${driver.license_expire}
+Date of Birth: ${driver.dob || 'Not specified'}
 
 Location Information:
 Region: ${driver.region}
@@ -238,8 +252,22 @@ Subsidiary ID: ${driver.spcode || 'Not assigned'}
               <div className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 text-gray-400" />
                 <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Issue Date</p>
+                  <p className="font-medium">{driver.date_issued || 'Not specified'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-gray-400" />
+                <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Expiry Date</p>
                   <p className="font-medium">{driver.license_expire}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Date of Birth</p>
+                  <p className="font-medium">{driver.dob || 'Not specified'}</p>
                 </div>
               </div>
             </div>

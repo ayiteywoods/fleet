@@ -290,9 +290,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
     if (!formData.subsidiary) {
       newErrors.subsidiary = 'Subsidiary is required'
     }
-    if (!formData.assignedTo) {
-      newErrors.assignedTo = 'Driver assignment is required'
-    }
+    // assignedTo is now optional - no validation required
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -562,7 +560,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                 >
                   <option value="">-- Select Model --</option>
                   {vehicleModels.map(model => (
-                    <option key={model.id} value={model.id}>
+                    <option key={model.id} value={model.name}>
                       {model.name}
                     </option>
                   ))}
@@ -748,7 +746,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                 <label className={`block text-sm font-medium mb-2 ${
                   themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Assigned To <span className="text-red-500">*</span>
+                  Assigned To
                 </label>
                 <select
                   value={formData.assignedTo}

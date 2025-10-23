@@ -87,7 +87,7 @@ export default function MaintenancePage() {
     { key: 'service_date', label: 'Service Date', type: 'date' },
     { key: 'vehicle_name', label: 'Vehicle', type: 'text' },
     { key: 'service_type', label: 'Service Type', type: 'text' },
-    { key: 'cost', label: 'Cost (₵)', type: 'currency' },
+    { key: 'cost', label: 'Cost (Ghc)', type: 'currency' },
     { key: 'status', label: 'Status', type: 'status' },
     { key: 'mileage_at_service', label: 'Mileage (Km)', type: 'number' },
     { key: 'service_details', label: 'Service Details', type: 'text' },
@@ -103,15 +103,32 @@ export default function MaintenancePage() {
     const fetchMaintenanceRecords = async () => {
       try {
         setLoading(true)
+        console.log('Fetching maintenance records...')
         const response = await fetch('/api/maintenance')
+        console.log('Maintenance API response status:', response.status)
+        
         if (response.ok) {
           const data = await response.json()
+          console.log('Maintenance records received:', data.length)
           setMaintenanceRecords(data)
         } else {
-          console.error('Failed to fetch maintenance records')
+          const errorData = await response.json()
+          console.error('Failed to fetch maintenance records:', errorData)
+          setNotification({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message: errorData.error || 'Failed to fetch maintenance records'
+          })
         }
       } catch (error) {
         console.error('Error fetching maintenance records:', error)
+        setNotification({
+          isOpen: true,
+          type: 'error',
+          title: 'Network Error',
+          message: 'Failed to connect to the server. Please check your connection.'
+        })
       } finally {
         setLoading(false)
       }
@@ -133,8 +150,8 @@ export default function MaintenancePage() {
     { title: 'Completed', value: completedMaintenance.toString(), icon: CheckCircleIcon, color: 'blue' },
     { title: 'Pending', value: pendingMaintenance.toString(), icon: ClockIcon, color: 'blue' },
     { title: 'In Progress', value: inProgressMaintenance.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
-    { title: 'Avg Cost', value: `₵${avgCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
+    { title: 'Total Cost', value: `Ghc${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue' },
+    { title: 'Avg Cost', value: `Ghc${avgCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue' }
   ]
 
   const toggleFieldSelection = (fieldKey: string) => {
@@ -142,6 +159,17 @@ export default function MaintenancePage() {
       setSelectedFields(selectedFields.filter(field => field !== fieldKey))
     } else {
       setSelectedFields([...selectedFields, fieldKey])
+    }
+  }
+
+  // Handle select all fields
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      // If all are selected, deselect all
+      setSelectedFields([])
+    } else {
+      // If not all are selected, select all
+      setSelectedFields(availableFields.map(field => field.key))
     }
   }
 
@@ -177,10 +205,10 @@ export default function MaintenancePage() {
         }
         return Number(stringValue).toLocaleString()
       case 'currency':
-        return `₵${Number(stringValue).toLocaleString()}`
+        return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -236,10 +264,10 @@ export default function MaintenancePage() {
         }
         return Number(stringValue).toLocaleString()
       case 'currency':
-        return `₵${Number(stringValue).toLocaleString()}`
+        return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -380,9 +408,19 @@ export default function MaintenancePage() {
     setShowEditMaintenanceModal(true)
   }
 
-  const handleUpdateMaintenance = async (id: string, maintenanceData: any) => {
+  const handleUpdateMaintenance = async (maintenanceData: any) => {
+    if (!selectedMaintenance?.id) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error!',
+        message: 'No maintenance record selected for update.'
+      })
+      return
+    }
+
     try {
-      const response = await fetch(`/api/maintenance?id=${id}`, {
+      const response = await fetch(`/api/maintenance?id=${selectedMaintenance.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -909,6 +947,29 @@ export default function MaintenancePage() {
                     Choose columns to display in the table (7 columns by default, more will enable horizontal scroll)
                   </p>
                 </div>
+                
+                {/* Select All Checkbox */}
+                <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.length === availableFields.length}
+                      onChange={handleSelectAllFields}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <span className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Select All Columns
+                    </span>
+                  </label>
+                  <p className={`text-xs mt-1 ml-7 ${
+                    themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {selectedFields.length} of {availableFields.length} columns selected
+                  </p>
+                </div>
+                
                 <div className="p-4 max-h-64 overflow-y-auto">
                   <div className="grid grid-cols-1 gap-2">
                     {availableFields.map((field) => (
@@ -1107,15 +1168,14 @@ export default function MaintenancePage() {
         <ViewMaintenanceModal
           isOpen={showViewMaintenanceModal}
           onClose={() => setShowViewMaintenanceModal(false)}
-          maintenance={selectedMaintenance}
-          onPencilIcon={handlePencilIconMaintenance}
+          maintenanceRecord={selectedMaintenance}
         />
 
         <EditMaintenanceModal
           isOpen={showEditMaintenanceModal}
           onClose={() => setShowEditMaintenanceModal(false)}
-          maintenance={selectedMaintenance}
-          onSave={handleUpdateMaintenance}
+          maintenanceRecord={selectedMaintenance}
+          onSubmit={handleUpdateMaintenance}
         />
 
         <MaintenanceScheduleModal

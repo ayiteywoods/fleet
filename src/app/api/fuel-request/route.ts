@@ -10,10 +10,23 @@ function serializeBigInt(obj: any) {
   )
 }
 
-// GET - Fetch all fuel requests
-export async function GET() {
+// GET - Fetch all fuel requests (excluding those already converted to expense logs by default)
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const includeConverted = searchParams.get('include_converted') === 'true'
+
+    const whereClause = includeConverted 
+      ? {} // Include all requests
+      : {
+          // Exclude fuel requests that have been converted to expense logs
+          fuel_expense_log: {
+            none: {}
+          }
+        }
+
     const fuelRequests = await prisma.fuel_request.findMany({
+      where: whereClause,
       include: {
         vehicles: {
           select: {

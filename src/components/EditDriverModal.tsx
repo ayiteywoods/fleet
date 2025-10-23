@@ -42,6 +42,8 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
     license_number: '',
     license_category: '',
     license_expire: '',
+    date_issued: '',
+    dob: '',
     region: '',
     district: '',
     status: 'Active',
@@ -117,6 +119,8 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
         license_number: driver.license_number || '',
         license_category: driver.license_category || '',
         license_expire: driver.license_expire || '',
+        date_issued: driver.date_issued || '',
+        dob: driver.dob || '',
         region: driver.region || '',
         district: driver.district || '',
         status: driver.status || 'Active',
@@ -303,6 +307,26 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    License Issue Date
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="date"
+                      name="date_issued"
+                      value={formData.date_issued}
+                      onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        themeMode === 'dark'
+                          ? 'bg-gray-800 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     License Expiry Date *
                   </label>
                   <div className="relative">
@@ -313,6 +337,26 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
                       value={formData.license_expire}
                       onChange={handleChange}
                       required
+                      className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        themeMode === 'dark'
+                          ? 'bg-gray-800 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Date of Birth
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="date"
+                      name="dob"
+                      value={formData.dob}
+                      onChange={handleChange}
                       className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         themeMode === 'dark'
                           ? 'bg-gray-800 border-gray-600 text-white'

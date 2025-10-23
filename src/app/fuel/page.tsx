@@ -17,7 +17,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   BoltIcon,
-  CurrencyDollarIcon,
   BanknotesIcon,
   CalendarIcon,
   TruckIcon,
@@ -98,16 +97,14 @@ export default function FuelPage() {
   const [averageQuantity, setAverageQuantity] = useState(0)
   
   // Chart data and settings
-  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar')
+  const [timePeriod, setTimePeriod] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
   const [chartData, setChartData] = useState<{
-    monthly: { month: string; quantity: number; cost: number }[]
     fuelTypes: { type: string; count: number; totalCost: number }[]
-    vehicles: { vehicle: string; quantity: number; cost: number }[]
   }>({
-    monthly: [],
-    fuelTypes: [],
-    vehicles: []
+    fuelTypes: []
   })
+  const [hoveredSegment, setHoveredSegment] = useState<{ type: string; count: number; totalCost: number; percentage: number } | null>(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
 
   // Filtered fuel logs
   const filteredFuelLogs = fuelLogs.filter((log: FuelLog) => {
@@ -128,8 +125,8 @@ export default function FuelPage() {
     { key: 'vehicles.reg_number', label: 'Vehicle', type: 'text' },
     { key: 'driver_operators.name', label: 'Driver', type: 'text' },
     { key: 'quantity', label: 'Quantity (L)', type: 'number' },
-    { key: 'unit_cost', label: 'Unit Cost (₵)', type: 'currency' },
-    { key: 'total_cost', label: 'Total Cost (₵)', type: 'currency' },
+    { key: 'unit_cost', label: 'Unit Cost (Ghc)', type: 'currency' },
+    { key: 'total_cost', label: 'Total Cost (Ghc)', type: 'currency' },
     { key: 'mileage_before', label: 'Mileage Before', type: 'number' },
     { key: 'mileage_after', label: 'Mileage After', type: 'number' },
     { key: 'fuel_type', label: 'Fuel Type', type: 'text' },
@@ -138,73 +135,75 @@ export default function FuelPage() {
     { key: 'notes', label: 'Notes', type: 'text' }
   ]
 
-  // Fetch fuel logs data
-  // Process chart data
-  const processChartData = (data: FuelLog[]) => {
-    // Monthly data
-    const monthlyData: { [key: string]: { quantity: number; cost: number } } = {}
-    const fuelTypeData: { [key: string]: { count: number; totalCost: number } } = {}
-    const vehicleData: { [key: string]: { quantity: number; cost: number } } = {}
+  // Helper function to normalize fuel types
+  const normalizeFuelType = (fuelType: string): string => {
+    if (!fuelType) return 'unknown'
     
-    data.forEach((log, index) => {
+    // Convert to lowercase and trim whitespace
+    const normalized = fuelType.toString().toLowerCase().trim().replace(/\s+/g, ' ')
+    
+    // Handle common variations
+    const fuelTypeMap: { [key: string]: string } = {
+      'diesel': 'diesel',
+      'petrol': 'petrol',
+      'gasoline': 'petrol',
+      'gas': 'gas',
+      'lpg': 'gas',
+      'cng': 'gas',
+      'electric': 'electric',
+      'hybrid': 'hybrid'
+    }
+    
+    return fuelTypeMap[normalized] || normalized
+  }
+
+  // Process chart data based on time period
+  const processChartData = (data: FuelLog[], period: 'weekly' | 'monthly' | 'yearly') => {
+    const fuelTypeData: { [key: string]: { count: number; totalCost: number } } = {}
+    
+    data.forEach((log) => {
       try {
         const date = new Date(log.refuel_date)
-        const month = date.toLocaleDateString('en-US', { month: 'short' })
-        const fuelType = log.fuel_type || 'Unknown'
-        const vehicle = log.vehicles?.reg_number || 'Unknown'
+        const fuelType = normalizeFuelType(log.fuel_type || 'Unknown')
         
-        // Validate numeric values
-        const quantity = Number(log.quantity) || 0
-        const cost = Number(log.total_cost) || 0
+        // Filter by time period
+        const now = new Date()
+        let shouldInclude = false
         
-        // Monthly aggregation
-        if (!monthlyData[month]) {
-          monthlyData[month] = { quantity: 0, cost: 0 }
+        switch (period) {
+          case 'weekly':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            shouldInclude = date >= weekAgo
+            break
+          case 'monthly':
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+            shouldInclude = date >= monthAgo
+            break
+          case 'yearly':
+            const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+            shouldInclude = date >= yearAgo
+            break
         }
-        monthlyData[month].quantity += quantity
-        monthlyData[month].cost += cost
         
-        // Fuel type aggregation
+        if (shouldInclude) {
         if (!fuelTypeData[fuelType]) {
           fuelTypeData[fuelType] = { count: 0, totalCost: 0 }
         }
         fuelTypeData[fuelType].count += 1
-        fuelTypeData[fuelType].totalCost += cost
-        
-        // Vehicle aggregation
-        if (!vehicleData[vehicle]) {
-          vehicleData[vehicle] = { quantity: 0, cost: 0 }
+          fuelTypeData[fuelType].totalCost += Number(log.total_cost) || 0
         }
-        vehicleData[vehicle].quantity += quantity
-        vehicleData[vehicle].cost += cost
       } catch (error) {
-        console.error('Error processing log:', error, log)
+        console.error('Error processing log:', error)
       }
     })
     
-    // Convert to arrays
-    const monthly = Object.entries(monthlyData).map(([month, data]) => ({
-      month,
-      quantity: data.quantity,
-      cost: data.cost
-    })).sort((a, b) => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      return months.indexOf(a.month) - months.indexOf(b.month)
-    })
-    
     const fuelTypes = Object.entries(fuelTypeData).map(([type, data]) => ({
-      type,
+      type: type.charAt(0).toUpperCase() + type.slice(1),
       count: data.count,
       totalCost: data.totalCost
-    }))
+    })).sort((a, b) => b.count - a.count)
     
-    const vehicles = Object.entries(vehicleData).map(([vehicle, data]) => ({
-      vehicle,
-      quantity: data.quantity,
-      cost: data.cost
-    })).sort((a, b) => b.quantity - a.quantity).slice(0, 6) // Top 6 vehicles
-    
-    setChartData({ monthly, fuelTypes, vehicles })
+    setChartData({ fuelTypes })
   }
 
   const fetchFuelLogs = async () => {
@@ -227,7 +226,7 @@ export default function FuelPage() {
         setAverageQuantity(total > 0 ? totalQuantityValue / total : 0)
         
         // Process chart data
-        processChartData(data)
+        processChartData(data, timePeriod)
       }
     } catch (error) {
       console.error('Error fetching fuel logs:', error)
@@ -239,6 +238,12 @@ export default function FuelPage() {
   useEffect(() => {
     fetchFuelLogs()
   }, [])
+
+  useEffect(() => {
+    if (fuelLogs.length > 0) {
+      processChartData(fuelLogs, timePeriod)
+    }
+  }, [timePeriod])
 
   // Filter and sort data
   const filteredData = fuelLogs.filter(log => {
@@ -302,6 +307,17 @@ export default function FuelPage() {
     )
   }
 
+  // Handle select all fields
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      // If all are selected, deselect all
+      setSelectedFields([])
+    } else {
+      // If not all are selected, select all
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
+
   // Handle actions
   const handleView = (fuelLog: FuelLog) => {
     setSelectedFuelLog(fuelLog)
@@ -349,13 +365,13 @@ export default function FuelPage() {
   // Export functions
   const handleExportExcel = () => {
     const dataToExport = filteredFuelLogs.map((log: FuelLog) => ({
-      'Refuel Date': new Date(log.refuel_date).toLocaleDateString(),
+      'Refuel Date': new Date(log.refuel_date).toLocaleString(),
       'Vehicle Reg No.': log.vehicles?.reg_number,
       'Driver Name': log.driver_operators?.name,
       'Fuel Type': log.fuel_type,
       'Quantity (L)': log.quantity,
-      'Unit Cost (₵)': log.unit_cost,
-      'Total Cost (₵)': log.total_cost,
+      'Unit Cost (Ghc)': log.unit_cost,
+      'Total Cost (Ghc)': log.total_cost,
       'Mileage Before': log.mileage_before,
       'Mileage After': log.mileage_after,
       'Vendor': log.vendor,
@@ -370,13 +386,13 @@ export default function FuelPage() {
 
   const handleExportCSV = () => {
     const dataToExport = filteredFuelLogs.map((log: FuelLog) => ({
-      'Refuel Date': new Date(log.refuel_date).toLocaleDateString(),
+      'Refuel Date': new Date(log.refuel_date).toLocaleString(),
       'Vehicle Reg No.': log.vehicles?.reg_number,
       'Driver Name': log.driver_operators?.name,
       'Fuel Type': log.fuel_type,
       'Quantity (L)': log.quantity,
-      'Unit Cost (₵)': log.unit_cost,
-      'Total Cost (₵)': log.total_cost,
+      'Unit Cost (Ghc)': log.unit_cost,
+      'Total Cost (Ghc)': log.total_cost,
       'Mileage Before': log.mileage_before,
       'Mileage After': log.mileage_after,
       'Vendor': log.vendor,
@@ -398,9 +414,9 @@ export default function FuelPage() {
   const handleExportPDF = () => {
     const doc = new jsPDF()
     autoTable(doc as any, {
-      head: [['Refuel Date', 'Vehicle Reg No.', 'Driver Name', 'Fuel Type', 'Quantity (L)', 'Unit Cost (₵)', 'Total Cost (₵)', 'Mileage Before', 'Mileage After', 'Vendor', 'Receipt Number', 'Notes']],
+      head: [['Refuel Date', 'Vehicle Reg No.', 'Driver Name', 'Fuel Type', 'Quantity (L)', 'Unit Cost (Ghc)', 'Total Cost (Ghc)', 'Mileage Before', 'Mileage After', 'Vendor', 'Receipt Number', 'Notes']],
       body: filteredFuelLogs.map((log: FuelLog) => [
-        new Date(log.refuel_date).toLocaleDateString(),
+        new Date(log.refuel_date).toLocaleString(),
         log.vehicles?.reg_number || '',
         log.driver_operators?.name || '',
         log.fuel_type,
@@ -444,8 +460,8 @@ export default function FuelPage() {
                   <th>Driver Name</th>
                   <th>Fuel Type</th>
                   <th>Quantity (L)</th>
-                  <th>Unit Cost (₵)</th>
-                  <th>Total Cost (₵)</th>
+                  <th>Unit Cost (Ghc)</th>
+                  <th>Total Cost (Ghc)</th>
                   <th>Mileage Before</th>
                   <th>Mileage After</th>
                   <th>Vendor</th>
@@ -492,13 +508,13 @@ export default function FuelPage() {
     if (value === null || value === undefined) return '-'
     
     if (fieldKey.includes('cost')) {
-      return `₵${Number(value).toFixed(2)}`
+      return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     }
     if (fieldKey === 'quantity') {
       return `${Number(value).toFixed(2)}L`
     }
     if (fieldKey === 'refuel_date') {
-      return new Date(value).toLocaleDateString()
+      return new Date(value).toLocaleString()
     }
     if (fieldKey.includes('mileage')) {
       return Number(value).toLocaleString()
@@ -536,8 +552,8 @@ export default function FuelPage() {
                   <div className="ml-4">
                     <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Logs</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
-                      {loading ? '...' : totalFuelLogs}
-                    </p>
+                    {loading ? '...' : totalFuelLogs}
+                  </p>
                   </div>
                 </div>
               </div>
@@ -558,10 +574,10 @@ export default function FuelPage() {
                       {loading ? '...' : `${totalQuantity.toFixed(0)}L`}
                     </p>
                   </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
+
             <div className="grid grid-cols-1 gap-4 mt-4">
               {/* Total Cost Card */}
               <div className={`p-6 rounded-2xl ${
@@ -576,7 +592,7 @@ export default function FuelPage() {
                   <div className="ml-4">
                     <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Total Cost</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
-                      {loading ? '...' : `₵${totalCost.toFixed(0)}`}
+                      {loading ? '...' : `Ghc${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </p>
                   </div>
                 </div>
@@ -590,12 +606,12 @@ export default function FuelPage() {
                   <div className={`p-3 rounded-full ${
                     themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
                   }`}>
-                    <CurrencyDollarIcon className="w-6 h-6 text-brand-500" />
+                    <BanknotesIcon className="w-6 h-6 text-brand-500" />
                   </div>
                   <div className="ml-4">
                     <p className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Avg Cost</p>
                     <p className={`text-2xl font-bold ${themeMode === 'dark' ? 'text-white' : 'text-navy-700'}`}>
-                      {loading ? '...' : `₵${averageCost.toFixed(0)}`}
+                      {loading ? '...' : `Ghc${averageCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </p>
                   </div>
                 </div>
@@ -613,12 +629,12 @@ export default function FuelPage() {
                   Fuel Analytics
                 </h3>
                 
-                {/* Chart Type Selector */}
+                {/* Time Period Selector */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setChartType('bar')}
+                    onClick={() => setTimePeriod('weekly')}
                     className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      chartType === 'bar'
+                      timePeriod === 'weekly'
                         ? themeColor === 'blue' 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-purple-600 text-white'
@@ -627,12 +643,12 @@ export default function FuelPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    Bar
+                    Weekly
                   </button>
                   <button
-                    onClick={() => setChartType('line')}
+                    onClick={() => setTimePeriod('monthly')}
                     className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      chartType === 'line'
+                      timePeriod === 'monthly'
                         ? themeColor === 'blue' 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-purple-600 text-white'
@@ -641,12 +657,12 @@ export default function FuelPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    Line
+                    Monthly
                   </button>
                   <button
-                    onClick={() => setChartType('pie')}
+                    onClick={() => setTimePeriod('yearly')}
                     className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      chartType === 'pie'
+                      timePeriod === 'yearly'
                         ? themeColor === 'blue' 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-purple-600 text-white'
@@ -655,223 +671,182 @@ export default function FuelPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    Pie
+                    Yearly
                   </button>
                 </div>
               </div>
               
 
               {/* Chart Content */}
-              <div className="h-64">
-                {chartType === 'bar' && (
-                  <div className="space-y-4">
-                    {/* Chart Legend */}
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-blue-600"></div>
-                        <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Quantity (L)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-green-600"></div>
-                        <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Cost (₵)</span>
-                      </div>
-                    </div>
-
-                    {/* Chart Bars */}
-                    <div className="space-y-3 h-40 overflow-y-auto">
-                      {chartData.monthly.length > 0 ? chartData.monthly.map((item, index) => {
-                        const maxQuantity = Math.max(...chartData.monthly.map(d => d.quantity))
-                        const maxCost = Math.max(...chartData.monthly.map(d => d.cost))
-                        const quantityHeight = maxQuantity > 0 ? (item.quantity / maxQuantity) * 100 : 0
-                        const costHeight = maxCost > 0 ? (item.cost / maxCost) * 100 : 0
+              <div className="h-64 relative">
+                {/* Modern Donut Chart */}
+                <div className="h-40 flex items-center justify-center">
+                  {chartData.fuelTypes.length > 0 ? (
+                    <div className="relative w-40 h-40">
+                      <svg className="w-full h-full drop-shadow-lg" viewBox="0 0 120 120">
+                        <defs>
+                          {/* Gradient definitions */}
+                          <linearGradient id="analyticsPetrolGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#1d4ed8" />
+                          </linearGradient>
+                          <linearGradient id="analyticsDieselGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#10b981" />
+                            <stop offset="100%" stopColor="#059669" />
+                          </linearGradient>
+                          <linearGradient id="analyticsGasGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#f59e0b" />
+                            <stop offset="100%" stopColor="#d97706" />
+                          </linearGradient>
+                          <linearGradient id="analyticsOtherGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#8b5cf6" />
+                            <stop offset="100%" stopColor="#7c3aed" />
+                          </linearGradient>
+                        </defs>
                         
-                        return (
-                          <div key={item.month} className="flex items-end gap-2">
-                            <div className="w-8 text-xs text-gray-500">{item.month}</div>
-                            <div className="flex-1 flex items-end gap-1">
-                              <div 
-                                className="bg-blue-600 rounded-t"
-                                style={{ height: `${Math.max(quantityHeight, 10)}%`, minHeight: '10px' }}
-                                title={`Quantity: ${item.quantity.toFixed(1)}L`}
-                              ></div>
-                              <div 
-                                className="bg-green-600 rounded-t"
-                                style={{ height: `${Math.max(costHeight, 10)}%`, minHeight: '10px' }}
-                                title={`Cost: ₵${item.cost.toFixed(0)}`}
-                              ></div>
-                            </div>
-                          </div>
-                        )
-                      }) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          No data available
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {chartType === 'line' && (
-                  <div className="space-y-4">
-                    {/* Chart Legend */}
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-blue-600"></div>
-                        <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Quantity (L)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded bg-green-600"></div>
-                        <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Cost (₵)</span>
-                      </div>
-                    </div>
-
-                    {/* Line Chart */}
-                    <div className="h-40 relative">
-                      {chartData.monthly.length > 0 ? (
-                        <svg className="w-full h-full" viewBox="0 0 400 160">
-                          {/* Grid lines */}
-                          <defs>
-                            <pattern id="grid" width="40" height="32" patternUnits="userSpaceOnUse">
-                              <path d="M 40 0 L 0 0 0 32" fill="none" stroke={themeMode === 'dark' ? '#374151' : '#e5e7eb'} strokeWidth="0.5"/>
-                            </pattern>
-                          </defs>
-                          <rect width="100%" height="100%" fill="url(#grid)" />
+                        {(() => {
+                          const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
+                          let currentAngle = 0
+                          const innerRadius = 25
+                          const outerRadius = 45
                           
-                          {/* Quantity line */}
-                          <polyline
-                            fill="none"
-                            stroke="#3b82f6"
-                            strokeWidth="2"
-                            points={chartData.monthly.map((item, index) => {
-                              const x = chartData.monthly.length > 1 
-                                ? (index / (chartData.monthly.length - 1)) * 360 + 20
-                                : 200 // Center for single data point
-                              const maxQuantity = Math.max(...chartData.monthly.map(d => d.quantity))
-                              const y = 140 - (maxQuantity > 0 ? (item.quantity / maxQuantity) * 120 : 0)
-                              return `${x},${y}`
-                            }).join(' ')}
-                          />
-                          
-                          {/* Cost line */}
-                          <polyline
-                            fill="none"
-                            stroke="#10b981"
-                            strokeWidth="2"
-                            points={chartData.monthly.map((item, index) => {
-                              const x = chartData.monthly.length > 1 
-                                ? (index / (chartData.monthly.length - 1)) * 360 + 20
-                                : 200 // Center for single data point
-                              const maxCost = Math.max(...chartData.monthly.map(d => d.cost))
-                              const y = 140 - (maxCost > 0 ? (item.cost / maxCost) * 120 : 0)
-                              return `${x},${y}`
-                            }).join(' ')}
-                          />
-                          
-                          {/* Data points */}
-                          {chartData.monthly.map((item, index) => {
-                            const x = chartData.monthly.length > 1 
-                              ? (index / (chartData.monthly.length - 1)) * 360 + 20
-                              : 200 // Center for single data point
-                            const maxQuantity = Math.max(...chartData.monthly.map(d => d.quantity))
-                            const maxCost = Math.max(...chartData.monthly.map(d => d.cost))
-                            const yQuantity = 140 - (maxQuantity > 0 ? (item.quantity / maxQuantity) * 120 : 0)
-                            const yCost = 140 - (maxCost > 0 ? (item.cost / maxCost) * 120 : 0)
+                          return chartData.fuelTypes.map((item, index) => {
+                            const percentage = (item.count / total) * 100
+                            const angle = (percentage / 100) * 360
+                            const startAngle = currentAngle
+                            const endAngle = currentAngle + angle
+                            currentAngle += angle
+                            
+                            const startAngleRad = (startAngle - 90) * (Math.PI / 180)
+                            const endAngleRad = (endAngle - 90) * (Math.PI / 180)
+                            
+                            // Outer arc coordinates
+                            const x1 = 60 + outerRadius * Math.cos(startAngleRad)
+                            const y1 = 60 + outerRadius * Math.sin(startAngleRad)
+                            const x2 = 60 + outerRadius * Math.cos(endAngleRad)
+                            const y2 = 60 + outerRadius * Math.sin(endAngleRad)
+                            
+                            // Inner arc coordinates
+                            const x3 = 60 + innerRadius * Math.cos(endAngleRad)
+                            const y3 = 60 + innerRadius * Math.sin(endAngleRad)
+                            const x4 = 60 + innerRadius * Math.cos(startAngleRad)
+                            const y4 = 60 + innerRadius * Math.sin(startAngleRad)
+                            
+                            const largeArcFlag = angle > 180 ? 1 : 0
+                            
+                            const pathData = [
+                              `M ${x1} ${y1}`,
+                              `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                              `L ${x3} ${y3}`,
+                              `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+                              `Z`
+                            ].join(' ')
+                            
+                            // Get gradient ID based on fuel type
+                            const getGradientId = (fuelType: string) => {
+                              switch (fuelType.toLowerCase()) {
+                                case 'petrol': return 'url(#analyticsPetrolGradient)'
+                                case 'diesel': return 'url(#analyticsDieselGradient)'
+                                case 'gas': return 'url(#analyticsGasGradient)'
+                                default: return 'url(#analyticsOtherGradient)'
+                              }
+                            }
                             
                             return (
-                              <g key={item.month}>
-                                <circle cx={x} cy={yQuantity} r="3" fill="#3b82f6" />
-                                <circle cx={x} cy={yCost} r="3" fill="#10b981" />
-                                <text x={x} y="155" textAnchor="middle" className="text-xs fill-gray-500">
-                                  {item.month}
-                                </text>
-                              </g>
+                              <path
+                                key={item.type}
+                                d={pathData}
+                                fill={getGradientId(item.type)}
+                                stroke="white"
+                                strokeWidth="1"
+                                className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                                onMouseEnter={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect()
+                                  const svgRect = e.currentTarget.ownerSVGElement?.getBoundingClientRect()
+                                  if (svgRect) {
+                                    setTooltipPosition({
+                                      x: rect.left - svgRect.left + rect.width / 2,
+                                      y: rect.top - svgRect.top - 10
+                                    })
+                                    setHoveredSegment({
+                                      type: item.type,
+                                      count: item.count,
+                                      totalCost: item.totalCost,
+                                      percentage: percentage
+                                    })
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredSegment(null)
+                                }}
+                              />
                             )
-                          })}
-                        </svg>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          No data available
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {chartType === 'pie' && (
-                  <div className="space-y-4">
-                    {/* Pie Chart */}
-                    <div className="h-40 flex items-center justify-center">
-                      {chartData.fuelTypes.length > 0 ? (
-                        <div className="relative w-32 h-32">
-                          <svg className="w-full h-full" viewBox="0 0 100 100">
-                            {(() => {
-                              const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
-                              let currentAngle = 0
-                              const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
-                              
-                              return chartData.fuelTypes.map((item, index) => {
-                                const percentage = (item.count / total) * 100
-                                const angle = (percentage / 100) * 360
-                                const startAngle = currentAngle
-                                const endAngle = currentAngle + angle
-                                currentAngle += angle
-                                
-                                const startAngleRad = (startAngle - 90) * (Math.PI / 180)
-                                const endAngleRad = (endAngle - 90) * (Math.PI / 180)
-                                
-                                const x1 = 50 + 40 * Math.cos(startAngleRad)
-                                const y1 = 50 + 40 * Math.sin(startAngleRad)
-                                const x2 = 50 + 40 * Math.cos(endAngleRad)
-                                const y2 = 50 + 40 * Math.sin(endAngleRad)
-                                
-                                const largeArcFlag = angle > 180 ? 1 : 0
-                                
-                                const pathData = [
-                                  `M 50 50`,
-                                  `L ${x1} ${y1}`,
-                                  `A 40 40 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                                  `Z`
-                                ].join(' ')
-                                
-                                return (
-                                  <path
-                                    key={item.type}
-                                    d={pathData}
-                                    fill={colors[index % colors.length]}
-                                    stroke="white"
-                                    strokeWidth="1"
-                                  />
-                                )
-                              })
-                            })()}
-                          </svg>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-500">
-                          No data available
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Legend */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      {chartData.fuelTypes.map((item, index) => {
-                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
-                        return (
-                          <div key={item.type} className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded" 
-                              style={{ backgroundColor: colors[index % colors.length] }}
-                            ></div>
-                            <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                              {item.type} ({item.count})
-                            </span>
+                          })
+                        })()}
+                        
+                        {/* Center content */}
+                        <circle cx="60" cy="60" r="20" fill="white" />
+                        <circle cx="60" cy="60" r="20" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                        
+                        {/* Fuel icon */}
+                        <g transform="translate(50, 50)">
+                          <path
+                            d="M20 8h-4V6c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H0v2h2v10l-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            fill="#3b82f6"
+                            transform="scale(0.6)"
+                          />
+                        </g>
+                      </svg>
+                      
+                      {/* Tooltip */}
+                      {hoveredSegment && (
+                        <div 
+                          className={`absolute z-10 px-3 py-2 rounded-lg shadow-lg text-sm font-medium pointer-events-none ${
+                            themeMode === 'dark' 
+                              ? 'bg-gray-800 text-white border border-gray-600' 
+                              : 'bg-white text-gray-900 border border-gray-200'
+                          }`}
+                          style={{
+                            left: `${tooltipPosition.x}px`,
+                            top: `${tooltipPosition.y}px`,
+                            transform: 'translateX(-50%)'
+                          }}
+                        >
+                          <div className="text-center">
+                            <div className="font-semibold">{hoveredSegment.type}</div>
+                            <div className="text-xs mt-1">
+                              <div>Count: {hoveredSegment.count}</div>
+                              <div>Cost: Ghc{hoveredSegment.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                              <div>Percentage: {hoveredSegment.percentage.toFixed(1)}%</div>
+                            </div>
                           </div>
-                        )
-                      })}
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      No data available
+                    </div>
+                  )}
+                </div>
+                
+                {/* Legend */}
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {chartData.fuelTypes.map((item, index) => {
+                    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+                    return (
+                      <div key={item.type} className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded" 
+                          style={{ backgroundColor: colors[index % colors.length] }}
+                        ></div>
+                        <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                          {item.type} ({item.count})
+                        </span>
                   </div>
-                )}
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -998,103 +973,6 @@ export default function FuelPage() {
                 SELECT COLUMNS
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Pie Chart Section */}
-        <div className={`p-6 rounded-2xl mb-6 ${
-          themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-        }`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-lg font-semibold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Fuel Distribution
-            </h3>
-            <div className="flex items-center gap-2">
-              <select 
-                className={`px-3 py-1 rounded text-sm border ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300 text-gray-700'
-                }`}
-              >
-                <option>Monthly</option>
-                <option>Weekly</option>
-                <option>Yearly</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-center">
-            <div className="relative w-48 h-48">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                {(() => {
-                  const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
-                  let currentAngle = 0
-                  const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
-                  
-                  return chartData.fuelTypes.map((item, index) => {
-                    const percentage = (item.count / total) * 100
-                    const angle = (percentage / 100) * 360
-                    const startAngle = currentAngle
-                    const endAngle = currentAngle + angle
-                    currentAngle += angle
-                    
-                    const startAngleRad = (startAngle - 90) * (Math.PI / 180)
-                    const endAngleRad = (endAngle - 90) * (Math.PI / 180)
-                    
-                    const x1 = 50 + 35 * Math.cos(startAngleRad)
-                    const y1 = 50 + 35 * Math.sin(startAngleRad)
-                    const x2 = 50 + 35 * Math.cos(endAngleRad)
-                    const y2 = 50 + 35 * Math.sin(endAngleRad)
-                    
-                    const largeArcFlag = angle > 180 ? 1 : 0
-                    
-                    const pathData = [
-                      `M 50 50`,
-                      `L ${x1} ${y1}`,
-                      `A 35 35 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                      `Z`
-                    ].join(' ')
-                    
-                    return (
-                      <path
-                        key={item.type}
-                        d={pathData}
-                        fill={colors[index % colors.length]}
-                        stroke="white"
-                        strokeWidth="2"
-                      />
-                    )
-                  })
-                })()}
-              </svg>
-            </div>
-          </div>
-          
-          {/* Legend */}
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            {chartData.fuelTypes.slice(0, 2).map((item, index) => {
-              const total = chartData.fuelTypes.reduce((sum, item) => sum + item.count, 0)
-              const percentage = ((item.count / total) * 100).toFixed(0)
-              const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
-              
-              return (
-                <div key={item.type} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: colors[index % colors.length] }}
-                    ></div>
-                    <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {item.type}
-                    </span>
-                  </div>
-                  <span className={`text-lg font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {percentage}%
-                  </span>
-                </div>
-              )
-            })}
           </div>
         </div>
 
@@ -1256,6 +1134,29 @@ export default function FuelPage() {
               }`}>
                 Select Columns
               </h3>
+              
+              {/* Select All Checkbox */}
+              <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedFields.length === availableFields.length}
+                    onChange={handleSelectAllFields}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className={`text-sm font-medium ${
+                    themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Select All Columns
+                  </span>
+                </label>
+                <p className={`text-xs mt-1 ml-7 ${
+                  themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  {selectedFields.length} of {availableFields.length} columns selected
+                </p>
+              </div>
+              
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {availableFields.map((field) => (
                   <label key={field.key} className="flex items-center gap-2">
@@ -1303,7 +1204,7 @@ export default function FuelPage() {
         <AddFuelLogModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
+          onSubmit={() => {
             setShowAddModal(false)
             setNotification({
               isOpen: true,

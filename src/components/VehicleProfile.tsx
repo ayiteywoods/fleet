@@ -132,6 +132,10 @@ export default function VehicleProfile() {
   const [vehicleMakes, setVehicleMakes] = useState<any[]>([])
   const [subsidiaries, setSubsidiaries] = useState<any[]>([])
   const [drivers, setDrivers] = useState<any[]>([])
+  const [hoveredMaintenanceSegment, setHoveredMaintenanceSegment] = useState<{ type: string; count: number; percentage: number } | null>(null)
+  const [maintenanceTooltipPosition, setMaintenanceTooltipPosition] = useState({ x: 0, y: 0 })
+  const [hoveredRepairSegment, setHoveredRepairSegment] = useState<{ type: string; count: number; percentage: number } | null>(null)
+  const [repairTooltipPosition, setRepairTooltipPosition] = useState({ x: 0, y: 0 })
   const [notification, setNotification] = useState({
     isOpen: false,
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -1592,15 +1596,6 @@ export default function VehicleProfile() {
             {/* First Row - Key Information */}
             <div className="flex flex-wrap gap-6 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 dark:text-green-400 text-xs font-bold">ID</span>
-                </div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {vehicle.id}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
                 <div className={`w-3 h-3 rounded-full ${vehicle.status === 'Active' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
                 <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   {vehicle.status?.toLowerCase()}
@@ -1618,19 +1613,10 @@ export default function VehicleProfile() {
               
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
-                  <PhoneIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {vehicle.reg_number}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
                   <MapPinIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Fleet
+                  {vehicle.subsidiary?.name || 'N/A'}
                 </span>
               </div>
               
@@ -1639,7 +1625,7 @@ export default function VehicleProfile() {
                   <CalendarIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {new Date(vehicle.created_at).toLocaleDateString()}
+                  {new Date(vehicle.created_at).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -1647,7 +1633,7 @@ export default function VehicleProfile() {
             {/* Second Row - Additional Details */}
             <div className="flex items-center space-x-4">
               <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                Last Updated: {new Date(vehicle.updated_at).toLocaleDateString()}
+                Last Updated: {new Date(vehicle.updated_at).toLocaleString()}
               </div>
               <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Driver: {vehicle.driver || 'Unassigned'}
@@ -2013,7 +1999,7 @@ export default function VehicleProfile() {
               Created At
             </label>
             <div className={`p-3 rounded-2xl ${themeMode === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-              {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleDateString() : 'Not specified'}
+              {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleString() : 'Not specified'}
             </div>
           </div>
 
@@ -2023,7 +2009,7 @@ export default function VehicleProfile() {
               Updated At
             </label>
             <div className={`p-3 rounded-2xl ${themeMode === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-              {vehicle?.updated_at ? new Date(vehicle.updated_at).toLocaleDateString() : 'Not specified'}
+              {vehicle?.updated_at ? new Date(vehicle.updated_at).toLocaleString() : 'Not specified'}
             </div>
           </div>
         </div>
@@ -2247,13 +2233,13 @@ export default function VehicleProfile() {
                             {index + 1}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {maintenance.date ? new Date(maintenance.date).toLocaleDateString() : 'N/A'}
+                            {maintenance.service_date ? new Date(maintenance.service_date).toLocaleString() : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {vehicle?.reg_number || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {maintenance.type || 'N/A'}
+                            {maintenance.service_type || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {maintenance.cost ? `₵${maintenance.cost}` : 'N/A'}
@@ -2417,17 +2403,45 @@ export default function VehicleProfile() {
                 </div>
               </div>
 
-              {/* Pie Chart - Maintenance Status Distribution */}
+              {/* Modern Donut Chart - Maintenance Status Distribution */}
               <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Maintenance Status Distribution</h3>
                 <div className="h-80 flex flex-col items-center justify-center">
-                  <svg width="200" height="200" viewBox="0 0 200 200" className="overflow-visible mb-4">
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="overflow-visible mb-4 drop-shadow-lg">
+                    <defs>
+                      {/* Gradient definitions */}
+                      <linearGradient id="completedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                      <linearGradient id="pendingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#d97706" />
+                      </linearGradient>
+                      <linearGradient id="inProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#1d4ed8" />
+                      </linearGradient>
+                      <linearGradient id="cancelledGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="100%" stopColor="#dc2626" />
+                      </linearGradient>
+                      <linearGradient id="scheduledGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#7c3aed" />
+                      </linearGradient>
+                    </defs>
+                    
                     {(() => {
                       if (maintenanceData.length === 0) {
                         return (
-                          <text x="100" y="100" textAnchor="middle" className="text-sm fill-gray-500">
-                            No data available
-                          </text>
+                          <g>
+                            <circle cx="100" cy="100" r="60" fill="white" />
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#e5e7eb" strokeWidth="1" />
+                            <text x="100" y="100" textAnchor="middle" className="text-sm fill-gray-500">
+                              No data available
+                            </text>
+                          </g>
                         )
                       }
                       
@@ -2439,10 +2453,10 @@ export default function VehicleProfile() {
                       }, {} as Record<string, number>)
                       
                       const statuses = Object.keys(statusCounts)
-                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
-                      
+                      const total = maintenanceData.length
                       let currentAngle = 0
-                      const radius = 80
+                      const innerRadius = 50
+                      const outerRadius = 80
                       const centerX = 100
                       const centerY = 100
                       
@@ -2450,25 +2464,48 @@ export default function VehicleProfile() {
                         <g>
                           {statuses.map((status, index) => {
                             const count = statusCounts[status]
-                            const percentage = (count / maintenanceData.length) * 100
-                            const angle = (count / maintenanceData.length) * 360
+                            const percentage = (count / total) * 100
+                            const angle = (count / total) * 360
                             
                             const startAngle = currentAngle
                             const endAngle = currentAngle + angle
                             
-                            const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180)
-                            const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180)
-                            const x2 = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180)
-                            const y2 = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180)
+                            const startAngleRad = (startAngle - 90) * (Math.PI / 180)
+                            const endAngleRad = (endAngle - 90) * (Math.PI / 180)
+                            
+                            // Outer arc coordinates
+                            const x1 = centerX + outerRadius * Math.cos(startAngleRad)
+                            const y1 = centerY + outerRadius * Math.sin(startAngleRad)
+                            const x2 = centerX + outerRadius * Math.cos(endAngleRad)
+                            const y2 = centerY + outerRadius * Math.sin(endAngleRad)
+                            
+                            // Inner arc coordinates
+                            const x3 = centerX + innerRadius * Math.cos(endAngleRad)
+                            const y3 = centerY + innerRadius * Math.sin(endAngleRad)
+                            const x4 = centerX + innerRadius * Math.cos(startAngleRad)
+                            const y4 = centerY + innerRadius * Math.sin(startAngleRad)
                             
                             const largeArcFlag = angle > 180 ? 1 : 0
                             
                             const pathData = [
-                              `M ${centerX} ${centerY}`,
-                              `L ${x1} ${y1}`,
-                              `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                              'Z'
+                              `M ${x1} ${y1}`,
+                              `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                              `L ${x3} ${y3}`,
+                              `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+                              `Z`
                             ].join(' ')
+                            
+                            // Get gradient ID based on status
+                            const getGradientId = (status: string) => {
+                              switch (status.toLowerCase()) {
+                                case 'completed': return 'url(#completedGradient)'
+                                case 'pending': return 'url(#pendingGradient)'
+                                case 'in_progress': return 'url(#inProgressGradient)'
+                                case 'cancelled': return 'url(#cancelledGradient)'
+                                case 'scheduled': return 'url(#scheduledGradient)'
+                                default: return 'url(#pendingGradient)'
+                              }
+                            }
                             
                             currentAngle += angle
                             
@@ -2476,19 +2513,52 @@ export default function VehicleProfile() {
                               <path
                                 key={status}
                                 d={pathData}
-                                fill={colors[index % colors.length]}
+                                fill={getGradientId(status)}
                                 stroke="white"
-                                strokeWidth="2"
+                                strokeWidth="1"
+                                className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                                onMouseEnter={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect()
+                                  const svgRect = e.currentTarget.ownerSVGElement?.getBoundingClientRect()
+                                  if (svgRect) {
+                                    setMaintenanceTooltipPosition({
+                                      x: rect.left - svgRect.left + rect.width / 2,
+                                      y: rect.top - svgRect.top - 10
+                                    })
+                                    setHoveredMaintenanceSegment({
+                                      type: status,
+                                      count: statusCounts[status],
+                                      percentage: percentage
+                                    })
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredMaintenanceSegment(null)
+                                }}
                               />
                             )
                           })}
+                          
+                          {/* Center content */}
+                          <circle cx="100" cy="100" r="45" fill="white" />
+                          <circle cx="100" cy="100" r="45" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                          
+                          {/* Maintenance icon */}
+                          <g transform="translate(85, 85)">
+                            <path
+                              d="M30 4h-4V2c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H0v2h2v20c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6h2V4h-4zM6 2h16v2H6V2zm16 20H4V6h18v16z"
+                              fill="#3b82f6"
+                              transform="scale(0.8)"
+                            />
+                          </g>
+                          
                         </g>
                       )
                     })()}
                   </svg>
                   
-                  {/* Legend below the pie chart */}
-                  <div className="flex flex-wrap justify-center gap-4 mt-2">
+                  {/* Modern Legend */}
+                  <div className="grid grid-cols-1 gap-2 mt-4 w-full max-w-xs">
                     {(() => {
                       if (maintenanceData.length === 0) return null
                       
@@ -2499,21 +2569,43 @@ export default function VehicleProfile() {
                       }, {} as Record<string, number>)
                       
                       const statuses = Object.keys(statusCounts)
-                      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                      const total = maintenanceData.length
+                      
+                      const getStatusColor = (status: string) => {
+                        switch (status.toLowerCase()) {
+                          case 'completed': return '#10b981'
+                          case 'pending': return '#f59e0b'
+                          case 'in_progress': return '#3b82f6'
+                          case 'cancelled': return '#ef4444'
+                          case 'scheduled': return '#8b5cf6'
+                          default: return '#f59e0b'
+                        }
+                      }
                       
                       return statuses.map((status, index) => {
                         const count = statusCounts[status]
-                        const color = colors[index % colors.length]
+                        const percentage = ((count / total) * 100).toFixed(0)
+                        const color = getStatusColor(status)
                         
                         return (
-                          <div key={status} className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-sm"
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className="text-xs text-gray-700 dark:text-gray-300">
-                              {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')} ({count})
-                            </span>
+                          <div key={status} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full shadow-sm"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-bold text-gray-900 dark:text-white">
+                                {count}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {percentage}%
+                              </div>
+                            </div>
                           </div>
                         )
                       })
@@ -2837,17 +2929,45 @@ export default function VehicleProfile() {
                 </div>
               </div>
 
-              {/* Pie Chart - Repair Status Distribution */}
+              {/* Modern Donut Chart - Repair Status Distribution */}
               <div className="bg-white dark:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 p-6">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Repair Status Distribution</h3>
                 <div className="h-80 flex flex-col items-center justify-center">
-                  <svg width="200" height="200" viewBox="0 0 200 200" className="overflow-visible mb-4">
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="overflow-visible mb-4 drop-shadow-lg">
+                    <defs>
+                      {/* Gradient definitions */}
+                      <linearGradient id="repairCompletedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#059669" />
+                      </linearGradient>
+                      <linearGradient id="repairPendingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#1d4ed8" />
+                      </linearGradient>
+                      <linearGradient id="repairInProgressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#d97706" />
+                      </linearGradient>
+                      <linearGradient id="repairCancelledGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="100%" stopColor="#dc2626" />
+                      </linearGradient>
+                      <linearGradient id="repairScheduledGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#7c3aed" />
+                      </linearGradient>
+                    </defs>
+                    
                     {(() => {
                       if (repairData.length === 0) {
                         return (
-                          <text x="100" y="100" textAnchor="middle" className="text-sm fill-gray-500">
-                            No data available
-                          </text>
+                          <g>
+                            <circle cx="100" cy="100" r="60" fill="white" />
+                            <circle cx="100" cy="100" r="60" fill="none" stroke="#e5e7eb" strokeWidth="1" />
+                            <text x="100" y="100" textAnchor="middle" className="text-sm fill-gray-500">
+                              No data available
+                            </text>
+                          </g>
                         )
                       }
                       
@@ -2859,20 +2979,10 @@ export default function VehicleProfile() {
                       }, {} as Record<string, number>)
                       
                       const statuses = Object.keys(statusCounts)
-                      
-                      // Map specific statuses to specific colors
-                      const getStatusColor = (status: string) => {
-                        switch (status) {
-                          case 'completed': return '#10b981' // Green
-                          case 'in_progress': return '#f59e0b' // Amber
-                          case 'pending': return '#3b82f6' // Blue
-                          case 'cancelled': return '#ef4444' // Red
-                          default: return '#8b5cf6' // Purple
-                        }
-                      }
-                      
+                      const total = repairData.length
                       let currentAngle = 0
-                      const radius = 80
+                      const innerRadius = 50
+                      const outerRadius = 80
                       const centerX = 100
                       const centerY = 100
                       
@@ -2880,25 +2990,48 @@ export default function VehicleProfile() {
                         <g>
                           {statuses.map((status, index) => {
                             const count = statusCounts[status]
-                            const percentage = (count / repairData.length) * 100
-                            const angle = (count / repairData.length) * 360
+                            const percentage = (count / total) * 100
+                            const angle = (count / total) * 360
                             
                             const startAngle = currentAngle
                             const endAngle = currentAngle + angle
                             
-                            const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180)
-                            const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180)
-                            const x2 = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180)
-                            const y2 = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180)
+                            const startAngleRad = (startAngle - 90) * (Math.PI / 180)
+                            const endAngleRad = (endAngle - 90) * (Math.PI / 180)
+                            
+                            // Outer arc coordinates
+                            const x1 = centerX + outerRadius * Math.cos(startAngleRad)
+                            const y1 = centerY + outerRadius * Math.sin(startAngleRad)
+                            const x2 = centerX + outerRadius * Math.cos(endAngleRad)
+                            const y2 = centerY + outerRadius * Math.sin(endAngleRad)
+                            
+                            // Inner arc coordinates
+                            const x3 = centerX + innerRadius * Math.cos(endAngleRad)
+                            const y3 = centerY + innerRadius * Math.sin(endAngleRad)
+                            const x4 = centerX + innerRadius * Math.cos(startAngleRad)
+                            const y4 = centerY + innerRadius * Math.sin(startAngleRad)
                             
                             const largeArcFlag = angle > 180 ? 1 : 0
                             
                             const pathData = [
-                              `M ${centerX} ${centerY}`,
-                              `L ${x1} ${y1}`,
-                              `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                              'Z'
+                              `M ${x1} ${y1}`,
+                              `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                              `L ${x3} ${y3}`,
+                              `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
+                              `Z`
                             ].join(' ')
+                            
+                            // Get gradient ID based on status
+                            const getGradientId = (status: string) => {
+                              switch (status.toLowerCase()) {
+                                case 'completed': return 'url(#repairCompletedGradient)'
+                                case 'pending': return 'url(#repairPendingGradient)'
+                                case 'in_progress': return 'url(#repairInProgressGradient)'
+                                case 'cancelled': return 'url(#repairCancelledGradient)'
+                                case 'scheduled': return 'url(#repairScheduledGradient)'
+                                default: return 'url(#repairPendingGradient)'
+                              }
+                            }
                             
                             currentAngle += angle
                             
@@ -2906,19 +3039,34 @@ export default function VehicleProfile() {
                               <path
                                 key={status}
                                 d={pathData}
-                                fill={getStatusColor(status)}
+                                fill={getGradientId(status)}
                                 stroke="white"
-                                strokeWidth="2"
+                                strokeWidth="1"
+                                className="transition-all duration-300 hover:opacity-80"
                               />
                             )
                           })}
+                          
+                          {/* Center content */}
+                          <circle cx="100" cy="100" r="45" fill="white" />
+                          <circle cx="100" cy="100" r="45" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                          
+                          {/* Repair icon */}
+                          <g transform="translate(85, 85)">
+                            <path
+                              d="M30 4h-4V2c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H0v2h2v20c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6h2V4h-4zM6 2h16v2H6V2zm16 20H4V6h18v16z"
+                              fill="#ef4444"
+                              transform="scale(0.8)"
+                            />
+                          </g>
+                          
                         </g>
                       )
                     })()}
                   </svg>
                   
-                  {/* Legend below the pie chart */}
-                  <div className="flex flex-wrap justify-center gap-4 mt-2">
+                  {/* Modern Legend */}
+                  <div className="grid grid-cols-1 gap-2 mt-4 w-full max-w-xs">
                     {(() => {
                       if (repairData.length === 0) return null
                       
@@ -2929,31 +3077,43 @@ export default function VehicleProfile() {
                       }, {} as Record<string, number>)
                       
                       const statuses = Object.keys(statusCounts)
+                      const total = repairData.length
                       
-                      // Map specific statuses to specific colors
                       const getStatusColor = (status: string) => {
-                        switch (status) {
-                          case 'completed': return '#10b981' // Green
-                          case 'in_progress': return '#f59e0b' // Amber
-                          case 'pending': return '#3b82f6' // Blue
-                          case 'cancelled': return '#ef4444' // Red
-                          default: return '#8b5cf6' // Purple
+                        switch (status.toLowerCase()) {
+                          case 'completed': return '#10b981'
+                          case 'pending': return '#3b82f6'
+                          case 'in_progress': return '#f59e0b'
+                          case 'cancelled': return '#ef4444'
+                          case 'scheduled': return '#8b5cf6'
+                          default: return '#3b82f6'
                         }
                       }
                       
                       return statuses.map((status, index) => {
                         const count = statusCounts[status]
+                        const percentage = ((count / total) * 100).toFixed(0)
                         const color = getStatusColor(status)
                         
                         return (
-                          <div key={status} className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-sm"
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className="text-xs text-gray-700 dark:text-gray-300">
-                              {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')} ({count})
-                            </span>
+                          <div key={status} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full shadow-sm"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-bold text-gray-900 dark:text-white">
+                                {count}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {percentage}%
+                              </div>
+                            </div>
                           </div>
                         )
                       })

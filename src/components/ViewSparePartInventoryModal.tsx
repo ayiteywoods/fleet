@@ -45,8 +45,8 @@ export default function ViewSparePartInventoryModal({ isOpen, onClose, inventory
       ['Description', inventory.description],
       ['Supplier', inventory.supplier_name],
       ['Quantity', inventory.quantity],
-      ['Unit Price', `$${inventory.unit_price}`],
-      ['Total Value', `$${inventory.total_value}`],
+      ['Unit Price', `₵${inventory.unit_price}`],
+      ['Total Value', `₵${inventory.total_value}`],
       ['Minimum Stock Level', inventory.minimum_stock_level],
       ['Maximum Stock Level', inventory.maximum_stock_level],
       ['Location', inventory.location],
@@ -70,8 +70,8 @@ export default function ViewSparePartInventoryModal({ isOpen, onClose, inventory
       ['Description', inventory.description],
       ['Supplier', inventory.supplier_name],
       ['Quantity', inventory.quantity],
-      ['Unit Price', `$${inventory.unit_price}`],
-      ['Total Value', `$${inventory.total_value}`],
+      ['Unit Price', `₵${inventory.unit_price}`],
+      ['Total Value', `₵${inventory.total_value}`],
       ['Minimum Stock Level', inventory.minimum_stock_level],
       ['Maximum Stock Level', inventory.maximum_stock_level],
       ['Location', inventory.location],
@@ -119,8 +119,8 @@ export default function ViewSparePartInventoryModal({ isOpen, onClose, inventory
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.text(`Quantity: ${inventory.quantity}`, 20, 120)
-    doc.text(`Unit Price: $${inventory.unit_price}`, 20, 130)
-    doc.text(`Total Value: $${inventory.total_value}`, 20, 140)
+    doc.text(`Unit Price: ₵${inventory.unit_price}`, 20, 130)
+    doc.text(`Total Value: ₵${inventory.total_value}`, 20, 140)
     doc.text(`Minimum Stock Level: ${inventory.minimum_stock_level}`, 20, 150)
     doc.text(`Maximum Stock Level: ${inventory.maximum_stock_level}`, 20, 160)
     
@@ -194,11 +194,11 @@ export default function ViewSparePartInventoryModal({ isOpen, onClose, inventory
               </div>
               <div class="field">
                 <span class="label">Unit Price:</span>
-                <span class="value">$${inventory.unit_price}</span>
+                <span class="value">₵${inventory.unit_price}</span>
               </div>
               <div class="field">
                 <span class="label">Total Value:</span>
-                <span class="value">$${inventory.total_value}</span>
+                <span class="value">₵${inventory.total_value}</span>
               </div>
               <div class="field">
                 <span class="label">Minimum Stock Level:</span>

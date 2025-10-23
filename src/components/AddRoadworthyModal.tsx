@@ -23,6 +23,7 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
     updated_by: '1'
   })
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -47,14 +48,58 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
       }
     }
 
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch('/api/vehicles?simple=true')
+        if (response.ok) {
+          const data = await response.json()
+          setVehicles(data)
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error)
+      }
+    }
+
     if (isOpen) {
       fetchVehicleTypes()
+      fetchVehicles()
     }
   }, [isOpen])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleVehicleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const vehicleId = e.target.value
+    setFormData(prev => ({ ...prev, vehicle_number: vehicleId }))
+
+    if (vehicleId) {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/vehicles/details?id=${vehicleId}`)
+        if (response.ok) {
+          const vehicleDetails = await response.json()
+          setFormData(prev => ({
+            ...prev,
+            company: vehicleDetails.subsidiary_name || '',
+            vehicle_type: vehicleDetails.vehicle_type || ''
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching vehicle details:', error)
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      // Clear company and vehicle type when no vehicle is selected
+      setFormData(prev => ({
+        ...prev,
+        company: '',
+        vehicle_type: ''
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,13 +157,17 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
                   value={formData.company}
                   onChange={handleChange}
                   required
+                  readOnly={!!formData.vehicle_number}
                   className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                  } ${formData.vehicle_number ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}`}
                 />
               </div>
+              {formData.vehicle_number && (
+                <p className="text-green-600 text-xs">Auto-filled from vehicle selection</p>
+              )}
             </div>
 
             {/* Vehicle Number */}
@@ -128,19 +177,29 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
               </label>
               <div className="relative">
                 <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
+                <select
                   name="vehicle_number"
                   value={formData.vehicle_number}
-                  onChange={handleChange}
+                  onChange={handleVehicleChange}
                   required
+                  disabled={loading}
                   className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                />
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Select Vehicle</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.reg_number} - {vehicle.trim} ({vehicle.year})
+                    </option>
+                  ))}
+                </select>
               </div>
+              {loading && (
+                <p className="text-blue-500 text-xs">Loading vehicle details...</p>
+              )}
             </div>
 
             {/* Vehicle Type */}
@@ -155,11 +214,12 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
                   value={formData.vehicle_type}
                   onChange={handleChange}
                   required
+                  disabled={!!formData.vehicle_number}
                   className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                  } ${formData.vehicle_number ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Vehicle Type</option>
                   {vehicleTypes.map((type) => (
@@ -169,6 +229,9 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
                   ))}
                 </select>
               </div>
+              {formData.vehicle_number && (
+                <p className="text-green-600 text-xs">Auto-filled from vehicle selection</p>
+              )}
             </div>
 
             {/* Date Issued */}

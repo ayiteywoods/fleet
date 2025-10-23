@@ -56,6 +56,7 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
     mechanic_id: '',
     workshop_id: ''
   })
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(false)
 
   // Update vehicle_id when vehicleId prop changes
@@ -65,8 +66,15 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
         ...prev,
         vehicle_id: vehicleId
       }))
+      // Find and set the selected vehicle
+      if (vehicles.length > 0) {
+        const vehicle = vehicles.find(v => v.id === vehicleId)
+        if (vehicle) {
+          setSelectedVehicle(vehicle)
+        }
+      }
     }
-  }, [vehicleId])
+  }, [vehicleId, vehicles])
 
   // Fetch data when modal opens
   useEffect(() => {
@@ -210,6 +218,51 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
+            </div>
+
+            {/* Vehicle Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Vehicle *
+              </label>
+              {vehicleId && selectedVehicle ? (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={`${selectedVehicle.reg_number} - ${selectedVehicle.trim} (${selectedVehicle.year})`}
+                    disabled
+                    className={`w-full px-3 py-2 border rounded-3xl bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-500 cursor-not-allowed`}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-end pr-3">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-600 px-2 py-1 rounded">
+                      Pre-selected
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  name="vehicle_id"
+                  value={formData.vehicle_id}
+                  onChange={handleChange}
+                  required
+                  disabled={fetchLoading}
+                  className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } ${fetchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Select Vehicle</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.reg_number} - {vehicle.trim} ({vehicle.year})
+                    </option>
+                  ))}
+                </select>
+              )}
+              {fetchLoading && (
+                <p className="text-blue-500 text-xs">Loading vehicles...</p>
+              )}
             </div>
 
             {/* Cost */}

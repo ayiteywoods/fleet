@@ -95,7 +95,7 @@ export async function PUT(
 
     // Add spcode if subsidiary_id is provided
     if (subsidiary_id) {
-      updateData.spcode = parseInt(subsidiary_id)
+      updateData.spcode = BigInt(subsidiary_id)
     }
 
     const driver = await prisma.driver_operators.update({

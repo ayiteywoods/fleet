@@ -77,6 +77,7 @@ export default function VehiclesPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -84,7 +85,7 @@ export default function VehiclesPage() {
     message: ''
   })
   const [selectedFields, setSelectedFields] = useState([
-    'reg_number', 'vin_number', 'trim', 'year', 'status', 'color', 'vehicle_type_name', 'vehicle_make_name', 'spcode'
+    'reg_number', 'vin_number', 'trim', 'year', 'status', 'color', 'vehicle_type_name', 'vehicle_make_name', 'subsidiary_name'
   ])
 
   // All available fields from the vehicles table
@@ -104,7 +105,7 @@ export default function VehiclesPage() {
     { key: 'next_service_km', label: 'Next Service (Km)', type: 'number' },
     { key: 'vehicle_type_name', label: 'Vehicle Type', type: 'text' },
     { key: 'vehicle_make_name', label: 'Make', type: 'text' },
-    { key: 'spcode', label: 'Subsidiary', type: 'text' },
+    { key: 'subsidiary_name', label: 'Subsidiary', type: 'text' },
     { key: 'notes', label: 'Notes', type: 'text' },
     { key: 'created_at', label: 'Created At', type: 'date' },
     { key: 'updated_at', label: 'Updated At', type: 'date' }
@@ -115,7 +116,7 @@ export default function VehiclesPage() {
     const fetchVehicles = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/vehicles')
+        const response = await fetch(`/api/vehicles?t=${Date.now()}`)
         if (response.ok) {
           const data = await response.json()
           setVehicles(data)
@@ -138,16 +139,19 @@ export default function VehiclesPage() {
   const maintenanceVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'maintenance').length
   const repairVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'repair').length
   const inactiveVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'inactive').length
-  const dispatchedVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'dispatched').length
 
   const kpiCards = [
-    { title: 'Total', value: totalVehicles.toString(), icon: TruckIcon, color: 'blue' },
-    { title: 'Active', value: activeVehicles.toString(), icon: CheckCircleIcon, color: 'blue' },
-    { title: 'Maintenance', value: maintenanceVehicles.toString(), icon: WrenchScrewdriverIcon, color: 'blue' },
-    { title: 'Repair', value: repairVehicles.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Dispatched', value: dispatchedVehicles.toString(), icon: TruckIcon, color: 'blue' },
-    { title: 'Inactive', value: inactiveVehicles.toString(), icon: UserMinusIcon, color: 'blue' }
+    { title: 'Total', value: totalVehicles.toString(), icon: TruckIcon, color: 'blue', status: null },
+    { title: 'Active', value: activeVehicles.toString(), icon: CheckCircleIcon, color: 'blue', status: 'active' },
+    { title: 'Inactive', value: inactiveVehicles.toString(), icon: UserMinusIcon, color: 'blue', status: 'inactive' },
+    { title: 'Maintenance', value: maintenanceVehicles.toString(), icon: WrenchScrewdriverIcon, color: 'blue', status: 'maintenance' },
+    { title: 'Repair', value: repairVehicles.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'repair' }
   ]
+
+  const handleCardClick = (status: string | null) => {
+    setStatusFilter(status)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -166,6 +170,14 @@ export default function VehiclesPage() {
     }
   }
 
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      setSelectedFields([])
+    } else {
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
+
   const getSelectedFieldsData = () => {
     return selectedFields.map(fieldKey => 
       availableFields.find(field => field.key === fieldKey)
@@ -180,10 +192,6 @@ export default function VehiclesPage() {
       return '-'
     }
     
-    // Special handling for spcode field - display subsidiary name instead of ID
-    if (fieldKey === 'spcode' && vehicle?.subsidiary_name) {
-      return vehicle.subsidiary_name
-    }
     
     // Convert to string and clean up
     let stringValue = String(value).trim()
@@ -207,9 +215,48 @@ export default function VehiclesPage() {
           return `${Number(stringValue).toLocaleString()} km`
         }
         return Number(stringValue).toLocaleString()
+      case 'text':
+        // Special handling for trim/model field
+        if (fieldKey === 'trim') {
+          // First, try to extract meaningful model name from corrupted data
+          // Look for common patterns like "ModelName123" or "Model Name 123"
+          let cleanTrim = stringValue
+          
+          // If it contains numbers mixed with text, try to extract the text part
+          if (/\d/.test(cleanTrim) && /[a-zA-Z]/.test(cleanTrim)) {
+            // Split by numbers and take the longest text segment
+            const textParts = cleanTrim.split(/\d+/).filter(part => part.trim().length > 0)
+            if (textParts.length > 0) {
+              cleanTrim = textParts.reduce((longest, current) => 
+                current.trim().length > longest.trim().length ? current : longest
+              ).trim()
+            }
+          }
+          
+          // Clean up special characters but keep hyphens and spaces
+          cleanTrim = cleanTrim.replace(/[^\w\s-]/g, '').trim()
+          // Remove extra spaces
+          cleanTrim = cleanTrim.replace(/\s+/g, ' ').trim()
+          
+          // If still empty or very short, try to preserve original if it has some content
+          if (!cleanTrim || cleanTrim.length < 2) {
+            // If original has some alphabetic content, use a cleaned version
+            const hasLetters = /[a-zA-Z]/.test(stringValue)
+            if (hasLetters) {
+              cleanTrim = stringValue.replace(/[^\w\s-]/g, '').replace(/\s+/g, ' ').trim()
+            }
+            // If still empty, return default
+            if (!cleanTrim || cleanTrim.length < 2) {
+              return 'Model Not Specified'
+            }
+          }
+          
+          return cleanTrim
+        }
+        return stringValue
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -276,9 +323,48 @@ export default function VehiclesPage() {
           return `${Number(stringValue).toLocaleString()} km`
         }
         return Number(stringValue).toLocaleString()
+      case 'text':
+        // Special handling for trim/model field
+        if (fieldKey === 'trim') {
+          // First, try to extract meaningful model name from corrupted data
+          // Look for common patterns like "ModelName123" or "Model Name 123"
+          let cleanTrim = stringValue
+          
+          // If it contains numbers mixed with text, try to extract the text part
+          if (/\d/.test(cleanTrim) && /[a-zA-Z]/.test(cleanTrim)) {
+            // Split by numbers and take the longest text segment
+            const textParts = cleanTrim.split(/\d+/).filter(part => part.trim().length > 0)
+            if (textParts.length > 0) {
+              cleanTrim = textParts.reduce((longest, current) => 
+                current.trim().length > longest.trim().length ? current : longest
+              ).trim()
+            }
+          }
+          
+          // Clean up special characters but keep hyphens and spaces
+          cleanTrim = cleanTrim.replace(/[^\w\s-]/g, '').trim()
+          // Remove extra spaces
+          cleanTrim = cleanTrim.replace(/\s+/g, ' ').trim()
+          
+          // If still empty or very short, try to preserve original if it has some content
+          if (!cleanTrim || cleanTrim.length < 2) {
+            // If original has some alphabetic content, use a cleaned version
+            const hasLetters = /[a-zA-Z]/.test(stringValue)
+            if (hasLetters) {
+              cleanTrim = stringValue.replace(/[^\w\s-]/g, '').replace(/\s+/g, ' ').trim()
+            }
+            // If still empty, return default
+            if (!cleanTrim || cleanTrim.length < 2) {
+              return 'Model Not Specified'
+            }
+          }
+          
+          return cleanTrim
+        }
+        return stringValue
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -375,6 +461,8 @@ export default function VehiclesPage() {
 
   const handleUpdateVehicle = async (vehicleData: any) => {
     console.log('Update vehicle data:', vehicleData) // Debug log
+    console.log('Vehicle ID:', vehicleData.id) // Debug log
+    console.log('Subsidiary value:', vehicleData.subsidiary) // Debug log
     try {
       const response = await fetch('/api/vehicles', {
         method: 'PUT',
@@ -388,28 +476,37 @@ export default function VehiclesPage() {
       console.log('Update response:', result) // Debug log
 
       if (response.ok) {
-        setNotification({
-          isOpen: true,
-          type: 'success',
-          title: 'Vehicle Updated Successfully!',
-          message: `Vehicle "${vehicleData.registrationNumber}" has been updated in the database. The table will refresh shortly.`
-        })
+        // Check if it's a "no changes" response
+        if (result.message === "No changes detected - vehicle data is already up to date") {
+          setNotification({
+            isOpen: true,
+            type: 'info',
+            title: 'No Changes Made',
+            message: 'The vehicle data is already up to date. No changes were needed.'
+          })
+        } else {
+          setNotification({
+            isOpen: true,
+            type: 'success',
+            title: 'Vehicle Updated Successfully!',
+            message: `Vehicle "${vehicleData.registrationNumber}" has been updated in the database.`
+          })
+        }
         
         // Close the modal first
         setShowEditVehicleModal(false)
         
-        // Refresh the vehicles data after a short delay
-        setTimeout(async () => {
-          try {
-            const response = await fetch('/api/vehicles')
-            if (response.ok) {
-              const data = await response.json()
-              setVehicles(data)
-            }
-          } catch (error) {
-            console.error('Error refreshing vehicles:', error)
+        // Immediately refresh the vehicles data
+        try {
+          const refreshResponse = await fetch(`/api/vehicles?t=${Date.now()}`)
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json()
+            setVehicles(data)
+            console.log('Vehicles data refreshed successfully')
           }
-        }, 2000) // 2 second delay to let user see the notification
+        } catch (error) {
+          console.error('Error refreshing vehicles:', error)
+        }
       } else {
         setNotification({
           isOpen: true,
@@ -672,8 +769,14 @@ export default function VehiclesPage() {
     setSearchQuery(query)
   }
 
-  // Filter vehicles based on search query
+  // Filter vehicles based on search query and status filter
   const filteredVehicles = vehicles.filter(vehicle => {
+    // Apply status filter
+    if (statusFilter && vehicle?.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+      return false
+    }
+    
+    // Apply search filter
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -701,27 +804,44 @@ export default function VehiclesPage() {
           <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
         </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
+            const isActive = statusFilter === card.status
             return (
-              <div key={index} className={`p-6 rounded-2xl ${
-                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-              }`}>
+              <div 
+                key={index} 
+                onClick={() => handleCardClick(card.status)}
+                className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 ${
+                  themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+                } ${
+                  isActive 
+                    ? 'ring-2 ring-blue-500 shadow-lg transform scale-105' 
+                    : 'hover:shadow-md hover:transform hover:scale-102'
+                }`}
+              >
                 <div className="flex items-center">
-                  <div className={`p-3 rounded-full ${
+                  <div className={`p-3 rounded-full transition-colors ${
                     themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  } ${
+                    isActive ? 'bg-blue-100' : ''
                   }`}>
-                    <IconComponent className={`w-6 h-6 text-brand-500`} />
+                    <IconComponent className={`w-6 h-6 transition-colors ${
+                      isActive ? 'text-blue-600' : 'text-brand-500'
+                    }`} />
                   </div>
                   <div className="ml-4">
-                    <h3 className={`text-sm font-medium ${
+                    <h3 className={`text-sm font-medium transition-colors ${
                       themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.title}
                     </h3>
-                    <p className={`text-2xl font-bold ${
+                    <p className={`text-2xl font-bold transition-colors ${
                       themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.value}
                     </p>
@@ -942,6 +1062,26 @@ export default function VehiclesPage() {
                   </p>
                 </div>
                 <div className="p-4 max-h-64 overflow-y-auto">
+                  <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedFields.length === availableFields.length}
+                        onChange={handleSelectAllFields}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className={`text-sm font-medium ${
+                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Select All Columns
+                      </span>
+                    </label>
+                    <p className={`text-xs mt-1 ml-7 ${
+                      themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {selectedFields.length} of {availableFields.length} columns selected
+                    </p>
+                  </div>
                   <div className="grid grid-cols-1 gap-2">
                     {availableFields.map((field) => (
                       <label
@@ -1129,7 +1269,7 @@ export default function VehiclesPage() {
               themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
             }`}>
               Showing 1 to {filteredVehicles.length} of {filteredVehicles.length} entries
-              {searchQuery && (
+              {(searchQuery || statusFilter) && (
                 <span className="ml-2 text-blue-600">
                   (filtered from {vehicles.length} total)
                 </span>

@@ -156,6 +156,23 @@ export async function POST(request: Request) {
       data: vehicleData
     });
 
+    // If a driver is assigned, update the driver_operator record to link to this vehicle
+    if (body.assignedTo) {
+      try {
+        await prisma.driver_operators.update({
+          where: { id: BigInt(body.assignedTo) },
+          data: {
+            vehicle_id: newVehicle.id,
+            updated_at: new Date(),
+            updated_by: 1
+          }
+        });
+      } catch (driverError) {
+        console.warn('Could not assign driver to vehicle:', driverError);
+        // Continue with vehicle creation even if driver assignment fails
+      }
+    }
+
     // Convert BigInt values to strings for JSON serialization
     const serializedVehicle = {
       ...newVehicle,
@@ -190,42 +207,170 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Vehicle ID is required' }, { status: 400 });
     }
 
-    // Map form data to database fields
-    const vehicleData = {
-      reg_number: updateData.registrationNumber,
-      vin_number: updateData.vin,
-      trim: updateData.model,
-      year: parseInt(updateData.year) || null,
-      status: updateData.status || 'active', // Use provided status or default to active
-      color: updateData.color,
-      engine_number: '', // Default empty
-      chassis_number: '', // Default empty
-      current_region: updateData.location,
-      current_district: updateData.location, // Use location for both
-      current_mileage: parseFloat(updateData.currentMileage) || 0,
-      last_service_date: updateData.purchaseDate ? new Date(updateData.purchaseDate) : null,
-      next_service_km: parseInt(updateData.nextServiceKm) || 0,
-      type_id: 1, // Default type ID
-      make_id: 1, // Default make ID
-      notes: updateData.additionalNotes,
+    // Get the current vehicle data to compare
+    const currentVehicle = await prisma.vehicles.findUnique({
+      where: { id: BigInt(id) },
+      select: {
+        reg_number: true,
+        vin_number: true,
+        trim: true,
+        year: true,
+        status: true,
+        color: true,
+        engine_number: true,
+        chassis_number: true,
+        current_region: true,
+        current_district: true,
+        current_mileage: true,
+        last_service_date: true,
+        next_service_km: true,
+        type_id: true,
+        make_id: true,
+        notes: true,
+        spcode: true
+      }
+    });
+
+    if (!currentVehicle) {
+      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
+    }
+
+    // Map form data to database fields - only include fields that have changed
+    const vehicleData: any = {
       updated_at: new Date(),
       updated_by: 1, // Default user ID (integer)
     };
 
+    // Only update fields that have actually changed
+    if (updateData.registrationNumber && updateData.registrationNumber !== currentVehicle.reg_number) {
+      vehicleData.reg_number = updateData.registrationNumber;
+    }
+    if (updateData.vin && updateData.vin !== currentVehicle.vin_number) {
+      vehicleData.vin_number = updateData.vin;
+    }
+    if (updateData.model && updateData.model !== currentVehicle.trim) {
+      vehicleData.trim = updateData.model;
+    }
+    if (updateData.year && parseInt(updateData.year) !== currentVehicle.year) {
+      vehicleData.year = parseInt(updateData.year);
+    }
+    if (updateData.status && updateData.status !== currentVehicle.status) {
+      vehicleData.status = updateData.status;
+    }
+    if (updateData.color && updateData.color !== currentVehicle.color) {
+      vehicleData.color = updateData.color;
+    }
+    if (updateData.engineNumber && updateData.engineNumber !== currentVehicle.engine_number) {
+      vehicleData.engine_number = updateData.engineNumber;
+    }
+    if (updateData.chassisNumber && updateData.chassisNumber !== currentVehicle.chassis_number) {
+      vehicleData.chassis_number = updateData.chassisNumber;
+    }
+    if (updateData.location && updateData.location !== currentVehicle.current_region) {
+      vehicleData.current_region = updateData.location;
+      vehicleData.current_district = updateData.location;
+    }
+    if (updateData.currentMileage && parseFloat(updateData.currentMileage) !== Number(currentVehicle.current_mileage)) {
+      vehicleData.current_mileage = parseFloat(updateData.currentMileage);
+    }
+    if (updateData.purchaseDate) {
+      const newDate = new Date(updateData.purchaseDate);
+      if (newDate.getTime() !== currentVehicle.last_service_date?.getTime()) {
+        vehicleData.last_service_date = newDate;
+      }
+    }
+    if (updateData.nextServiceKm && parseInt(updateData.nextServiceKm) !== currentVehicle.next_service_km) {
+      vehicleData.next_service_km = parseInt(updateData.nextServiceKm);
+    }
+    if (updateData.vehicleType && BigInt(updateData.vehicleType) !== currentVehicle.type_id) {
+      vehicleData.type_id = BigInt(updateData.vehicleType);
+    }
+    if (updateData.make && BigInt(updateData.make) !== currentVehicle.make_id) {
+      vehicleData.make_id = BigInt(updateData.make);
+    }
+    if (updateData.additionalNotes && updateData.additionalNotes !== currentVehicle.notes) {
+      vehicleData.notes = updateData.additionalNotes;
+    }
+    if (updateData.subsidiary && BigInt(updateData.subsidiary) !== currentVehicle.spcode) {
+      vehicleData.spcode = BigInt(updateData.subsidiary);
+    }
+
+    // If no fields have changed, return success without updating
+    if (Object.keys(vehicleData).length === 2) { // Only updated_at and updated_by
+      // Serialize the current vehicle data properly
+      const serializedCurrentVehicle = {
+        ...currentVehicle,
+        id: BigInt(id).toString(),
+        type_id: currentVehicle.type_id?.toString() || null,
+        make_id: currentVehicle.make_id?.toString() || null,
+        spcode: currentVehicle.spcode?.toString() || null,
+        current_mileage: currentVehicle.current_mileage?.toString() || null,
+        last_service_date: currentVehicle.last_service_date?.toISOString() || null
+      };
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'No changes detected - vehicle data is already up to date',
+        vehicle: serializedCurrentVehicle 
+      });
+    }
+
     const updatedVehicle = await prisma.vehicles.update({
       where: { id: BigInt(id) },
-      data: vehicleData
+      data: vehicleData,
+      include: {
+        subsidiary: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        vehicle_types: {
+          select: {
+            id: true,
+            type: true
+          }
+        },
+        vehicle_makes: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
     });
 
-    // Convert BigInt values to strings for JSON serialization
+    // Convert BigInt values to strings for JSON serialization and add related data
     const serializedVehicle = {
-      ...updatedVehicle,
       id: updatedVehicle.id.toString(),
+      reg_number: updatedVehicle.reg_number,
+      vin_number: updatedVehicle.vin_number,
+      trim: updatedVehicle.trim,
+      year: updatedVehicle.year,
+      status: updatedVehicle.status,
+      color: updatedVehicle.color,
+      engine_number: updatedVehicle.engine_number,
+      chassis_number: updatedVehicle.chassis_number,
+      current_region: updatedVehicle.current_region,
+      current_district: updatedVehicle.current_district,
+      current_mileage: updatedVehicle.current_mileage?.toString() || null,
+      last_service_date: updatedVehicle.last_service_date?.toISOString() || null,
+      next_service_km: updatedVehicle.next_service_km,
+      notes: updatedVehicle.notes,
+      created_at: updatedVehicle.created_at?.toISOString() || null,
+      updated_at: updatedVehicle.updated_at?.toISOString() || null,
       type_id: updatedVehicle.type_id?.toString() || null,
       make_id: updatedVehicle.make_id?.toString() || null,
       created_by: updatedVehicle.created_by?.toString() || null,
       updated_by: updatedVehicle.updated_by?.toString() || null,
-      spcode: updatedVehicle.spcode?.toString() || null
+      spcode: updatedVehicle.spcode?.toString() || null,
+      subsidiary_name: updatedVehicle.subsidiary?.name || null,
+      vehicle_type_name: updatedVehicle.vehicle_types?.type || null,
+      vehicle_make_name: updatedVehicle.vehicle_makes?.name || null,
+      subsidiary: updatedVehicle.subsidiary ? {
+        id: updatedVehicle.subsidiary.id.toString(),
+        name: updatedVehicle.subsidiary.name
+      } : null
     };
 
     return NextResponse.json({ 

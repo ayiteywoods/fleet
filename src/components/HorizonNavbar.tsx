@@ -98,16 +98,16 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
       </div>
 
       <div className="relative mt-[3px] flex h-[61px] w-[550px] flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none md:w-[570px] md:flex-grow-0 md:gap-1 xl:w-[570px] xl:gap-2">
-        <form onSubmit={handleSearch} className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[400px]">
+        <form onSubmit={handleSearch} className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[300px]">
           <p className="pl-3 pr-2 text-xl">
             <FiSearch className="h-4 w-4 text-gray-400 dark:text-white" />
           </p>
           <input
             type="text"
-            placeholder="Vehicle or Driver (ID, Reg No, License No)"
+            placeholder="Vehicle or Driver (Reg No, License No)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit"
+            className="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit xl:w-[290px]"
           />
         </form>
         <span

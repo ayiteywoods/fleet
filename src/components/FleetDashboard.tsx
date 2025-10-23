@@ -58,9 +58,25 @@ interface FuelLog {
 
 interface MonthlyFuelData {
   month: string
-  baseCost: number
-  additionalCost: number
+  petrolCost: number
+  dieselCost: number
   totalCost: number
+}
+
+interface MaintenanceSchedule {
+  id: string
+  due_date: string
+  vehicle_id: string
+  created_at?: string
+  updated_at?: string
+  created_by?: string
+  updated_by?: string
+  vehicles: {
+    reg_number: string
+    trim: string
+    year: number
+    status: string
+  }
 }
 
 export default function FleetDashboard() {
@@ -73,8 +89,61 @@ export default function FleetDashboard() {
   const [maintenanceCount, setMaintenanceCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [monthlyFuelData, setMonthlyFuelData] = useState<MonthlyFuelData[]>([])
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceSchedule[]>([])
   const [isLoadingFuelData, setIsLoadingFuelData] = useState(true)
   const [hoveredMonth, setHoveredMonth] = useState<string | null>(null)
+  const [hoveredFleetSegment, setHoveredFleetSegment] = useState<{ type: string; count: number; percentage: number } | null>(null)
+  const [fleetTooltipPosition, setFleetTooltipPosition] = useState({ x: 0, y: 0 })
+  const [fleetTimePeriod, setFleetTimePeriod] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
+  const [filteredVehicles, setFilteredVehicles] = useState<any[]>([])
+  
+  // Filter vehicles based on time period
+  const filterVehiclesByTimePeriod = (vehicles: any[], period: 'weekly' | 'monthly' | 'yearly') => {
+    const now = new Date()
+    let cutoffDate: Date
+    
+    switch (period) {
+      case 'weekly':
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'monthly':
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case 'yearly':
+        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+        break
+      default:
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    }
+    
+    return vehicles.filter(vehicle => {
+      const vehicleDate = new Date(vehicle.created_at)
+      return vehicleDate >= cutoffDate
+    })
+  }
+  
+  // Update fleet counts when time period changes
+  useEffect(() => {
+    if (filteredVehicles.length > 0) {
+      const timeFilteredVehicles = filterVehiclesByTimePeriod(filteredVehicles, fleetTimePeriod)
+      
+      // Count on road and off road vehicles for the filtered period
+      const onRoad = timeFilteredVehicles.filter((vehicle: any) => 
+        vehicle.status?.toLowerCase() === 'active' || 
+        vehicle.status?.toLowerCase() === 'on-road'
+      ).length
+      const offRoad = timeFilteredVehicles.filter((vehicle: any) => 
+        vehicle.status?.toLowerCase() === 'inactive' || 
+        vehicle.status?.toLowerCase() === 'off-road' ||
+        vehicle.status?.toLowerCase() === 'maintenance' ||
+        vehicle.status?.toLowerCase() === 'repair'
+      ).length
+      
+      setOnRoadCount(onRoad)
+      setOffRoadCount(offRoad)
+    }
+  }, [fleetTimePeriod, filteredVehicles])
+  
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([
     {
       id: '1',
@@ -126,6 +195,7 @@ export default function FleetDashboard() {
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json()
           setVehiclesCount(vehiclesData.length)
+          setFilteredVehicles(vehiclesData) // Store vehicles for filtering
           
           // Count on road and off road vehicles
           const onRoad = vehiclesData.filter((vehicle: any) => 
@@ -134,7 +204,9 @@ export default function FleetDashboard() {
           ).length
           const offRoad = vehiclesData.filter((vehicle: any) => 
             vehicle.status?.toLowerCase() === 'inactive' || 
-            vehicle.status?.toLowerCase() === 'off-road'
+            vehicle.status?.toLowerCase() === 'off-road' ||
+            vehicle.status?.toLowerCase() === 'maintenance' ||
+            vehicle.status?.toLowerCase() === 'repair'
           ).length
           
           setOnRoadCount(onRoad)
@@ -169,6 +241,13 @@ export default function FleetDashboard() {
             const monthlyData = processMonthlyFuelData(fuelData)
             setMonthlyFuelData(monthlyData)
         }
+
+        // Fetch maintenance schedules data
+        const maintenanceScheduleResponse = await fetch('/api/maintenance-schedule')
+        if (maintenanceScheduleResponse.ok) {
+          const scheduleData = await maintenanceScheduleResponse.json()
+          setMaintenanceSchedules(scheduleData)
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -182,45 +261,71 @@ export default function FleetDashboard() {
 
   // Process fuel data into monthly format
   const processMonthlyFuelData = (fuelLogs: FuelLog[]): MonthlyFuelData[] => {
-    // Group by month names (last 12 months)
+    // Group by actual month names from dates
+    const monthlyData: { [key: string]: { petrolCost: number; dieselCost: number } } = {}
+    
+    // Process each fuel log with its actual date
+    fuelLogs.forEach((log) => {
+      try {
+        const date = new Date(log.refuel_date)
+        const month = date.toLocaleDateString('en-US', { month: 'short' })
+        const fuelType = (log.fuel_type || '').toLowerCase()
+        const totalCost = Number(log.total_cost) || 0
+        
+        // Initialize month if not exists
+        if (!monthlyData[month]) {
+          monthlyData[month] = { petrolCost: 0, dieselCost: 0 }
+        }
+        
+        // Categorize by fuel type
+        if (fuelType === 'diesel') {
+          monthlyData[month].dieselCost += totalCost
+        } else {
+          // Default to petrol for petrol, gas, or unknown types
+          monthlyData[month].petrolCost += totalCost
+        }
+      } catch (error) {
+        console.error('Error processing fuel log:', error, log)
+      }
+    })
+    
+    // Get all 12 months in order, starting from January
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const monthlyData: { [key: string]: { baseCost: number; additionalCost: number } } = {}
     
-    // Initialize 12 months
-    monthNames.forEach(month => {
-      monthlyData[month] = { baseCost: 0, additionalCost: 0 }
-    })
-    
-    // Sort fuel logs by date (newest first)
-    const sortedLogs = [...fuelLogs].sort((a, b) => 
-      new Date(b.refuel_date).getTime() - new Date(a.refuel_date).getTime()
-    )
-    
-    // Distribute logs across the 12 months (most recent logs get recent months)
-    sortedLogs.forEach((log, index) => {
-      const monthIndex = Math.min(11, Math.max(0, Math.floor(index / Math.ceil(sortedLogs.length / 12))))
-      const monthKey = monthNames[monthIndex]
-      
-      const totalCost = Number(log.total_cost) || 0
-      const baseCost = totalCost * 0.7
-      const additionalCost = totalCost * 0.3
-      
-      monthlyData[monthKey].baseCost += baseCost
-      monthlyData[monthKey].additionalCost += additionalCost
-    })
-    
-    // Convert to array format
+    // Convert to array format, showing all 12 months with data (zero for months without data)
     const result = monthNames.map(month => {
-      const data = monthlyData[month]
+      const data = monthlyData[month] || { petrolCost: 0, dieselCost: 0 }
       return {
         month: month,
-        baseCost: data.baseCost,
-        additionalCost: data.additionalCost,
-        totalCost: data.baseCost + data.additionalCost
+        petrolCost: data.petrolCost,
+        dieselCost: data.dieselCost,
+        totalCost: data.petrolCost + data.dieselCost
       }
     })
     
     return result
+  }
+
+  // Process maintenance schedules to get upcoming maintenance
+  const getUpcomingMaintenance = (schedules: MaintenanceSchedule[]): MaintenanceSchedule[] => {
+    const today = new Date()
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+    
+    return schedules
+      .filter(schedule => {
+        const dueDate = new Date(schedule.due_date)
+        return dueDate >= today && dueDate <= thirtyDaysFromNow
+      })
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+      .slice(0, 3) // Show only top 3 upcoming maintenance
+  }
+
+  // Calculate days until maintenance is due
+  const getDaysUntilDue = (dueDate: string): number => {
+    const today = new Date()
+    const due = new Date(dueDate)
+    const diffTime = due.getTime() - today.getTime()
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
   const kpiCards = [
@@ -365,9 +470,9 @@ export default function FleetDashboard() {
               ) : (
                 <div className="flex items-end justify-between h-48 px-2">
                   {monthlyFuelData.map((monthData, index) => {
-                    const maxCost = Math.max(...monthlyFuelData.map(m => m.totalCost))
-                    const baseHeight = maxCost > 0 ? (monthData.baseCost / maxCost) * 100 : 0
-                    const additionalHeight = maxCost > 0 ? (monthData.additionalCost / maxCost) * 100 : 0
+                    const maxCost = Math.max(...monthlyFuelData.map(m => m.totalCost || 0))
+                    const petrolHeight = maxCost > 0 ? ((monthData.petrolCost || 0) / maxCost) * 100 : 0
+                    const dieselHeight = maxCost > 0 ? ((monthData.dieselCost || 0) / maxCost) * 100 : 0
                     const isHovered = hoveredMonth === monthData.month
                     
                     return (
@@ -382,18 +487,20 @@ export default function FleetDashboard() {
                         }}
                       >
                         <div className="relative w-8 h-40">
-                          <div className="absolute bottom-0 w-full bg-gray-200 rounded-t"></div>
+                          {/* Petrol bar (bottom, blue) */}
                           <div 
                             className={`absolute bottom-0 w-full bg-blue-500 rounded-t transition-all duration-200 ${
                               isHovered ? 'opacity-90 scale-105' : ''
                             }`}
-                            style={{height: `${additionalHeight}%`}}
+                            style={{height: `${Math.max(petrolHeight - 2, 0)}%`}}
                           ></div>
+                          
+                          {/* Diesel bar (top, green, inverted) */}
                           <div 
-                            className={`absolute bottom-0 w-full bg-blue-400 rounded-t transition-all duration-200 ${
+                            className={`absolute top-0 w-full bg-green-500 rounded-b transition-all duration-200 ${
                               isHovered ? 'opacity-90 scale-105' : ''
                             }`}
-                            style={{height: `${baseHeight}%`}}
+                            style={{height: `${Math.max(dieselHeight - 2, 0)}%`}}
                           ></div>
                           
                           {/* Tooltip */}
@@ -401,10 +508,10 @@ export default function FleetDashboard() {
                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-3xl shadow-lg whitespace-nowrap z-10">
                               <div className="text-center">
                                 <div className="font-semibold">{monthData.month}</div>
-                                <div>Base: ₵{monthData.baseCost.toFixed(2)}</div>
-                                <div>Additional: ₵{monthData.additionalCost.toFixed(2)}</div>
+                                <div>Petrol: ₵{(monthData.petrolCost || 0).toFixed(2)}</div>
+                                <div>Diesel: ₵{(monthData.dieselCost || 0).toFixed(2)}</div>
                                 <div className="font-semibold border-t border-gray-700 pt-1 mt-1">
-                                  Total: ₵{monthData.totalCost.toFixed(2)}
+                                  Total: ₵{(monthData.totalCost || 0).toFixed(2)}
                                 </div>
                               </div>
                               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
@@ -426,12 +533,12 @@ export default function FleetDashboard() {
             {/* Legend */}
             <div className="flex items-center justify-center space-x-6 mt-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-400 rounded"></div>
-                <span className="text-sm text-gray-600">Base Fuel Cost</span>
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                <span className="text-sm text-gray-600">Petrol</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span className="text-sm text-gray-600">Additional Fuel Cost</span>
+                <div className="w-3 h-3 bg-green-500 rounded"></div>
+                <span className="text-sm text-gray-600">Diesel</span>
               </div>
             </div>
           </div>
@@ -469,24 +576,66 @@ export default function FleetDashboard() {
                 </Link>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Osei&apos;s Van - Checking Transmission</p>
-                    <p className="text-xs text-gray-500">30 Days left</p>
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Ansah&apos;s Honda - Change rear brakes and...</p>
-                    <p className="text-xs text-gray-500">54 Days left</p>
+                ) : getUpcomingMaintenance(maintenanceSchedules).length > 0 ? (
+                  getUpcomingMaintenance(maintenanceSchedules).map((schedule) => {
+                    const daysLeft = getDaysUntilDue(schedule.due_date)
+                    const isUrgent = daysLeft <= 7
+                    const isWarning = daysLeft <= 14
+                    
+                    return (
+                      <div 
+                        key={schedule.id}
+                        className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+                          themeMode === 'dark' 
+                            ? 'bg-gray-700 hover:bg-gray-600' 
+                            : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${
+                            themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {schedule.vehicles.reg_number} - {schedule.vehicles.trim} ({schedule.vehicles.year})
+                          </p>
+                          <p className={`text-xs ${
+                            isUrgent ? 'text-red-500' : 
+                            isWarning ? 'text-yellow-500' : 
+                            themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {daysLeft === 0 ? 'Due today' : 
+                             daysLeft === 1 ? 'Due tomorrow' : 
+                             daysLeft < 0 ? `${Math.abs(daysLeft)} days overdue` :
+                             `${daysLeft} days left`}
+                          </p>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${
+                          isUrgent ? 'bg-red-500' : 
+                          isWarning ? 'bg-yellow-500' : 
+                          'bg-green-500'
+                        }`}></div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="text-center">
+                      <div className={`text-sm font-medium ${
+                        themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        No upcoming maintenance
+                      </div>
+                      <div className={`text-xs ${
+                        themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        All maintenance is up to date
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Changing of Oil Tank...</p>
-                    <p className="text-xs text-gray-500">30 Days left</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -554,33 +703,49 @@ export default function FleetDashboard() {
               </h3>
               <div className="flex items-center gap-2">
                 <select 
+                  value={fleetTimePeriod}
+                  onChange={(e) => setFleetTimePeriod(e.target.value as 'weekly' | 'monthly' | 'yearly')}
                   className={`px-3 py-1 rounded text-sm border ${
                     themeMode === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white' 
                       : 'bg-white border-gray-300 text-gray-700'
                   }`}
                 >
-                  <option>Monthly</option>
-                  <option>Weekly</option>
-                  <option>Yearly</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
                 </select>
               </div>
             </div>
             
             <div className="flex items-center justify-center">
               <div className="relative w-48 h-48">
-                <svg className="w-full h-full" viewBox="0 0 100 100">
+                <svg className="w-full h-full drop-shadow-lg" viewBox="0 0 120 120">
+                  <defs>
+                    {/* Gradient definitions */}
+                    <linearGradient id="activeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                    <linearGradient id="inactiveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="100%" stopColor="#dc2626" />
+                    </linearGradient>
+                  </defs>
+                  
                   {(() => {
-                    // Create sample data for fleet distribution
+                    // Create fleet distribution data
                     const fleetData = [
                       { type: 'Active Vehicles', count: onRoadCount },
-                      { type: 'Maintenance', count: maintenanceCount },
-                      { type: 'Offline', count: offRoadCount }
+                      { type: 'Inactive Vehicles', count: offRoadCount }
                     ].filter(item => item.count > 0)
+                    
+                    if (fleetData.length === 0) return null
                     
                     const total = fleetData.reduce((sum, item) => sum + item.count, 0)
                     let currentAngle = 0
-                    const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+                    const innerRadius = 30
+                    const outerRadius = 50
                     
                     return fleetData.map((item, index) => {
                       const percentage = (item.count / total) * 100
@@ -592,64 +757,149 @@ export default function FleetDashboard() {
                       const startAngleRad = (startAngle - 90) * (Math.PI / 180)
                       const endAngleRad = (endAngle - 90) * (Math.PI / 180)
                       
-                      const x1 = 50 + 35 * Math.cos(startAngleRad)
-                      const y1 = 50 + 35 * Math.sin(startAngleRad)
-                      const x2 = 50 + 35 * Math.cos(endAngleRad)
-                      const y2 = 50 + 35 * Math.sin(endAngleRad)
+                      // Outer arc coordinates
+                      const x1 = 60 + outerRadius * Math.cos(startAngleRad)
+                      const y1 = 60 + outerRadius * Math.sin(startAngleRad)
+                      const x2 = 60 + outerRadius * Math.cos(endAngleRad)
+                      const y2 = 60 + outerRadius * Math.sin(endAngleRad)
+                      
+                      // Inner arc coordinates
+                      const x3 = 60 + innerRadius * Math.cos(endAngleRad)
+                      const y3 = 60 + innerRadius * Math.sin(endAngleRad)
+                      const x4 = 60 + innerRadius * Math.cos(startAngleRad)
+                      const y4 = 60 + innerRadius * Math.sin(startAngleRad)
                       
                       const largeArcFlag = angle > 180 ? 1 : 0
                       
                       const pathData = [
-                        `M 50 50`,
-                        `L ${x1} ${y1}`,
-                        `A 35 35 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                        `M ${x1} ${y1}`,
+                        `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                        `L ${x3} ${y3}`,
+                        `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}`,
                         `Z`
                       ].join(' ')
+                      
+                      // Get gradient ID based on vehicle type
+                      const getGradientId = (type: string) => {
+                        switch (type) {
+                          case 'Active Vehicles': return 'url(#activeGradient)'
+                          case 'Inactive Vehicles': return 'url(#inactiveGradient)'
+                          default: return 'url(#activeGradient)'
+                        }
+                      }
                       
                       return (
                         <path
                           key={item.type}
                           d={pathData}
-                          fill={colors[index % colors.length]}
+                          fill={getGradientId(item.type)}
                           stroke="white"
-                          strokeWidth="2"
+                          strokeWidth="1"
+                          className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const svgRect = e.currentTarget.ownerSVGElement?.getBoundingClientRect()
+                            if (svgRect) {
+                              setFleetTooltipPosition({
+                                x: rect.left - svgRect.left + rect.width / 2,
+                                y: rect.top - svgRect.top - 10
+                              })
+                              setHoveredFleetSegment({
+                                type: item.type,
+                                count: item.count,
+                                percentage: percentage
+                              })
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            setHoveredFleetSegment(null)
+                          }}
                         />
                       )
                     })
                   })()}
+                  
+                  {/* Center content */}
+                  <circle cx="60" cy="60" r="25" fill="white" />
+                  <circle cx="60" cy="60" r="25" fill="none" stroke="#e5e7eb" strokeWidth="0.5" />
+                  
+                  {/* Fleet icon */}
+                  <g transform="translate(50, 50)">
+                    <path
+                      d="M20 4h-4V2c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H0v2h2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6h2V4h-4zM6 2h8v2H6V2zm10 16H4V6h12v12z"
+                      fill="#10b981"
+                      transform="scale(0.7)"
+                    />
+                  </g>
+                  
                 </svg>
+                
+                {/* Tooltip */}
+                {hoveredFleetSegment && (
+                  <div 
+                    className={`absolute z-10 px-3 py-2 rounded-lg shadow-lg text-sm font-medium pointer-events-none ${
+                      themeMode === 'dark' 
+                        ? 'bg-gray-800 text-white border border-gray-600' 
+                        : 'bg-white text-gray-900 border border-gray-200'
+                    }`}
+                    style={{
+                      left: `${fleetTooltipPosition.x}px`,
+                      top: `${fleetTooltipPosition.y}px`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    <div className="text-center">
+                      <div className="font-semibold">{hoveredFleetSegment.type}</div>
+                      <div className="text-xs mt-1">
+                        <div>Count: {hoveredFleetSegment.count}</div>
+                        <div>Percentage: {hoveredFleetSegment.percentage.toFixed(1)}%</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Legend */}
-            <div className="mt-6 grid grid-cols-1 gap-4">
+            {/* Modern Legend */}
+            <div className="mt-6 grid grid-cols-1 gap-3">
               {(() => {
                 const fleetData = [
                   { type: 'Active Vehicles', count: onRoadCount },
-                  { type: 'Maintenance', count: maintenanceCount },
-                  { type: 'Offline', count: offRoadCount }
+                  { type: 'Inactive Vehicles', count: offRoadCount }
                 ].filter(item => item.count > 0)
                 
                 const total = fleetData.reduce((sum, item) => sum + item.count, 0)
-                const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
                 
-                return fleetData.slice(0, 2).map((item, index) => {
+                return fleetData.map((item, index) => {
                   const percentage = ((item.count / total) * 100).toFixed(0)
                   
+                  const getVehicleTypeColor = (type: string) => {
+                    switch (type) {
+                      case 'Active Vehicles': return '#10b981'
+                      case 'Inactive Vehicles': return '#ef4444'
+                      default: return '#10b981'
+                    }
+                  }
+                  
                   return (
-                    <div key={item.type} className="flex items-center justify-between">
+                    <div key={item.type} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                       <div className="flex items-center gap-3">
                         <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: colors[index % colors.length] }}
+                          className="w-3 h-3 rounded-full shadow-sm" 
+                          style={{ backgroundColor: getVehicleTypeColor(item.type) }}
                         ></div>
-                        <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                           {item.type}
                         </span>
                       </div>
-                      <span className={`text-lg font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        {percentage}%
-                      </span>
+                      <div className="text-right">
+                        <div className={`text-sm font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {item.count}
+                        </div>
+                        <div className={`text-xs ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {percentage}%
+                        </div>
+                      </div>
                     </div>
                   )
                 })

@@ -45,6 +45,7 @@ export default function RoadworthyPage() {
   const [selectedRoadworthy, setSelectedRoadworthy] = useState(null)
   const [roadworthyRecords, setRoadworthyRecords] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -90,6 +91,25 @@ export default function RoadworthyPage() {
     fetchRoadworthyRecords()
   }, [])
 
+  // Helper function to check if a record is expired
+  const isRecordExpired = (record: any) => {
+    try {
+      const expiryDate = new Date(record.date_expired)
+      const today = new Date()
+      // Set time to start of day for accurate comparison
+      today.setHours(0, 0, 0, 0)
+      expiryDate.setHours(0, 0, 0, 0)
+      
+      const isExpiredByDate = expiryDate < today
+      const isNotValidStatus = record.roadworth_status !== 'Valid'
+      
+      return isExpiredByDate && isNotValidStatus
+    } catch (error) {
+      console.error('Error parsing date:', error, record.date_expired)
+      return false
+    }
+  }
+
   // Calculate KPI values from roadworthy data
   const totalRecords = roadworthyRecords.length
   const validRecords = roadworthyRecords.filter(record => {
@@ -97,11 +117,7 @@ export default function RoadworthyPage() {
     const today = new Date()
     return expiryDate > today && record.roadworth_status === 'Valid'
   }).length
-  const expiredRecords = roadworthyRecords.filter(record => {
-    const expiryDate = new Date(record.date_expired)
-    const today = new Date()
-    return expiryDate <= today
-  }).length
+  const expiredRecords = roadworthyRecords.filter(record => isRecordExpired(record)).length
   const expiringSoon = roadworthyRecords.filter(record => {
     const expiryDate = new Date(record.date_expired)
     const today = new Date()
@@ -112,13 +128,18 @@ export default function RoadworthyPage() {
   const pendingRecords = roadworthyRecords.filter(record => record.roadworth_status === 'Pending').length
 
   const kpiCards = [
-    { title: 'Total Records', value: totalRecords.toString(), icon: DocumentCheckIcon, color: 'blue' },
-    { title: 'Valid', value: validRecords.toString(), icon: CheckCircleIcon, color: 'blue' },
-    { title: 'Expired', value: expiredRecords.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue' },
-    { title: 'Invalid', value: invalidRecords.toString(), icon: XMarkIcon, color: 'blue' },
-    { title: 'Pending', value: pendingRecords.toString(), icon: CalendarIcon, color: 'blue' }
+    { title: 'Total Records', value: totalRecords.toString(), icon: DocumentCheckIcon, color: 'blue', status: null },
+    { title: 'Valid', value: validRecords.toString(), icon: CheckCircleIcon, color: 'blue', status: 'valid' },
+    { title: 'Expired', value: expiredRecords.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'expired' },
+    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue', status: 'expiring_soon' },
+    { title: 'Invalid', value: invalidRecords.toString(), icon: XMarkIcon, color: 'blue', status: 'invalid' },
+    { title: 'Pending', value: pendingRecords.toString(), icon: CalendarIcon, color: 'blue', status: 'pending' }
   ]
+
+  const handleCardClick = (status: string | null) => {
+    setStatusFilter(status)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -167,7 +188,7 @@ export default function RoadworthyPage() {
         return Number(stringValue).toLocaleString()
       case 'date':
         try {
-          return new Date(stringValue).toLocaleDateString()
+          return new Date(stringValue).toLocaleString()
         } catch (error) {
           return stringValue
         }
@@ -224,7 +245,7 @@ export default function RoadworthyPage() {
     const headers = ['Actions', 'No', ...selectedFieldsData.map(field => field.label)]
     
     const data = roadworthyRecords.map((record, index) => {
-      const row = ['View/PencilIcon/Delete', (currentPage - 1) * entriesPerPage + index + 1]
+      const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
         row.push(formatFieldValue(field.key, value, field.type))
@@ -232,9 +253,9 @@ export default function RoadworthyPage() {
       return row
     })
 
-    const worksheet = XMarkIconLSXMarkIcon.utils.aoa_to_sheet([headers, ...data])
-    const workbook = XMarkIconLSXMarkIcon.utils.book_new()
-    XMarkIconLSXMarkIcon.utils.book_append_sheet(workbook, worksheet, 'Roadworthy')
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Roadworthy')
     
     // Auto-size columns
     const colWidths = headers.map((_, index) => {
@@ -246,7 +267,7 @@ export default function RoadworthyPage() {
     })
     worksheet['!cols'] = colWidths
 
-    XMarkIconLSXMarkIcon.writeFile(workbook, `roadworthy-${new Date().toISOString().split('T')[0]}.xlsx`)
+    XLSX.writeFile(workbook, `roadworthy-${new Date().toISOString().split('T')[0]}.xlsx`)
     
     setNotification({
       isOpen: true,
@@ -261,7 +282,7 @@ export default function RoadworthyPage() {
     const headers = ['Actions', 'No', ...selectedFieldsData.map(field => field.label)]
     
     const data = roadworthyRecords.map((record, index) => {
-      const row = ['View/PencilIcon/Delete', (currentPage - 1) * entriesPerPage + index + 1]
+      const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
         row.push(formatFieldValue(field.key, value, field.type))
@@ -296,7 +317,7 @@ export default function RoadworthyPage() {
     const headers = ['Actions', 'No', ...selectedFieldsData.map(field => field.label)]
     
     const data = roadworthyRecords.map((record, index) => {
-      const row = ['View/PencilIcon/Delete', (currentPage - 1) * entriesPerPage + index + 1]
+      const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
         row.push(formatFieldValue(field.key, value, field.type))
@@ -339,7 +360,7 @@ export default function RoadworthyPage() {
     const headers = ['Actions', 'No', ...selectedFieldsData.map(field => field.label)]
     
     const data = roadworthyRecords.map((record, index) => {
-      const row = ['View/PencilIcon/Delete', (currentPage - 1) * entriesPerPage + index + 1]
+      const row = ['View/Edit/Delete', (currentPage - 1) * entriesPerPage + index + 1]
       selectedFieldsData.forEach(field => {
         const value = record[field.key]
         row.push(formatFieldValue(field.key, value, field.type))
@@ -456,6 +477,9 @@ export default function RoadworthyPage() {
 
   const handleUpdateRoadworthy = async (roadworthyData: any) => {
     try {
+      console.log('Updating roadworthy with data:', roadworthyData)
+      console.log('Selected roadworthy:', selectedRoadworthy)
+      
       const response = await fetch(`/api/roadworthy?id=${selectedRoadworthy?.id}&vehicle_number=${selectedRoadworthy?.vehicle_number}`, {
         method: 'PUT',
         headers: {
@@ -464,7 +488,12 @@ export default function RoadworthyPage() {
         body: JSON.stringify(roadworthyData),
       })
 
+      console.log('Update response status:', response.status)
+      
       if (response.ok) {
+        const updatedRecord = await response.json()
+        console.log('Updated record:', updatedRecord)
+        
         setNotification({
           isOpen: true,
           type: 'success',
@@ -473,7 +502,9 @@ export default function RoadworthyPage() {
         })
         fetchRoadworthyRecords()
       } else {
-        throw new Error('Failed to update roadworthy certificate')
+        const errorData = await response.json()
+        console.error('Update failed:', errorData)
+        throw new Error(errorData.error || 'Failed to update roadworthy certificate')
       }
     } catch (error) {
       console.error('Error updating roadworthy:', error)
@@ -481,7 +512,7 @@ export default function RoadworthyPage() {
         isOpen: true,
         type: 'error',
         title: 'Error',
-        message: 'Failed to update roadworthy certificate. Please try again.'
+        message: `Failed to update roadworthy certificate: ${error.message}`
       })
     }
   }
@@ -531,8 +562,34 @@ export default function RoadworthyPage() {
     setSearchQuery(query)
   }
 
-  // Filter roadworthy records based on search query
+  // Filter roadworthy records based on search query and status filter
   const filteredRecords = roadworthyRecords.filter(record => {
+    // Apply status filter
+    if (statusFilter) {
+      if (statusFilter === 'valid') {
+        // Filter for valid records (not expired and status is Valid)
+        const expiryDate = new Date(record.date_expired)
+        const today = new Date()
+        if (expiryDate <= today || record.roadworth_status !== 'Valid') return false
+      } else if (statusFilter === 'expired') {
+        // Filter for expired records using the same logic as KPI calculation
+        if (!isRecordExpired(record)) return false
+      } else if (statusFilter === 'expiring_soon') {
+        // Filter for records expiring soon (within 30 days)
+        const expiryDate = new Date(record.date_expired)
+        const today = new Date()
+        const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+        if (expiryDate <= today || expiryDate > thirtyDaysFromNow) return false
+      } else if (statusFilter === 'invalid') {
+        // Filter for invalid status
+        if (record.roadworth_status !== 'Invalid') return false
+      } else if (statusFilter === 'pending') {
+        // Filter for pending status
+        if (record.roadworth_status !== 'Pending') return false
+      }
+    }
+    
+    // Apply search filter
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -574,7 +631,7 @@ export default function RoadworthyPage() {
       <div className="p-6 h-full overflow-y-auto" style={{ 
         width: '100%', 
         maxWidth: '100%', 
-        overflowXMarkIcon: 'hidden',
+        overflowX: 'hidden',
         boxSizing: 'border-box',
         minWidth: '0',
         flexShrink: 1
@@ -591,24 +648,42 @@ export default function RoadworthyPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
+            const isActive = statusFilter === card.status
             return (
-              <div key={index} className={`p-6 rounded-2xl ${
-                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-              }`}>
+              <div 
+                key={index} 
+                onClick={() => handleCardClick(card.status)}
+                className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 ${
+                  themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+                } ${
+                  isActive 
+                    ? 'ring-2 ring-blue-500 shadow-lg transform scale-105' 
+                    : 'hover:shadow-md hover:transform hover:scale-102'
+                }`}
+              >
                 <div className="flex items-center">
-                  <div className={`p-3 rounded-full ${
+                  <div className={`p-3 rounded-full transition-colors ${
                     themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  } ${
+                    isActive ? 'bg-blue-100' : ''
                   }`}>
-                    <IconComponent className="w-6 h-6 text-brand-500" />
+                    <IconComponent className={`w-6 h-6 transition-colors ${
+                      isActive ? 'text-blue-600' : 
+                      card.status === 'expired' ? 'text-red-500' : 'text-brand-500'
+                    }`} />
                   </div>
                   <div className="ml-4">
-                    <h3 className={`text-sm font-medium ${
+                    <h3 className={`text-sm font-medium transition-colors ${
                       themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.title}
                     </h3>
-                    <p className={`text-2xl font-bold ${
+                    <p className={`text-2xl font-bold transition-colors ${
                       themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.value}
                     </p>
@@ -625,7 +700,7 @@ export default function RoadworthyPage() {
         }`} style={{
           width: '100%',
           maxWidth: '100%',
-          overflowXMarkIcon: 'hidden',
+          overflowX: 'hidden',
           boxSizing: 'border-box',
           minWidth: '0',
           flexShrink: 1
@@ -845,10 +920,11 @@ export default function RoadworthyPage() {
               <tbody className={`divide-y ${
                 themeMode === 'dark' ? 'divide-gray-700' : 'divide-gray-200'
               }`}>
-                {paginatedRecords.map((record, index) => (
-                  <tr key={index} className={`hover:${
-                    themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
-                  }`}>
+                {paginatedRecords.length > 0 ? (
+                  paginatedRecords.map((record, index) => (
+                    <tr key={index} className={`hover:${
+                      themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-50'
+                    }`}>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
@@ -883,7 +959,41 @@ export default function RoadworthyPage() {
                       </td>
                     ))}
                   </tr>
-                ))}
+                ))
+                ) : (
+                  <tr>
+                    <td 
+                      colSpan={selectedFields.length + 1} 
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <DocumentCheckIcon className="w-8 h-8 text-gray-400" />
+                        <span className="text-sm">
+                          {statusFilter === 'expired' 
+                            ? 'No expired roadworthy records found'
+                            : statusFilter === 'valid'
+                            ? 'No valid roadworthy records found'
+                            : statusFilter === 'expiring_soon'
+                            ? 'No roadworthy records expiring soon'
+                            : statusFilter === 'invalid'
+                            ? 'No invalid roadworthy records found'
+                            : statusFilter === 'pending'
+                            ? 'No pending roadworthy records found'
+                            : 'No roadworthy records found'
+                          }
+                        </span>
+                        {statusFilter && (
+                          <button
+                            onClick={() => setStatusFilter(null)}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+                          >
+                            Clear filter
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -893,6 +1003,11 @@ export default function RoadworthyPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-700 dark:text-gray-300">
                 Showing {startIndex + 1} to {Math.min(endIndex, sortedRecords.length)} of {sortedRecords.length} entries
+                {(searchQuery || statusFilter) && (
+                  <span className="ml-2 text-blue-600">
+                    (filtered from {roadworthyRecords.length} total)
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -922,7 +1037,7 @@ export default function RoadworthyPage() {
       <AddRoadworthyModal
         isOpen={showAddRoadworthyModal}
         onClose={() => setShowAddRoadworthyModal(false)}
-        onAdd={handleAddRoadworthy}
+        onSubmit={handleAddRoadworthy}
       />
 
       {/* Edit Roadworthy Modal */}
@@ -930,8 +1045,8 @@ export default function RoadworthyPage() {
         <EditRoadworthyModal
           isOpen={showEditRoadworthyModal}
           onClose={() => setShowEditRoadworthyModal(false)}
-          onUpdate={handleUpdateRoadworthy}
-          roadworthy={selectedRoadworthy}
+          onSubmit={handleUpdateRoadworthy}
+          roadworthyRecord={selectedRoadworthy}
         />
       )}
 
@@ -940,7 +1055,7 @@ export default function RoadworthyPage() {
         <ViewRoadworthyModal
           isOpen={showViewRoadworthyModal}
           onClose={() => setShowViewRoadworthyModal(false)}
-          roadworthy={selectedRoadworthy}
+          roadworthyRecord={selectedRoadworthy}
         />
       )}
 

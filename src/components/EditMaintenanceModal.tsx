@@ -11,6 +11,16 @@ interface EditMaintenanceModalProps {
   maintenanceRecord: any
 }
 
+interface Vehicle {
+  id: string
+  reg_number: string
+  trim: string
+  year: number
+  status: string
+  color: string
+  name: string
+}
+
 interface Mechanic {
   id: string
   name: string
@@ -30,6 +40,7 @@ interface Workshop {
 
 export default function EditMaintenanceModal({ isOpen, onClose, onSubmit, maintenanceRecord }: EditMaintenanceModalProps) {
   const { themeMode } = useTheme()
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [mechanics, setMechanics] = useState<Mechanic[]>([])
   const [workshops, setWorkshops] = useState<Workshop[]>([])
   const [fetchLoading, setFetchLoading] = useState(false)
@@ -41,6 +52,7 @@ export default function EditMaintenanceModal({ isOpen, onClose, onSubmit, mainte
     service_type: '',
     mileage_at_service: '',
     parts_replaced: '',
+    vehicle_id: '',
     mechanic_id: '',
     workshop_id: ''
   })
@@ -57,6 +69,7 @@ export default function EditMaintenanceModal({ isOpen, onClose, onSubmit, mainte
         service_type: maintenanceRecord.service_type || '',
         mileage_at_service: maintenanceRecord.mileage_at_service || '',
         parts_replaced: maintenanceRecord.parts_replaced || '',
+        vehicle_id: maintenanceRecord.vehicle_id || '',
         mechanic_id: maintenanceRecord.mechanic_id || '',
         workshop_id: maintenanceRecord.workshop_id || ''
       })
@@ -73,10 +86,16 @@ export default function EditMaintenanceModal({ isOpen, onClose, onSubmit, mainte
   const fetchData = async () => {
     setFetchLoading(true)
     try {
-      const [mechanicsResponse, workshopsResponse] = await Promise.all([
+      const [vehiclesResponse, mechanicsResponse, workshopsResponse] = await Promise.all([
+        fetch('/api/vehicles?simple=true'),
         fetch('/api/mechanics'),
         fetch('/api/workshops')
       ])
+
+      if (vehiclesResponse.ok) {
+        const vehiclesData = await vehiclesResponse.json()
+        setVehicles(vehiclesData)
+      }
 
       if (mechanicsResponse.ok) {
         const mechanicsData = await mechanicsResponse.json()
@@ -190,6 +209,35 @@ export default function EditMaintenanceModal({ isOpen, onClose, onSubmit, mainte
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
+            </div>
+
+            {/* Vehicle Selection */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Vehicle *
+              </label>
+              <select
+                name="vehicle_id"
+                value={formData.vehicle_id}
+                onChange={handleChange}
+                required
+                disabled={fetchLoading}
+                className={`w-full px-3 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  themeMode === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } ${fetchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <option value="">Select Vehicle</option>
+                {vehicles.map((vehicle) => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.reg_number} - {vehicle.trim} ({vehicle.year})
+                  </option>
+                ))}
+              </select>
+              {fetchLoading && (
+                <p className="text-blue-500 text-xs">Loading vehicles...</p>
+              )}
             </div>
 
             <div className="space-y-2">

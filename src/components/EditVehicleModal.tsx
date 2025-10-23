@@ -98,8 +98,8 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
     additionalNotes: vehicle?.notes || '',
     insuranceDocument: null as File | null,
     cluster: '',
-    subsidiary: '',
-    assignedTo: ''
+    subsidiary: vehicle?.spcode || '',
+    assignedTo: vehicle?.assigned_driver?.id?.toString() || ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -114,6 +114,8 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
   // Update form data when vehicle prop changes
   useEffect(() => {
     if (vehicle && isOpen) {
+      console.log('EditVehicleModal: Vehicle data received:', vehicle) // Debug log
+      console.log('EditVehicleModal: Setting model to:', vehicle.trim) // Debug log
       setFormData({
         registrationNumber: vehicle.reg_number || '',
         vehicleType: vehicle.type_id || '',
@@ -131,7 +133,7 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
         insuranceDocument: null as File | null,
         cluster: '', // Will be set after fetching clusters
         subsidiary: vehicle.spcode?.toString() || '',
-        assignedTo: ''
+        assignedTo: vehicle?.assigned_driver?.id?.toString() || ''
       })
       
       // Fetch all required data when modal opens
@@ -266,9 +268,11 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
     try {
       setLoading(true)
+      console.log('Fetching vehicle models for make_id:', makeId) // Debug log
       const response = await fetch(`/api/vehicle-models?vehicle_make_id=${makeId}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('Vehicle models received:', data) // Debug log
         setVehicleModels(data)
         setFormData(prev => ({ ...prev, model: '' }))
       } else {
@@ -294,6 +298,13 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
       fetchDrivers(value as string)
     } else if (field === 'make') {
       fetchVehicleModels(value as string)
+      // Clear the model field when make changes to avoid numeric values
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+        model: '' // Clear model when make changes
+      }))
+      return // Don't continue with the normal update
     }
     
     // Clear error when user starts typing
@@ -339,9 +350,7 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
     if (!formData.subsidiary) {
       newErrors.subsidiary = 'Subsidiary is required'
     }
-    if (!formData.assignedTo) {
-      newErrors.assignedTo = 'Driver assignment is required'
-    }
+    // assignedTo is now optional - no validation required
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -349,6 +358,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    console.log('Form submission - formData:', formData) // Debug log
+    console.log('Form submission - model field:', formData.model) // Debug log
     
     if (validateForm()) {
       onSubmit({ ...formData, id: vehicle?.id })
@@ -618,7 +630,7 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
                 >
                   <option value="">-- Select Model --</option>
                   {vehicleModels.map(model => (
-                    <option key={model.id} value={model.id}>
+                    <option key={model.id} value={model.name}>
                       {model.name}
                     </option>
                   ))}
@@ -810,7 +822,7 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
                   themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   <Building2 className="w-4 h-4 inline mr-2" />
-                  Assigned To <span className="text-red-500">*</span>
+                  Assigned To
                 </label>
                 <select
                   value={formData.assignedTo}
@@ -824,7 +836,7 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
                       : 'bg-white border-gray-300 text-gray-900'
                   } ${!formData.subsidiary ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <option value="">-- Select Driver --</option>
+                  <option value="">-- No Driver Assigned --</option>
                   {drivers.map(driver => (
                     <option key={driver.id} value={driver.id}>
                       {driver.name} - {driver.license_number}

@@ -42,6 +42,8 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
     license_number: '',
     license_category: '',
     license_expire: '',
+    date_issued: '',
+    dob: '',
     region: '',
     district: '',
     status: 'Active',
@@ -122,6 +124,8 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
         license_number: '',
         license_category: '',
         license_expire: '',
+        date_issued: '',
+        dob: '',
         region: '',
         district: '',
         status: 'Active',
@@ -277,6 +281,27 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
               </select>
             </div>
 
+            {/* License Issue Date */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                License Issue Date
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  name="date_issued"
+                  value={formData.date_issued}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
+            </div>
+
             {/* License Expiry */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -290,6 +315,27 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
                   value={formData.license_expire}
                   onChange={handleChange}
                   required
+                  className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-800 border-gray-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Date of Birth */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Date of Birth
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2 border rounded-3xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'

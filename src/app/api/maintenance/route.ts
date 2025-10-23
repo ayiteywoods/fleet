@@ -4,44 +4,90 @@ import { prisma } from '@/lib/prisma'
 // GET - Fetch all maintenance records
 export async function GET(request: NextRequest) {
   try {
+    console.log('Maintenance API called')
     const { searchParams } = new URL(request.url)
     const vehicleId = searchParams.get('vehicle_id')
 
     // Build the query with optional vehicle filter
     const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
 
+    console.log('Querying maintenance records with whereClause:', whereClause)
+
+    // First, let's get all maintenance records without relations to see what we have
     const maintenanceRecords = await prisma.maintenance_history.findMany({
       where: whereClause,
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        },
-        mechanics: {
-          select: {
-            id: true,
-            name: true,
-            specialization: true
-          }
-        },
-        workshops: {
-          select: {
-            id: true,
-            name: true,
-            region: true,
-            district: true
-          }
-        }
-      },
       orderBy: { created_at: 'desc' }
     })
 
+    console.log(`Found ${maintenanceRecords.length} maintenance records without relations`)
+
+    // Now let's manually fetch the related data for each record
+    const enrichedRecords = await Promise.all(
+      maintenanceRecords.map(async (record) => {
+        let vehicle = null
+        let mechanic = null
+        let workshop = null
+
+        try {
+          if (record.vehicle_id) {
+            vehicle = await prisma.vehicles.findUnique({
+              where: { id: record.vehicle_id },
+              select: {
+                reg_number: true,
+                trim: true,
+                year: true,
+                status: true
+              }
+            })
+          }
+        } catch (error) {
+          console.log(`Error fetching vehicle for record ${record.id}:`, error.message)
+        }
+
+        try {
+          if (record.mechanic_id) {
+            mechanic = await prisma.mechanics.findUnique({
+              where: { id: record.mechanic_id },
+              select: {
+                id: true,
+                name: true,
+                specialization: true
+              }
+            })
+          }
+        } catch (error) {
+          console.log(`Error fetching mechanic for record ${record.id}:`, error.message)
+        }
+
+        try {
+          if (record.workshop_id) {
+            workshop = await prisma.workshops.findUnique({
+              where: { id: record.workshop_id },
+              select: {
+                id: true,
+                name: true,
+                region: true,
+                district: true
+              }
+            })
+          }
+        } catch (error) {
+          console.log(`Error fetching workshop for record ${record.id}:`, error.message)
+        }
+
+        return {
+          ...record,
+          vehicles: vehicle,
+          mechanics: mechanic,
+          workshops: workshop
+        }
+      })
+    )
+
+    console.log(`Enriched ${enrichedRecords.length} maintenance records`)
+
     // Serialize BigInt values
-    const serializedRecords = maintenanceRecords.map(record => ({
+    const serializedRecords = enrichedRecords.map(record => ({
       id: record.id.toString(),
       service_date: record.service_date.toISOString(),
       cost: record.cost.toString(),
@@ -61,11 +107,12 @@ export async function GET(request: NextRequest) {
       workshop_name: record.workshops ? `${record.workshops.name} - ${record.workshops.region}, ${record.workshops.district}` : null
     }))
 
+    console.log('Returning serialized records:', serializedRecords.length)
     return NextResponse.json(serializedRecords)
   } catch (error) {
     console.error('Error fetching maintenance records:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch maintenance records' },
+      { error: 'Failed to fetch maintenance records', details: error.message },
       { status: 500 }
     )
   }

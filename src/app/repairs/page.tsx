@@ -79,7 +79,7 @@ export default function RepairsPage() {
   const availableFields = [
     { key: 'service_date', label: 'Service Date', type: 'date' },
     { key: 'vehicles.reg_number', label: 'Vehicle', type: 'text' },
-    { key: 'cost', label: 'Cost', type: 'currency' },
+    { key: 'cost', label: 'Cost (Ghc)', type: 'currency' },
     { key: 'status', label: 'Status', type: 'status' },
     { key: 'created_at', label: 'Created At', type: 'datetime' },
     { key: 'updated_at', label: 'Updated At', type: 'datetime' },
@@ -133,8 +133,8 @@ export default function RepairsPage() {
     { title: 'Completed', value: completedRepairs, icon: CheckCircleIcon, color: 'blue' },
     { title: 'Pending', value: pendingRepairs, icon: ClockIcon, color: 'blue' },
     { title: 'In Progress', value: inProgressRepairs, icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Total Cost', value: `₵${totalCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' },
-    { title: 'Average Cost', value: `₵${averageCost.toLocaleString()}`, icon: BanknotesIcon, color: 'blue' }
+    { title: 'Total Cost', value: `Ghc${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue' },
+    { title: 'Average Cost', value: `Ghc${averageCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: BanknotesIcon, color: 'blue' }
   ]
 
   // Format field value for display
@@ -159,11 +159,11 @@ export default function RepairsPage() {
     
     switch (fieldType) {
       case 'date':
-        return new Date(stringValue).toLocaleDateString()
+        return new Date(stringValue).toLocaleString()
       case 'datetime':
         return new Date(stringValue).toLocaleString()
       case 'currency':
-        return `₵${Number(stringValue).toLocaleString()}`
+        return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'status':
         const status = stringValue.toLowerCase()
         if (status === 'completed') return <span className="text-green-600 font-medium">Completed</span>
@@ -197,11 +197,11 @@ export default function RepairsPage() {
     
     switch (fieldType) {
       case 'date':
-        return new Date(stringValue).toLocaleDateString()
+        return new Date(stringValue).toLocaleString()
       case 'datetime':
         return new Date(stringValue).toLocaleString()
       case 'currency':
-        return `₵${Number(stringValue).toLocaleString()}`
+        return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'status':
         return stringValue
       default:
@@ -319,9 +319,19 @@ export default function RepairsPage() {
     setShowEditRepairModal(true)
   }
 
-  const handleUpdateRepair = async (id: string, repairData: any) => {
+  const handleUpdateRepair = async (repairData: any) => {
+    if (!selectedRepair?.id) {
+      setNotification({
+        isOpen: true,
+        type: 'error',
+        title: 'Error!',
+        message: 'No repair record selected for update.'
+      })
+      return
+    }
+
     try {
-      const response = await fetch(`/api/repairs?id=${id}`, {
+      const response = await fetch(`/api/repairs?id=${selectedRepair.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -596,6 +606,17 @@ export default function RepairsPage() {
     )
   }
 
+  // Handle select all fields
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      // If all are selected, deselect all
+      setSelectedFields([])
+    } else {
+      // If not all are selected, select all
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
+
   if (loading) {
     return (
       <HorizonDashboardLayout>
@@ -843,6 +864,29 @@ export default function RepairsPage() {
                     Choose columns to display in the table (7 columns by default, more will enable horizontal scroll)
                   </p>
                 </div>
+                
+                {/* Select All Checkbox */}
+                <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.length === availableFields.length}
+                      onChange={handleSelectAllFields}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    />
+                    <span className={`text-sm font-medium ${
+                      themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      Select All Columns
+                    </span>
+                  </label>
+                  <p className={`text-xs mt-1 ml-7 ${
+                    themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {selectedFields.length} of {availableFields.length} columns selected
+                  </p>
+                </div>
+                
                 <div className="p-4 max-h-64 overflow-y-auto">
                   <div className="grid grid-cols-1 gap-2">
                     {availableFields.map((field) => (
@@ -1036,15 +1080,14 @@ export default function RepairsPage() {
         <ViewRepairModal
           isOpen={showViewRepairModal}
           onClose={() => setShowViewRepairModal(false)}
-          repair={selectedRepair}
-          onPencilIcon={handlePencilIconRepair}
+          repairRecord={selectedRepair}
         />
 
         <EditRepairModal
           isOpen={showEditRepairModal}
           onClose={() => setShowEditRepairModal(false)}
-          repair={selectedRepair}
-          onSave={handleUpdateRepair}
+          repairRecord={selectedRepair}
+          onSubmit={handleUpdateRepair}
         />
 
         <RepairRequestModal

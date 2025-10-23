@@ -23,21 +23,29 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
     updated_by: '1'
   })
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [prefilling, setPrefilling] = useState(false)
 
   useEffect(() => {
-    if (roadworthyRecord) {
+    if (roadworthyRecord && vehicles.length > 0) {
+      setPrefilling(true)
+      // Find the vehicle ID that matches the vehicle_number (registration number)
+      const matchingVehicle = vehicles.find(vehicle => vehicle.reg_number === roadworthyRecord.vehicle_number)
+      const vehicleId = matchingVehicle ? matchingVehicle.id : roadworthyRecord.vehicle_number
+      
       setFormData({
         company: roadworthyRecord.company || '',
-        vehicle_number: roadworthyRecord.vehicle_number || '',
+        vehicle_number: vehicleId || '',
         vehicle_type: roadworthyRecord.vehicle_type || '',
         date_issued: roadworthyRecord.date_issued ? new Date(roadworthyRecord.date_issued).toISOString().split('T')[0] : '',
         date_expired: roadworthyRecord.date_expired ? new Date(roadworthyRecord.date_expired).toISOString().split('T')[0] : '',
         roadworth_status: roadworthyRecord.roadworth_status || 'valid',
         updated_by: roadworthyRecord.updated_by || '1'
       })
+      setPrefilling(false)
     }
-  }, [roadworthyRecord])
+  }, [roadworthyRecord, vehicles])
 
   useEffect(() => {
     const fetchVehicleTypes = async () => {
@@ -52,8 +60,21 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
       }
     }
 
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch('/api/vehicles?simple=true')
+        if (response.ok) {
+          const data = await response.json()
+          setVehicles(data)
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error)
+      }
+    }
+
     if (isOpen) {
       fetchVehicleTypes()
+      fetchVehicles()
     }
   }, [isOpen])
 
@@ -62,11 +83,36 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleVehicleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const vehicleId = e.target.value
+    setFormData(prev => ({ ...prev, vehicle_number: vehicleId }))
+
+    if (vehicleId) {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/vehicles/details?id=${vehicleId}`)
+        if (response.ok) {
+          const vehicleDetails = await response.json()
+          setFormData(prev => ({
+            ...prev,
+            company: vehicleDetails.subsidiary_name || '',
+            vehicle_type: vehicleDetails.vehicle_type || ''
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching vehicle details:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      console.log('Submitting roadworthy update:', formData)
       await onSubmit(formData)
       onClose()
     } catch (error) {
@@ -93,7 +139,15 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
             <X size={24} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        {prefilling ? (
+          <div className="mt-6 flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading form data...</p>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Company */}
             <div className="space-y-2">
@@ -115,6 +169,9 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
                   }`}
                 />
               </div>
+              {formData.vehicle_number && (
+                <p className="text-green-600 text-xs">Auto-fills when vehicle is changed</p>
+              )}
             </div>
 
             {/* Vehicle Number */}
@@ -124,19 +181,29 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
               </label>
               <div className="relative">
                 <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
+                <select
                   name="vehicle_number"
                   value={formData.vehicle_number}
-                  onChange={handleChange}
+                  onChange={handleVehicleChange}
                   required
+                  disabled={loading}
                   className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     themeMode === 'dark'
                       ? 'bg-gray-800 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                />
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Select Vehicle</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.reg_number} - {vehicle.trim} ({vehicle.year})
+                    </option>
+                  ))}
+                </select>
               </div>
+              {loading && (
+                <p className="text-blue-500 text-xs">Loading vehicle details...</p>
+              )}
             </div>
 
             {/* Vehicle Type */}
@@ -165,6 +232,9 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
                   ))}
                 </select>
               </div>
+              {formData.vehicle_number && (
+                <p className="text-green-600 text-xs">Auto-fills when vehicle is changed</p>
+              )}
             </div>
 
             {/* Date Issued */}
@@ -258,6 +328,7 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   )

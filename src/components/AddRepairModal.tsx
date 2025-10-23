@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, DollarSign, Wrench, Info } from 'lucide-react'
+import { X, Calendar, Coins, Wrench, Info } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface AddRepairModalProps {
@@ -17,7 +17,9 @@ export default function AddRepairModal({ isOpen, onClose, onSubmit, vehicleId }:
     service_date: '',
     cost: '',
     status: 'completed',
-    vehicle_id: vehicleId || ''
+    vehicle_id: vehicleId || '',
+    details: '',
+    part_replaced: ''
   })
   const [loading, setLoading] = useState(false)
 
@@ -45,7 +47,9 @@ export default function AddRepairModal({ isOpen, onClose, onSubmit, vehicleId }:
         service_date: '',
         cost: '',
         status: 'completed',
-        vehicle_id: vehicleId || ''
+        vehicle_id: vehicleId || '',
+        details: '',
+        part_replaced: ''
       })
       onClose()
     } catch (error) {
@@ -102,7 +106,7 @@ export default function AddRepairModal({ isOpen, onClose, onSubmit, vehicleId }:
                 Cost (₵) *
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Coins className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="number"
                   name="cost"
@@ -143,6 +147,50 @@ export default function AddRepairModal({ isOpen, onClose, onSubmit, vehicleId }:
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Repair Details
+            </label>
+            <div className="relative">
+              <Wrench className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <textarea
+                name="details"
+                value={formData.details}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Describe the repair work performed..."
+                className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
+                  themeMode === 'dark'
+                    ? 'bg-gray-800 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Parts Replaced */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Parts Replaced
+            </label>
+            <div className="relative">
+              <Info className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <textarea
+                name="part_replaced"
+                value={formData.part_replaced}
+                onChange={handleChange}
+                rows={2}
+                placeholder="List any parts that were replaced during the repair..."
+                className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
+                  themeMode === 'dark'
+                    ? 'bg-gray-800 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
             </div>
           </div>
 

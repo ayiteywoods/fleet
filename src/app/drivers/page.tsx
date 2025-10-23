@@ -45,6 +45,7 @@ export default function DriversPage() {
   const [selectedDriver, setSelectedDriver] = useState(null)
   const [drivers, setDrivers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [notification, setNotification] = useState({
     isOpen: false,
     type: 'success' as 'success' | 'error' | 'warning' | 'info',
@@ -52,7 +53,7 @@ export default function DriversPage() {
     message: ''
   })
   const [selectedFields, setSelectedFields] = useState([
-    'name', 'phone', 'license_number', 'license_category', 'status', 'region', 'spcode'
+    'name', 'phone', 'license_number', 'license_category', 'status', 'region', 'subsidiary_name', 'vehicle_reg_number'
   ])
 
   // All available fields from the driver_operators table
@@ -62,13 +63,17 @@ export default function DriversPage() {
     { key: 'license_number', label: 'License Number', type: 'text' },
     { key: 'license_category', label: 'License Category', type: 'text' },
     { key: 'license_expire', label: 'License Expiry', type: 'date' },
+    { key: 'date_issued', label: 'License Issue Date', type: 'date' },
+    { key: 'dob', label: 'Date of Birth', type: 'date' },
     { key: 'region', label: 'Region', type: 'text' },
     { key: 'district', label: 'District', type: 'text' },
     { key: 'status', label: 'Status', type: 'status' },
-    { key: 'spcode', label: 'Subsidiary ID', type: 'number' },
-    { key: 'vehicle_id', label: 'Vehicle ID', type: 'number' },
+    { key: 'subsidiary_name', label: 'Subsidiary', type: 'text' },
+    { key: 'vehicle_reg_number', label: 'Vehicle Registration', type: 'text' },
     { key: 'created_at', label: 'Created At', type: 'date' },
-    { key: 'updated_at', label: 'Updated At', type: 'date' }
+    { key: 'updated_at', label: 'Updated At', type: 'date' },
+    { key: 'created_by', label: 'Created By', type: 'text' },
+    { key: 'updated_by', label: 'Updated By', type: 'text' }
   ]
 
   // Fetch drivers data from API
@@ -107,13 +112,18 @@ export default function DriversPage() {
   const districtDrivers = drivers.filter(d => d.district).length
 
   const kpiCards = [
-    { title: 'Total', value: totalDrivers.toString(), icon: UserGroupIcon, color: 'blue' },
-    { title: 'Active', value: activeDrivers.toString(), icon: CheckCircleIcon, color: 'blue' },
-    { title: 'Inactive', value: inactiveDrivers.toString(), icon: UserMinusIcon, color: 'blue' },
-    { title: 'Expired Licenses', value: expiredLicenses.toString(), icon: ExclamationTriangleIcon, color: 'blue' },
-    { title: 'Regional', value: regionalDrivers.toString(), icon: UserIcon, color: 'blue' },
-    { title: 'District', value: districtDrivers.toString(), icon: WrenchScrewdriverIcon, color: 'blue' }
+    { title: 'Total', value: totalDrivers.toString(), icon: UserGroupIcon, color: 'blue', status: null },
+    { title: 'Active', value: activeDrivers.toString(), icon: CheckCircleIcon, color: 'blue', status: 'Active' },
+    { title: 'Inactive', value: inactiveDrivers.toString(), icon: UserMinusIcon, color: 'blue', status: 'Inactive' },
+    { title: 'Expired Licenses', value: expiredLicenses.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'expired' },
+    { title: 'Regional', value: regionalDrivers.toString(), icon: UserIcon, color: 'blue', status: 'regional' },
+    { title: 'District', value: districtDrivers.toString(), icon: WrenchScrewdriverIcon, color: 'blue', status: 'district' }
   ]
+
+  const handleCardClick = (status: string | null) => {
+    setStatusFilter(status)
+    setCurrentPage(1) // Reset to first page when filtering
+  }
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -132,6 +142,14 @@ export default function DriversPage() {
     }
   }
 
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      setSelectedFields([])
+    } else {
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
+
   const getSelectedFieldsData = () => {
     return selectedFields.map(fieldKey => 
       availableFields.find(field => field.key === fieldKey)
@@ -142,6 +160,11 @@ export default function DriversPage() {
     // Special handling for name field - don't return '-' for empty names
     if (fieldKey === 'name') {
       return value || 'No Name'
+    }
+    
+    // Special handling for vehicle registration - show "No Vehicle Assigned" if empty
+    if (fieldKey === 'vehicle_reg_number') {
+      return value || 'No Vehicle Assigned'
     }
     
     if (!value && value !== 0) return '-'
@@ -562,8 +585,29 @@ export default function DriversPage() {
     setSearchQuery(query)
   }
 
-  // Filter drivers based on search query
+  // Filter drivers based on search query and status filter
   const filteredDrivers = drivers.filter(driver => {
+    // Apply status filter
+    if (statusFilter) {
+      if (statusFilter === 'expired') {
+        // Filter for expired licenses
+        if (!driver.license_expire) return false
+        const expiryDate = new Date(driver.license_expire)
+        const today = new Date()
+        if (expiryDate >= today) return false
+      } else if (statusFilter === 'regional') {
+        // Filter for drivers with region
+        if (!driver.region) return false
+      } else if (statusFilter === 'district') {
+        // Filter for drivers with district
+        if (!driver.district) return false
+      } else {
+        // Filter by exact status match
+        if (driver.status !== statusFilter) return false
+      }
+    }
+    
+    // Apply search filter
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -622,24 +666,41 @@ export default function DriversPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
+            const isActive = statusFilter === card.status
             return (
-              <div key={index} className={`p-6 rounded-2xl ${
-                themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
-              }`}>
+              <div 
+                key={index} 
+                onClick={() => handleCardClick(card.status)}
+                className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 ${
+                  themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+                } ${
+                  isActive 
+                    ? 'ring-2 ring-blue-500 shadow-lg transform scale-105' 
+                    : 'hover:shadow-md hover:transform hover:scale-102'
+                }`}
+              >
                 <div className="flex items-center">
-                  <div className={`p-3 rounded-full ${
+                  <div className={`p-3 rounded-full transition-colors ${
                     themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
+                  } ${
+                    isActive ? 'bg-blue-100' : ''
                   }`}>
-                    <IconComponent className={`w-6 h-6 text-brand-500`} />
+                    <IconComponent className={`w-6 h-6 transition-colors ${
+                      isActive ? 'text-blue-600' : 'text-brand-500'
+                    }`} />
                   </div>
                   <div className="ml-4">
-                    <h3 className={`text-sm font-medium ${
+                    <h3 className={`text-sm font-medium transition-colors ${
                       themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.title}
                     </h3>
-                    <p className={`text-2xl font-bold ${
+                    <p className={`text-2xl font-bold transition-colors ${
                       themeMode === 'dark' ? 'text-white' : 'text-navy-700'
+                    } ${
+                      isActive ? 'text-blue-600' : ''
                     }`}>
                       {card.value}
                     </p>
@@ -837,6 +898,26 @@ export default function DriversPage() {
                   </button>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedFields.length === availableFields.length}
+                        onChange={handleSelectAllFields}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span className={`text-sm font-medium ${
+                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Select All Columns
+                      </span>
+                    </label>
+                    <p className={`text-xs mt-1 ml-7 ${
+                      themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {selectedFields.length} of {availableFields.length} columns selected
+                    </p>
+                  </div>
                   {availableFields.map((field) => (
                     <label key={field.key} className="flex items-center space-x-2">
                       <input
@@ -945,6 +1026,11 @@ export default function DriversPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-700 dark:text-gray-300">
                 Showing {startIndex + 1} to {Math.min(endIndex, sortedDrivers.length)} of {sortedDrivers.length} entries
+                {(searchQuery || statusFilter) && (
+                  <span className="ml-2 text-blue-600">
+                    (filtered from {drivers.length} total)
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button

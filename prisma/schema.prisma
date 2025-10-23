@@ -78,8 +78,6 @@ model vehicles {
   incident_reports     incident_reports[]
   insurance            insurance[]
   maintenance_history  maintenance_history[]
-  vehicle_types        vehicle_types? @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  vehicle_makes        vehicle_makes? @relation(fields: [make_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   maintenance_schedule maintenance_schedule[]
   repair_history       repair_history[]
   repair_request       repair_request[]
@@ -87,7 +85,9 @@ model vehicles {
   spare_part_request   spare_part_request[]
   vehicle_dispatch     vehicle_dispatch[]
   vehicle_reservation  vehicle_reservation[]
+  vehicle_makes        vehicle_makes?         @relation(fields: [make_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subsidiary           subsidiary?            @relation(fields: [spcode], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vehicle_types        vehicle_types?         @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model categories {
@@ -96,6 +96,8 @@ model categories {
   description String?
   created_at  DateTime? @default(now()) @db.Timestamp(0)
   updated_at  DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_by  BigInt?
+  updated_by  BigInt?
 }
 
 model clusters {
@@ -105,6 +107,8 @@ model clusters {
   notes       String?
   created_at  DateTime? @default(now()) @db.Timestamp(0)
   updated_at  DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_by  BigInt?
+  updated_by  BigInt?
 }
 
 model companies {
@@ -122,6 +126,8 @@ model companies {
   status         String    @db.VarChar(255)
   created_at     DateTime? @db.Timestamp(0)
   updated_at     DateTime? @db.Timestamp(0)
+  created_by     BigInt?
+  updated_by     BigInt?
 }
 
 model driver_operators {
@@ -137,9 +143,11 @@ model driver_operators {
   vehicle_id       BigInt?
   created_at       DateTime?          @db.Timestamp(0)
   updated_at       DateTime?          @db.Timestamp(0)
-  created_by       Int?
-  updated_by       Int?
+  created_by       BigInt?
+  updated_by       BigInt?
   spcode           Int?
+  date_issued      DateTime?          @db.Date
+  dob              DateTime?          @db.Date
   vehicles         vehicles?          @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "driver_operators_vehicle_id_foreign")
   fuel_logs        fuel_logs[]
   incident_reports incident_reports[]
@@ -212,6 +220,8 @@ model groups {
   status     String
   created_at DateTime? @default(now()) @db.Timestamp(0)
   updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_by BigInt?
+  updated_by BigInt?
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -413,6 +423,8 @@ model permissions {
   guard_name            String                  @db.VarChar(255)
   created_at            DateTime?               @default(now()) @db.Timestamp(0)
   updated_at            DateTime?               @default(now()) @updatedAt @db.Timestamp(0)
+  created_by            Int?
+  updated_by            Int?
   model_has_permissions model_has_permissions[]
   role_has_permissions  role_has_permissions[]
 
@@ -435,16 +447,18 @@ model personal_access_tokens {
 }
 
 model repair_history {
-  id           BigInt    @id @default(autoincrement())
-  service_date DateTime  @db.Date
-  cost         Decimal   @db.Decimal(10, 2)
-  status       String    @db.VarChar(255)
-  vehicle_id   BigInt
-  created_at   DateTime? @db.Timestamp(0)
-  updated_at   DateTime? @db.Timestamp(0)
-  created_by   Int?
-  updated_by   Int?
-  vehicles     vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_history_vehicle_id_foreign")
+  id            BigInt    @id @default(autoincrement())
+  service_date  DateTime  @db.Date
+  cost          Decimal   @db.Decimal(10, 2)
+  status        String    @db.VarChar(255)
+  vehicle_id    BigInt
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+  created_by    Int?
+  updated_by    Int?
+  details       String?
+  part_replaced String?
+  vehicles      vehicles  @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "repair_history_vehicle_id_foreign")
 }
 
 model repair_request {
@@ -493,6 +507,8 @@ model roles {
   guard_name           String                 @db.VarChar(255)
   created_at           DateTime?              @default(now()) @db.Timestamp(0)
   updated_at           DateTime?              @default(now()) @updatedAt @db.Timestamp(0)
+  created_by           Int?
+  updated_by           Int?
   model_has_roles      model_has_roles[]
   role_has_permissions role_has_permissions[]
 
@@ -614,6 +630,8 @@ model tags {
   color      String?   @db.VarChar(255)
   created_at DateTime? @default(now()) @db.Timestamp(0)
   updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_by Int?
+  updated_by Int?
 }
 
 model vehicle_dispatch {
@@ -636,10 +654,10 @@ model vehicle_dispatch {
 }
 
 model vehicle_makes {
-  id         BigInt    @id @default(autoincrement())
-  name       String    @db.VarChar(255)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
+  id         BigInt     @id @default(autoincrement())
+  name       String     @db.VarChar(255)
+  created_at DateTime?  @db.Timestamp(0)
+  updated_at DateTime?  @db.Timestamp(0)
   created_by Int?
   updated_by Int?
   models     model[]
@@ -674,11 +692,11 @@ model vehicle_reservation {
 }
 
 model vehicle_types {
-  id          BigInt    @id @default(autoincrement())
-  type        String    @db.VarChar(255)
+  id          BigInt     @id @default(autoincrement())
+  type        String     @db.VarChar(255)
   description String?
-  created_at  DateTime? @default(now()) @db.Timestamp(0)
-  updated_at  DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?  @default(now()) @updatedAt @db.Timestamp(0)
   created_by  Int?
   updated_by  Int?
   vehicles    vehicles[]
@@ -711,6 +729,7 @@ model roadworthy {
   updated_by       String    @db.VarChar
   created_at       DateTime? @db.Time(6)
   updated_at       DateTime? @db.Time(6)
+  created_by       Int?
 
   @@id([id, vehicle_number])
 }

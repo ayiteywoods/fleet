@@ -24,15 +24,52 @@ export async function GET(request: NextRequest) {
     let whereClause = {}
     if (subsidiaryId) {
       // Find drivers by spcode (subsidiary ID)
-      whereClause = { spcode: parseInt(subsidiaryId) }
+      whereClause = { spcode: BigInt(subsidiaryId) }
     }
 
     const drivers = await prisma.driver_operators.findMany({
       where: whereClause,
+      include: {
+        vehicles: {
+          select: {
+            reg_number: true,
+            trim: true,
+            year: true
+          }
+        }
+      },
       orderBy: { created_at: 'desc' }
     })
 
-    return NextResponse.json(serializeBigInt(drivers))
+    // Fetch subsidiary data for each driver and add subsidiary_name
+    const driversWithSubsidiaryName = await Promise.all(
+      drivers.map(async (driver) => {
+        let subsidiary = null
+        if (driver.spcode) {
+          subsidiary = await prisma.subsidiary.findUnique({
+            where: { id: driver.spcode }
+          })
+        }
+
+        return {
+          ...driver,
+          id: driver.id.toString(),
+          spcode: driver.spcode?.toString() || null,
+          vehicle_id: driver.vehicle_id?.toString() || null,
+          created_by: driver.created_by?.toString() || null,
+          updated_by: driver.updated_by?.toString() || null,
+          vehicle_reg_number: driver.vehicles?.reg_number || null,
+          subsidiary_name: subsidiary?.name || null,
+          subsidiary: subsidiary ? {
+            id: subsidiary.id.toString(),
+            name: subsidiary.name
+          } : null
+        }
+      })
+    )
+
+    const serializedDrivers = serializeBigInt(driversWithSubsidiaryName)
+    return NextResponse.json(serializedDrivers)
   } catch (error) {
     console.error('Error fetching drivers:', error)
     return NextResponse.json(
@@ -77,7 +114,7 @@ export async function POST(request: NextRequest) {
         region,
         district,
         status: status || 'Active',
-        spcode: subsidiary ? parseInt(subsidiary) : null,
+        spcode: subsidiary ? BigInt(subsidiary) : null,
         vehicle_id: vehicle_id ? BigInt(vehicle_id) : null,
         created_at: new Date(),
         updated_at: new Date()
@@ -138,7 +175,7 @@ export async function PUT(request: NextRequest) {
       region,
       district,
       status: status || 'Active',
-      spcode: subsidiary ? parseInt(subsidiary) : null,
+      spcode: subsidiary ? BigInt(subsidiary) : null,
       vehicle_id: vehicle_id ? BigInt(vehicle_id) : null,
       updated_at: new Date()
     }
