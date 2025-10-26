@@ -159,16 +159,17 @@ export default function GoogleFleetMap() {
 
   // Initialize map
   const initializeMap = async () => {
+    // Wait for ref to be available
+    let retries = 0
+    while (!mapRef.current && retries < 20) {
+      await new Promise(resolve => setTimeout(resolve, 50))
+      retries++
+    }
+    
     if (!mapRef.current) {
-      console.log('mapRef.current is null, retrying in 100ms...')
-      initRetryCountRef.current += 1
-      if (initRetryCountRef.current < 10) {
-        setTimeout(() => initializeMap(), 100)
-      } else {
-        console.error('Failed to get mapRef after 10 retries')
-        setError('Failed to initialize map')
-        setIsLoading(false)
-      }
+      console.error('Failed to get mapRef after waiting')
+      setError('Failed to initialize map - DOM element not ready')
+      setIsLoading(false)
       return
     }
 
