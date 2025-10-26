@@ -547,23 +547,13 @@ export default function GoogleFleetMap() {
     return <SimpleFleetMap />
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96 bg-gray-100 dark:bg-gray-800 rounded-xl">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
+  if (error && !map) {
     return (
       <DatabaseErrorDisplay 
         error={error} 
         onRetry={() => {
           setError(null)
+          setIsLoading(true)
           initializeMap()
           fetchVehiclePositions()
         }} 
@@ -573,6 +563,14 @@ export default function GoogleFleetMap() {
 
   return (
     <div className="h-96 rounded-xl overflow-hidden relative">
+      {(isLoading || !map) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading map...</p>
+          </div>
+        </div>
+      )}
       <div ref={mapRef} className="w-full h-full" style={{ minHeight: '384px', minWidth: '100%' }}></div>
     </div>
   )
