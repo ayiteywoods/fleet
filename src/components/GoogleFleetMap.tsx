@@ -414,7 +414,7 @@ export default function GoogleFleetMap() {
 
   // Initialize map and fetch data
   useEffect(() => {
-    console.log('Google Maps API Key available:', !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) // Debug log
+    console.log('Component mounted, mapRef.current:', !!mapRef.current) // Debug log
     
     // Set a timeout to stop loading after 10 seconds if nothing happens
     const loadingTimeout = setTimeout(() => {
@@ -422,10 +422,19 @@ export default function GoogleFleetMap() {
       setIsLoading(false)
     }, 10000)
     
-    initializeMap()
+    // Fetch data immediately
     fetchVehiclePositions()
     
-    return () => clearTimeout(loadingTimeout)
+    // Initialize map with a delay to ensure ref is attached
+    const initTimeout = setTimeout(() => {
+      console.log('Attempting to initialize map, mapRef.current:', !!mapRef.current)
+      initializeMap()
+    }, 100)
+    
+    return () => {
+      clearTimeout(loadingTimeout)
+      clearTimeout(initTimeout)
+    }
   }, [])
 
   // Create markers when map and vehicle positions are ready
