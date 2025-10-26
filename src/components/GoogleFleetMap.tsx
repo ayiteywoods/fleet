@@ -264,7 +264,12 @@ export default function GoogleFleetMap() {
 
       setMap(mapInstance)
       console.log('Map instance created successfully') // Debug log
-      setIsLoading(false) // Map is initialized, stop loading
+      
+      // Small delay to ensure map is rendered before hiding loading
+      setTimeout(() => {
+        setIsLoading(false) // Map is initialized, stop loading
+        console.log('Loading state set to false')
+      }, 100)
     } catch (err) {
       console.error('Error initializing map:', err)
       console.log('Switching to fallback map due to Google Maps error')
@@ -535,17 +540,6 @@ export default function GoogleFleetMap() {
           fetchVehiclePositions()
         }} 
       />
-    )
-  }
-
-  if (!map) {
-    return (
-      <div className="flex items-center justify-center h-96 bg-gray-100 dark:bg-gray-800 rounded-xl">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Initializing map...</p>
-        </div>
-      </div>
     )
   }
 
