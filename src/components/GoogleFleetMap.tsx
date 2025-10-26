@@ -102,6 +102,7 @@ export default function GoogleFleetMap() {
       const token = localStorage.getItem('token')
       if (!token) {
         setError('Authentication required - Please log in to view fleet positions')
+        setIsLoading(false)
         return
       }
 
@@ -150,6 +151,8 @@ export default function GoogleFleetMap() {
     } catch (error) {
       console.error('Error fetching vehicle positions:', error)
       setError(`Failed to fetch vehicle positions: ${error instanceof Error ? error.message : 'Network error'}`)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -395,8 +398,17 @@ export default function GoogleFleetMap() {
   // Initialize map and fetch data
   useEffect(() => {
     console.log('Google Maps API Key available:', !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) // Debug log
+    
+    // Set a timeout to stop loading after 10 seconds if nothing happens
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Map loading timeout reached')
+      setIsLoading(false)
+    }, 10000)
+    
     initializeMap()
     fetchVehiclePositions()
+    
+    return () => clearTimeout(loadingTimeout)
   }, [])
 
   // Create markers when map and vehicle positions are ready
@@ -409,9 +421,93 @@ export default function GoogleFleetMap() {
   // Update map theme when theme changes
   useEffect(() => {
     if (map) {
-      initializeMap()
+      // Update map styles based on theme without reinitializing
+      const styles = themeMode === 'dark' ? [
+        { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+        {
+          featureType: 'administrative.locality',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#d59563' }]
+        },
+        {
+          featureType: 'poi',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#d59563' }]
+        },
+        {
+          featureType: 'poi.park',
+          elementType: 'geometry',
+          stylers: [{ color: '#263c3f' }]
+        },
+        {
+          featureType: 'poi.park',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#6b9a76' }]
+        },
+        {
+          featureType: 'road',
+          elementType: 'geometry',
+          stylers: [{ color: '#38414e' }]
+        },
+        {
+          featureType: 'road',
+          elementType: 'geometry.stroke',
+          stylers: [{ color: '#212a37' }]
+        },
+        {
+          featureType: 'road',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#9ca5b3' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'geometry',
+          stylers: [{ color: '#746855' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'geometry.stroke',
+          stylers: [{ color: '#1f2835' }]
+        },
+        {
+          featureType: 'road.highway',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#f3d19c' }]
+        },
+        {
+          featureType: 'transit',
+          elementType: 'geometry',
+          stylers: [{ color: '#2f3948' }]
+        },
+        {
+          featureType: 'transit.station',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#d59563' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'geometry',
+          stylers: [{ color: '#17263c' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#515c6d' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'labels.text.stroke',
+          stylers: [{ color: '#17263c' }]
+        }
+      ] : undefined
+      
+      map.setOptions({
+        styles: styles
+      })
     }
-  }, [themeMode])
+  }, [themeMode, map])
 
   // Use fallback if Google Maps fails
   if (useFallback) {
@@ -439,6 +535,17 @@ export default function GoogleFleetMap() {
           fetchVehiclePositions()
         }} 
       />
+    )
+  }
+
+  if (!map) {
+    return (
+      <div className="flex items-center justify-center h-96 bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Initializing map...</p>
+        </div>
+      </div>
     )
   }
 
