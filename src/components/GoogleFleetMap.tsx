@@ -425,11 +425,17 @@ export default function GoogleFleetMap() {
     // Fetch data immediately
     fetchVehiclePositions()
     
-    // Initialize map with a delay to ensure ref is attached
+      // Initialize map with a delay to ensure ref is attached
     const initTimeout = setTimeout(() => {
       console.log('Attempting to initialize map, mapRef.current:', !!mapRef.current)
-      initializeMap()
-    }, 100)
+      if (!mapRef.current) {
+        console.error('mapRef.current is still null after 100ms delay')
+        setError('Failed to initialize map - DOM element not ready')
+        setIsLoading(false)
+      } else {
+        initializeMap()
+      }
+    }, 500)
     
     return () => {
       clearTimeout(loadingTimeout)
