@@ -36,6 +36,7 @@ interface VehiclePosition {
 export default function GoogleFleetMap() {
   const { themeMode } = useTheme()
   const mapRef = useRef<HTMLDivElement>(null)
+  const initRetryCountRef = useRef(0)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   const [vehiclePositions, setVehiclePositions] = useState<VehiclePosition[]>([])
@@ -158,7 +159,18 @@ export default function GoogleFleetMap() {
 
   // Initialize map
   const initializeMap = async () => {
-    if (!mapRef.current) return
+    if (!mapRef.current) {
+      console.log('mapRef.current is null, retrying in 100ms...')
+      initRetryCountRef.current += 1
+      if (initRetryCountRef.current < 10) {
+        setTimeout(() => initializeMap(), 100)
+      } else {
+        console.error('Failed to get mapRef after 10 retries')
+        setError('Failed to initialize map')
+        setIsLoading(false)
+      }
+      return
+    }
 
     try {
       setIsLoading(true)
