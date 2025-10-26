@@ -264,13 +264,14 @@ export default function GoogleFleetMap() {
 
       setMap(mapInstance)
       console.log('Map instance created successfully') // Debug log
+      
+      // Don't set loading to false here - let fetchVehiclePositions handle it
     } catch (err) {
       console.error('Error initializing map:', err)
       console.log('Switching to fallback map due to Google Maps error')
       setUseFallback(true)
       setError(null) // Clear error since we're using fallback
-    } finally {
-      setIsLoading(false)
+      setIsLoading(false) // Only set loading to false if using fallback
     }
   }
 
@@ -550,8 +551,8 @@ export default function GoogleFleetMap() {
   }
 
   return (
-    <div className="h-96 rounded-xl overflow-hidden">
-      <div ref={mapRef} className="w-full h-full"></div>
+    <div className="h-96 rounded-xl overflow-hidden relative">
+      <div ref={mapRef} className="w-full h-full" style={{ minHeight: '384px', minWidth: '100%' }}></div>
     </div>
   )
 }
