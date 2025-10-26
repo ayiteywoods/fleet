@@ -264,8 +264,7 @@ export default function GoogleFleetMap() {
 
       setMap(mapInstance)
       console.log('Map instance created successfully') // Debug log
-      
-      // Don't set loading to false here - let fetchVehiclePositions handle it
+      setIsLoading(false) // Map is initialized, stop loading
     } catch (err) {
       console.error('Error initializing map:', err)
       console.log('Switching to fallback map due to Google Maps error')
