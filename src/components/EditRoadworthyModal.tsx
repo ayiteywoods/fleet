@@ -19,7 +19,6 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
     vehicle_type: '',
     date_issued: '',
     date_expired: '',
-    roadworth_status: 'valid',
     updated_by: '1'
   })
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([])
@@ -40,7 +39,6 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
         vehicle_type: roadworthyRecord.vehicle_type || '',
         date_issued: roadworthyRecord.date_issued ? new Date(roadworthyRecord.date_issued).toISOString().split('T')[0] : '',
         date_expired: roadworthyRecord.date_expired ? new Date(roadworthyRecord.date_expired).toISOString().split('T')[0] : '',
-        roadworth_status: roadworthyRecord.roadworth_status || 'valid',
         updated_by: roadworthyRecord.updated_by || '1'
       })
       setPrefilling(false)
@@ -278,31 +276,6 @@ export default function EditRoadworthyModal({ isOpen, onClose, onSubmit, roadwor
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
-              </div>
-            </div>
-
-            {/* Roadworthy Status */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Status *
-              </label>
-              <div className="relative">
-                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select
-                  name="roadworth_status"
-                  value={formData.roadworth_status}
-                  onChange={handleChange}
-                  required
-                  className={`w-full pl-10 pr-4 py-2 border rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    themeMode === 'dark'
-                      ? 'bg-gray-800 border-gray-600 text-white'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value="valid">Valid</option>
-                  <option value="expired">Expired</option>
-                  <option value="pending">Pending</option>
-                </select>
               </div>
             </div>
           </div>

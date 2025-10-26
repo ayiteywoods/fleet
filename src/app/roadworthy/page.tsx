@@ -25,6 +25,7 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
+import { formatDateTime } from '@/lib/dateUtils'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import Notification from '@/components/Notification'
 import AddRoadworthyModal from '@/components/AddRoadworthyModal'
@@ -73,9 +74,16 @@ export default function RoadworthyPage() {
   const fetchRoadworthyRecords = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/roadworthy')
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/roadworthy', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
+        console.log('🔍 ROADWORTHY DATA RECEIVED:', data.length, 'records')
+        console.log('Sample record:', data[0])
         setRoadworthyRecords(data)
       } else {
         console.error('Failed to fetch roadworthy records')
@@ -112,28 +120,63 @@ export default function RoadworthyPage() {
 
   // Calculate KPI values from roadworthy data
   const totalRecords = roadworthyRecords.length
-  const validRecords = roadworthyRecords.filter(record => {
+  
+  console.log('🔍 KPI CALCULATION DEBUG:')
+  console.log('Total records:', totalRecords)
+  console.log('Today:', new Date().toISOString().split('T')[0])
+  
+  // Calculate expired records (date_expired < today)
+  const expiredRecords = roadworthyRecords.filter(record => {
     const expiryDate = new Date(record.date_expired)
     const today = new Date()
-    return expiryDate > today && record.roadworth_status === 'Valid'
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0)
+    expiryDate.setHours(0, 0, 0, 0)
+    const isExpired = expiryDate < today
+    if (isExpired) {
+      console.log('EXPIRED:', record.vehicle_number, expiryDate.toISOString().split('T')[0])
+    }
+    return isExpired
   }).length
-  const expiredRecords = roadworthyRecords.filter(record => isRecordExpired(record)).length
+  
+  // Calculate expiring soon records (today <= date_expired <= today + 30 days)
   const expiringSoon = roadworthyRecords.filter(record => {
     const expiryDate = new Date(record.date_expired)
     const today = new Date()
     const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
-    return expiryDate > today && expiryDate <= thirtyDaysFromNow
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0)
+    thirtyDaysFromNow.setHours(0, 0, 0, 0)
+    expiryDate.setHours(0, 0, 0, 0)
+    const isExpiringSoon = expiryDate >= today && expiryDate <= thirtyDaysFromNow
+    if (isExpiringSoon) {
+      console.log('EXPIRING SOON:', record.vehicle_number, expiryDate.toISOString().split('T')[0])
+    }
+    return isExpiringSoon
   }).length
-  const invalidRecords = roadworthyRecords.filter(record => record.roadworth_status === 'Invalid').length
-  const pendingRecords = roadworthyRecords.filter(record => record.roadworth_status === 'Pending').length
-
+  
+  // Calculate valid records (date_expired > today + 30 days)
+  const validRecords = roadworthyRecords.filter(record => {
+    const expiryDate = new Date(record.date_expired)
+    const today = new Date()
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+    // Set time to start of day for accurate comparison
+    today.setHours(0, 0, 0, 0)
+    thirtyDaysFromNow.setHours(0, 0, 0, 0)
+    expiryDate.setHours(0, 0, 0, 0)
+    const isValid = expiryDate > thirtyDaysFromNow
+    if (isValid) {
+      console.log('VALID:', record.vehicle_number, expiryDate.toISOString().split('T')[0])
+    }
+    return isValid
+  }).length
+  
+  console.log('FINAL COUNTS - Expired:', expiredRecords, 'Expiring Soon:', expiringSoon, 'Valid:', validRecords)
   const kpiCards = [
     { title: 'Total Records', value: totalRecords.toString(), icon: DocumentCheckIcon, color: 'blue', status: null },
     { title: 'Valid', value: validRecords.toString(), icon: CheckCircleIcon, color: 'blue', status: 'valid' },
     { title: 'Expired', value: expiredRecords.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'expired' },
-    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue', status: 'expiring_soon' },
-    { title: 'Invalid', value: invalidRecords.toString(), icon: XMarkIcon, color: 'blue', status: 'invalid' },
-    { title: 'Pending', value: pendingRecords.toString(), icon: CalendarIcon, color: 'blue', status: 'pending' }
+    { title: 'Expiring Soon', value: expiringSoon.toString(), icon: ClockIcon, color: 'blue', status: 'expiring_soon' }
   ]
 
   const handleCardClick = (status: string | null) => {
@@ -188,7 +231,7 @@ export default function RoadworthyPage() {
         return Number(stringValue).toLocaleString()
       case 'date':
         try {
-          return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
         } catch (error) {
           return stringValue
         }
@@ -567,25 +610,33 @@ export default function RoadworthyPage() {
     // Apply status filter
     if (statusFilter) {
       if (statusFilter === 'valid') {
-        // Filter for valid records (not expired and status is Valid)
-        const expiryDate = new Date(record.date_expired)
-        const today = new Date()
-        if (expiryDate <= today || record.roadworth_status !== 'Valid') return false
-      } else if (statusFilter === 'expired') {
-        // Filter for expired records using the same logic as KPI calculation
-        if (!isRecordExpired(record)) return false
-      } else if (statusFilter === 'expiring_soon') {
-        // Filter for records expiring soon (within 30 days)
+        // Filter for valid records (date_expired > today + 30 days)
         const expiryDate = new Date(record.date_expired)
         const today = new Date()
         const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
-        if (expiryDate <= today || expiryDate > thirtyDaysFromNow) return false
-      } else if (statusFilter === 'invalid') {
-        // Filter for invalid status
-        if (record.roadworth_status !== 'Invalid') return false
-      } else if (statusFilter === 'pending') {
-        // Filter for pending status
-        if (record.roadworth_status !== 'Pending') return false
+        // Set time to start of day for accurate comparison
+        today.setHours(0, 0, 0, 0)
+        thirtyDaysFromNow.setHours(0, 0, 0, 0)
+        expiryDate.setHours(0, 0, 0, 0)
+        if (expiryDate <= thirtyDaysFromNow) return false
+      } else if (statusFilter === 'expired') {
+        // Filter for expired records (date_expired < today)
+        const expiryDate = new Date(record.date_expired)
+        const today = new Date()
+        // Set time to start of day for accurate comparison
+        today.setHours(0, 0, 0, 0)
+        expiryDate.setHours(0, 0, 0, 0)
+        if (expiryDate >= today) return false
+      } else if (statusFilter === 'expiring_soon') {
+        // Filter for records expiring soon (today <= date_expired <= today + 30 days)
+        const expiryDate = new Date(record.date_expired)
+        const today = new Date()
+        const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+        // Set time to start of day for accurate comparison
+        today.setHours(0, 0, 0, 0)
+        thirtyDaysFromNow.setHours(0, 0, 0, 0)
+        expiryDate.setHours(0, 0, 0, 0)
+        if (expiryDate < today || expiryDate > thirtyDaysFromNow) return false
       }
     }
     
@@ -645,7 +696,7 @@ export default function RoadworthyPage() {
           <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
         </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             const isActive = statusFilter === card.status
@@ -975,10 +1026,6 @@ export default function RoadworthyPage() {
                             ? 'No valid roadworthy records found'
                             : statusFilter === 'expiring_soon'
                             ? 'No roadworthy records expiring soon'
-                            : statusFilter === 'invalid'
-                            ? 'No invalid roadworthy records found'
-                            : statusFilter === 'pending'
-                            ? 'No pending roadworthy records found'
                             : 'No roadworthy records found'
                           }
                         </span>

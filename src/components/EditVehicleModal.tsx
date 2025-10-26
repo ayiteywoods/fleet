@@ -82,7 +82,7 @@ interface EditVehicleModalProps {
 
 export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }: EditVehicleModalProps) {
   const { themeMode } = useTheme()
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     registrationNumber: vehicle?.reg_number || '',
     vehicleType: vehicle?.type_id || '',
     status: vehicle?.status || 'active',
@@ -93,14 +93,18 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
     model: vehicle?.trim || '',
     year: vehicle?.year || '',
     color: vehicle?.color || '',
-    purchaseDate: vehicle?.last_service_date || '',
+    engineNumber: vehicle?.engine_number || '',
+    chassisNumber: vehicle?.chassis_number || '',
+    currentDistrict: vehicle?.current_district || '',
+    lastServiceDate: vehicle?.last_service_date || '',
     nextServiceKm: vehicle?.next_service_km || '',
     additionalNotes: vehicle?.notes || '',
+    companyName: vehicle?.company_name || '',
     insuranceDocument: null as File | null,
     cluster: '',
     subsidiary: vehicle?.spcode || '',
     assignedTo: vehicle?.assigned_driver?.id?.toString() || ''
-  })
+  }))
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [clusters, setClusters] = useState<Cluster[]>([])
@@ -127,9 +131,13 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
         model: vehicle.trim || '',
         year: vehicle.year || '',
         color: vehicle.color || '',
-        purchaseDate: vehicle.last_service_date || '',
+        engineNumber: vehicle.engine_number || '',
+        chassisNumber: vehicle.chassis_number || '',
+        currentDistrict: vehicle.current_district || '',
+        lastServiceDate: vehicle.last_service_date || '',
         nextServiceKm: vehicle.next_service_km || '',
         additionalNotes: vehicle.notes || '',
+        companyName: vehicle.company_name || '',
         insuranceDocument: null as File | null,
         cluster: '', // Will be set after fetching clusters
         subsidiary: vehicle.spcode?.toString() || '',
@@ -684,21 +692,101 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
                   }`}
                 />
               </div>
-            </div>
 
-            {/* Third Column */}
-            <div className="space-y-4">
-              {/* Purchase Date */}
+              {/* Company Name */}
               <div>
                 <label className={`block text-sm font-medium mb-2 ${
                   themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  Purchase Date
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="e.g., Company ABC"
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+
+              {/* Engine Number */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Engine Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.engineNumber}
+                  onChange={(e) => handleInputChange('engineNumber', e.target.value)}
+                  placeholder="Engine identification number"
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+
+              {/* Chassis Number */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Chassis Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.chassisNumber}
+                  onChange={(e) => handleInputChange('chassisNumber', e.target.value)}
+                  placeholder="Chassis identification number"
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+
+              {/* Current District */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Current District
+                </label>
+                <input
+                  type="text"
+                  value={formData.currentDistrict}
+                  onChange={(e) => handleInputChange('currentDistrict', e.target.value)}
+                  placeholder="e.g., Accra Central, Kumasi Metro"
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Third Column */}
+            <div className="space-y-4">
+              {/* Last Service Date */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Last Service Date
                 </label>
                 <input
                   type="date"
-                  value={formData.purchaseDate}
-                  onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
+                  value={formData.lastServiceDate}
+                  onChange={(e) => handleInputChange('lastServiceDate', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white'

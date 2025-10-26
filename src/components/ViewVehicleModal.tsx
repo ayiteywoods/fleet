@@ -1,7 +1,8 @@
 'use client'
 
-import { X, Car, Calendar, MapPin, Wrench, FileText, Printer, Download, Edit, Plus, Settings, Building2 } from 'lucide-react'
+import { X, Car, Calendar, MapPin, Wrench, FileText, Printer, Download, Edit, Plus, Settings, Building2, User } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useRouter } from 'next/navigation'
 
 interface Vehicle {
   id: number
@@ -42,11 +43,18 @@ interface ViewVehicleModalProps {
   isOpen: boolean
   onClose: () => void
   vehicle: Vehicle | null
-  onEdit?: (vehicle: Vehicle) => void
 }
 
-export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: ViewVehicleModalProps) {
+export default function ViewVehicleModal({ isOpen, onClose, vehicle }: ViewVehicleModalProps) {
   const { themeMode } = useTheme()
+  const router = useRouter()
+
+  const handleViewProfile = () => {
+    if (vehicle) {
+      router.push(`/vehicle-profile/${vehicle.id}`)
+      onClose() // Close the modal after navigation
+    }
+  }
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
@@ -182,13 +190,13 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
               <p className="text-gray-600 dark:text-gray-300">{vehicle.trim} {vehicle.year} - {vehicle.color}</p>
             </div>
             
-            {/* Edit Button */}
+            {/* View Profile Button */}
             <button 
-              onClick={() => onEdit?.(vehicle)}
+              onClick={handleViewProfile}
               className="px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
-              <Edit className="w-4 h-4" />
-              Edit
+              <User className="w-4 h-4" />
+              View Profile
             </button>
           </div>
         </div>
@@ -272,6 +280,19 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    value={vehicle.company_name || 'Not specified'}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="Company Name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Engine Number
                   </label>
                   <div className="relative">
@@ -281,6 +302,26 @@ export default function ViewVehicleModal({ isOpen, onClose, vehicle, onEdit }: V
                       readOnly
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white pr-8 font-mono text-sm"
                       placeholder="Engine Number"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Chassis Number
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={vehicle.chassis_number || 'Not specified'}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-3xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white pr-8 font-mono text-sm"
+                      placeholder="Chassis Number"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

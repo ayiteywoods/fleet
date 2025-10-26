@@ -34,7 +34,7 @@ export async function GET() {
   try {
     const models = await prisma.model.findMany({
       include: {
-        vehicle_make: true
+        vehicle_makes: true
       },
       orderBy: {
         created_at: 'desc'
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         updated_at: new Date()
       },
       include: {
-        vehicle_make: true
+        vehicle_makes: true
       }
     })
     
@@ -93,7 +93,7 @@ export async function PUT(request: NextRequest) {
         updated_at: new Date()
       },
       include: {
-        vehicle_make: true
+        vehicle_makes: true
       }
     })
     

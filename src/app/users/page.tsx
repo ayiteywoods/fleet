@@ -203,6 +203,200 @@ export default function UserGroupIconPage() {
       </div>
   }
 
+  // Export functions
+  const formatFieldValueForExport = (fieldKey: string, value: any, fieldType: string) => {
+    if (!value && value !== 0) return '-'
+    
+    if (typeof value === 'object' && value !== null) {
+      return '-'
+    }
+    
+    let stringValue = String(value).trim()
+    stringValue = stringValue.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim()
+    
+    switch (fieldType) {
+      case 'number':
+        return Number(stringValue).toLocaleString()
+      case 'date':
+        try {
+          return new Date(stringValue).toLocaleDateString()
+        } catch (error) {
+          return stringValue
+        }
+      case 'status':
+        return stringValue === 'true' ? 'Active' : stringValue === 'false' ? 'Inactive' : stringValue?.charAt(0).toUpperCase() + stringValue?.slice(1).toLowerCase()
+      default:
+        return stringValue
+    }
+  }
+
+  const handleExportExcel = () => {
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = ['No', ...selectedFieldsData.map(field => field.label)]
+    
+    const data = paginatedUserGroupIcon.map((user, index) => {
+      const row = [startIndex + index + 1]
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users')
+    
+    XLSX.writeFile(workbook, `users-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'Excel Export Successful!',
+      message: 'Users data has been exported to Excel file.'
+    })
+  }
+
+  const handleExportCSV = () => {
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = ['No', ...selectedFieldsData.map(field => field.label)]
+    
+    const data = paginatedUserGroupIcon.map((user, index) => {
+      const row = [startIndex + index + 1]
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const csvContent = [headers, ...data]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `users-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'CSV Export Successful!',
+      message: 'Users data has been exported to CSV file.'
+    })
+  }
+
+  const handleExportPDF = () => {
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = ['No', ...selectedFieldsData.map(field => field.label)]
+    
+    const data = paginatedUserGroupIcon.map((user, index) => {
+      const row = [startIndex + index + 1]
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const doc = new jsPDF('l', 'mm', 'a4') // landscape orientation
+    doc.setFontSize(16)
+    doc.text('Users Report', 14, 22)
+    doc.setFontSize(10)
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30)
+
+    // Add table
+    autoTable(doc, {
+      head: [headers],
+      body: data,
+      startY: 40,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] }, // Blue header
+      alternateRowStyles: { fillColor: [249, 250, 251] }, // Light gray alternating rows
+      margin: { top: 40 }
+    })
+
+    doc.save(`users-${new Date().toISOString().split('T')[0]}.pdf`)
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'PDF Export Successful!',
+      message: 'Users data has been exported to PDF file.'
+    })
+  }
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) return
+
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = ['No', ...selectedFieldsData.map(field => field.label)]
+    
+    const data = paginatedUserGroupIcon.map((user, index) => {
+      const row = [startIndex + index + 1]
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Users Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          .date { color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #3b82f6; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f9fafb; }
+          tr:hover { background-color: #f3f4f6; }
+        </style>
+      </head>
+      <body>
+        <h1>Users Report</h1>
+        <div class="date">Generated on: ${new Date().toLocaleDateString()}</div>
+        <table>
+          <thead>
+            <tr>
+              ${headers.map(header => `<th>${header}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(row => 
+              `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+            ).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'Print Successful!',
+      message: 'Users data has been sent to printer.'
+    })
+  }
+
   const handleAddUser = async (userData: any) => {
     try {
       setNotification({
@@ -490,35 +684,47 @@ export default function UserGroupIconPage() {
                   <Cog6ToothIcon className="w-4 h-4" />
                   SELECT COLUMNS ({selectedFields.length})
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                <button 
+                  onClick={handleExportExcel}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
                   <TableCellsIcon className="w-4 h-4" />
                   EXCEL
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                <button 
+                  onClick={handleExportCSV}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
                   <DocumentTextIcon className="w-4 h-4" />
                   CSV
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                <button 
+                  onClick={handleExportPDF}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
                   <DocumentTextIcon className="w-4 h-4" />
                   PDF
                 </button>
-                <button className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                <button 
+                  onClick={handlePrint}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
                   <PrinterIcon className="w-4 h-4" />
                   PRINT
                 </button>

@@ -98,6 +98,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
     purchaseDate: '',
     nextServiceKm: '',
     additionalNotes: '',
+    companyName: '',
     insuranceDocument: null as File | null,
     cluster: '',
     subsidiary: '',
@@ -315,6 +316,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
         purchaseDate: '',
         nextServiceKm: '',
         additionalNotes: '',
+        companyName: '',
         insuranceDocument: null,
         cluster: '',
         subsidiary: '',
@@ -607,6 +609,26 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
                   value={formData.color}
                   onChange={(e) => handleInputChange('color', e.target.value)}
                   placeholder="e.g., Red, Blue"
+                  className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+
+              {/* Company Name */}
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="e.g., Company ABC"
                   className={`w-full px-3 py-2 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     themeMode === 'dark'
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'

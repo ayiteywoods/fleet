@@ -19,10 +19,23 @@ import {
   MapIcon,
   UserIcon,
   WrenchIcon,
-  PrinterIcon
+  PrinterIcon,
+  CpuChipIcon,
+  MapPinIcon as TrackingIcon,
+  EyeIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  DocumentArrowDownIcon,
+  DocumentTextIcon,
+  DocumentIcon,
+  MapPinIcon as LocationIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
+import { formatDateTime } from '@/lib/dateUtils'
 import Notification from './Notification'
+import GoogleMapsModal from './GoogleMapsModal'
 import AddMaintenanceModal from './AddMaintenanceModal'
 import EditMaintenanceModal from './EditMaintenanceModal'
 import ViewMaintenanceModal from './ViewMaintenanceModal'
@@ -108,6 +121,40 @@ export default function VehicleProfile() {
   const [insuranceData, setInsuranceData] = useState<any[]>([])
   const [roadworthyData, setRoadworthyData] = useState<any[]>([])
   const [fuelLogsData, setFuelLogsData] = useState<any[]>([])
+  const [sensorData, setSensorData] = useState<any[]>([])
+  const [sensorSearchQuery, setSensorSearchQuery] = useState('')
+  const [sensorCurrentPage, setSensorCurrentPage] = useState(1)
+  const [sensorEntriesPerPage, setSensorEntriesPerPage] = useState(10)
+  const [trackingData, setTrackingData] = useState<any[]>([])
+  const [trackingSearchQuery, setTrackingSearchQuery] = useState('')
+  const [trackingCurrentPage, setTrackingCurrentPage] = useState(1)
+  const [trackingEntriesPerPage, setTrackingEntriesPerPage] = useState(10)
+  
+  // Google Maps Modal state
+  const [isMapsModalOpen, setIsMapsModalOpen] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<{
+    address: string
+    latitude?: number
+    longitude?: number
+  } | null>(null)
+
+  // Google Maps Modal handlers
+  const handleOpenMapsModal = (tracking: any) => {
+    setSelectedLocation({
+      address: tracking.address || 'Unknown Location',
+      latitude: tracking.latitude,
+      longitude: tracking.longitude
+    })
+    setIsMapsModalOpen(true)
+  }
+
+  const handleCloseMapsModal = () => {
+    setIsMapsModalOpen(false)
+    setSelectedLocation(null)
+  }
+
+  const [latestTrackingData, setLatestTrackingData] = useState<any>(null)
+  const [latestSensorData, setLatestSensorData] = useState<any>(null)
   const [isAddMaintenanceModalOpen, setIsAddMaintenanceModalOpen] = useState(false)
   const [isEditMaintenanceModalOpen, setIsEditMaintenanceModalOpen] = useState(false)
   const [isViewMaintenanceModalOpen, setIsViewMaintenanceModalOpen] = useState(false)
@@ -223,6 +270,253 @@ export default function VehicleProfile() {
     }
   }
 
+  const fetchSensorData = async () => {
+    try {
+      const response = await fetch(`/api/sensor-data?vehicle_id=${params.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSensorData(data)
+        // Set the latest fuel level sensor data - look for fuel-related sensors
+        const fuelSensor = data.find(sensor => 
+          sensor.sensor_type?.toLowerCase().includes('fuel') ||
+          sensor.name?.toLowerCase().includes('fuel') ||
+          sensor.sensor_type === 'Fuel Level'
+        )
+        
+        // If no fuel sensor found, use battery as fallback for demonstration
+        const fallbackSensor = fuelSensor || data.find(sensor => sensor.sensor_type === 'Battery')
+        setLatestSensorData(fallbackSensor || null)
+      }
+    } catch (error) {
+      console.error('Error fetching sensor data:', error)
+    }
+  }
+
+  const fetchTrackingData = async () => {
+    try {
+      const response = await fetch(`/api/positions-data?vehicle_id=${params.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setTrackingData(data)
+        // Set the latest tracking data (most recent GPS time)
+        if (data.length > 0) {
+          const latest = data.reduce((latest, current) => {
+            return new Date(current.gps_time_utc) > new Date(latest.gps_time_utc) ? current : latest
+          })
+          setLatestTrackingData(latest)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tracking data:', error)
+    }
+  }
+
+  // Filter sensor data based on search query
+  const filteredSensorData = sensorData.filter(sensor => {
+    if (!sensorSearchQuery) return true
+    const searchLower = sensorSearchQuery.toLowerCase()
+    return (
+      sensor.sensor_type?.toLowerCase().includes(searchLower) ||
+      sensor.name?.toLowerCase().includes(searchLower) ||
+      sensor.value !== null && sensor.value !== undefined ? 
+        (typeof sensor.value === 'object' ? sensor.value.toString().toLowerCase() : sensor.value.toString().toLowerCase()).includes(searchLower) : false ||
+      sensor.measurement_sign?.toLowerCase().includes(searchLower)
+    )
+  })
+
+  // Filter tracking data based on search query
+  const filteredTrackingData = trackingData.filter(tracking => {
+    if (!trackingSearchQuery) return true
+    const searchLower = trackingSearchQuery.toLowerCase()
+    return (
+      tracking.address?.toLowerCase().includes(searchLower) ||
+      tracking.speed?.toString().toLowerCase().includes(searchLower) ||
+      tracking.odometer?.toString().toLowerCase().includes(searchLower) ||
+      tracking.engine_status?.toLowerCase().includes(searchLower)
+    )
+  })
+
+  // Calculate pagination for sensor data
+  const sensorTotalPages = Math.ceil(filteredSensorData.length / sensorEntriesPerPage)
+  const sensorStartIndex = (sensorCurrentPage - 1) * sensorEntriesPerPage
+  const sensorEndIndex = sensorStartIndex + sensorEntriesPerPage
+  const paginatedSensorData = filteredSensorData.slice(sensorStartIndex, sensorEndIndex)
+
+  // Calculate pagination for tracking data
+  const trackingTotalPages = Math.ceil(filteredTrackingData.length / trackingEntriesPerPage)
+  const trackingStartIndex = (trackingCurrentPage - 1) * trackingEntriesPerPage
+  const trackingEndIndex = trackingStartIndex + trackingEntriesPerPage
+  const paginatedTrackingData = filteredTrackingData.slice(trackingStartIndex, trackingEndIndex)
+
+  // Reset sensor page when search changes
+  useEffect(() => {
+    setSensorCurrentPage(1)
+  }, [sensorSearchQuery])
+
+  // Reset tracking page when search changes
+  useEffect(() => {
+    setTrackingCurrentPage(1)
+  }, [trackingSearchQuery])
+
+  // Export functions for sensor data
+  const exportSensorToExcel = () => {
+    const data = paginatedSensorData.map((sensor, index) => [
+      sensorStartIndex + index + 1,
+      sensor.sensor_type,
+      sensor.name,
+      sensor.value !== null && sensor.value !== undefined ? 
+        `${typeof sensor.value === 'object' ? sensor.value.toString() : sensor.value}${sensor.measurement_sign || ''}` : 'N/A',
+        sensor.reading_time_local ? formatDateTime(sensor.reading_time_local) : 'N/A'
+    ])
+    
+    const csvContent = [
+      ['No', 'Sensor Type', 'Name', 'Value', 'Reading Time'],
+      ...data
+    ].map(row => row.join(',')).join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `sensor-data-${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+  }
+
+  const exportSensorToCSV = () => {
+    exportSensorToExcel() // Same implementation for now
+  }
+
+  const exportSensorToPDF = () => {
+    // Placeholder for PDF export
+    alert('PDF export functionality will be implemented soon!')
+  }
+
+  const printSensorData = () => {
+    const printWindow = window.open('', '_blank')
+    const printContent = `
+      <html>
+        <head>
+          <title>Sensor Data Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h2>Sensor Data Report</h2>
+          <p>Generated on: ${formatDateTime(new Date())}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Sensor Type</th>
+                <th>Name</th>
+                <th>Value</th>
+                <th>Reading Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${paginatedSensorData.map((sensor, index) => `
+                <tr>
+                  <td>${sensorStartIndex + index + 1}</td>
+                  <td>${sensor.sensor_type}</td>
+                  <td>${sensor.name}</td>
+                  <td>${sensor.value !== null && sensor.value !== undefined ? 
+                    `${typeof sensor.value === 'object' ? sensor.value.toString() : sensor.value}${sensor.measurement_sign || ''}` : 'N/A'}</td>
+                  <td>${sensor.reading_time_local ? formatDateTime(sensor.reading_time_local) : 'N/A'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
+  // Export functions for tracking data
+  const exportTrackingToExcel = () => {
+    const data = paginatedTrackingData.map((tracking, index) => [
+      trackingStartIndex + index + 1,
+      tracking.address,
+      tracking.speed?.toString(),
+      tracking.odometer?.toString(),
+      tracking.engine_status,
+      tracking.gps_time_utc ? formatDateTime(tracking.gps_time_utc) : 'N/A'
+    ])
+    
+    const csvContent = [
+      ['No', 'Address', 'Speed', 'Odometer', 'Engine Status', 'GPS Time'],
+      ...data
+    ].map(row => row.join(',')).join('\n')
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `tracking-data-${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+  }
+
+  const exportTrackingToCSV = () => {
+    exportTrackingToExcel() // Same implementation for now
+  }
+
+  const exportTrackingToPDF = () => {
+    // Placeholder for PDF export
+    alert('PDF export functionality will be implemented soon!')
+  }
+
+  const printTrackingData = () => {
+    const printWindow = window.open('', '_blank')
+    const printContent = `
+      <html>
+        <head>
+          <title>Tracking Data Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h2>Tracking Data Report</h2>
+          <p>Generated on: ${formatDateTime(new Date())}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Address</th>
+                <th>Speed</th>
+                <th>Odometer</th>
+                <th>Engine Status</th>
+                <th>GPS Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${paginatedTrackingData.map((tracking, index) => `
+                <tr>
+                  <td>${trackingStartIndex + index + 1}</td>
+                  <td>${tracking.address}</td>
+                  <td>${tracking.speed?.toString() || '0'}</td>
+                  <td>${tracking.odometer?.toString() || '0'}</td>
+                  <td>${tracking.engine_status}</td>
+                  <td>${tracking.gps_time_utc ? formatDateTime(tracking.gps_time_utc) : 'N/A'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.print()
+  }
+
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
@@ -278,6 +572,8 @@ export default function VehicleProfile() {
     if (params.id) {
       fetchVehicle()
       fetchDropdownData()
+      fetchTrackingData()
+      fetchSensorData()
     }
   }, [params.id, router])
 
@@ -293,6 +589,10 @@ export default function VehicleProfile() {
       fetchRoadworthyData()
     } else if (buttonName === 'Fuel Logs') {
       fetchFuelLogsData()
+    } else if (buttonName === 'Sensor') {
+      fetchSensorData()
+    } else if (buttonName === 'Tracking') {
+      fetchTrackingData()
     }
   }
 
@@ -1193,7 +1493,7 @@ export default function VehicleProfile() {
         <body>
           <h1>${section.charAt(0).toUpperCase() + section.slice(1)} Report</h1>
           <p>Vehicle: ${vehicle?.reg_number || 'N/A'}</p>
-          <p>Generated: ${new Date().toLocaleString()}</p>
+          <p>Generated: ${formatDateTime(new Date())}</p>
           <table>
             <thead>
               <tr>
@@ -1400,10 +1700,10 @@ export default function VehicleProfile() {
                     <span class="print-tag print-tag-gray">${vehicleData.status || 'active'}</span>
                     <span class="print-tag print-tag-blue">📞 ${vehicleData.reg_number || 'N/A'}</span>
                     <span class="print-tag print-tag-blue">📍 Fleet</span>
-                    <span class="print-tag print-tag-blue">📅 ${new Date().toLocaleDateString()}</span>
+                    <span class="print-tag print-tag-blue">📅 ${formatDateTime(new Date())}</span>
                   </div>
                   <div class="print-vehicle-meta">
-                    <div>Last Updated: ${new Date().toLocaleDateString()}</div>
+                    <div>Last Updated: ${formatDateTime(new Date())}</div>
                     <div>Driver: ${vehicleData.driver || 'Unassigned'}</div>
                   </div>
                 </div>
@@ -1462,7 +1762,7 @@ export default function VehicleProfile() {
                 </div>
                 <div class="print-field">
                   <div class="print-label">Last Service Date</div>
-                  <div class="print-value">${vehicleData.last_service_date ? new Date(vehicleData.last_service_date).toLocaleDateString() : 'Not specified'}</div>
+                  <div class="print-value">${vehicleData.last_service_date ? formatDateTime(vehicleData.last_service_date) : 'Not specified'}</div>
                 </div>
                 <div class="print-field">
                   <div class="print-label">Next Service KM</div>
@@ -1486,16 +1786,16 @@ export default function VehicleProfile() {
                 </div>
                 <div class="print-field">
                   <div class="print-label">Created At</div>
-                  <div class="print-value">${vehicleData.created_at ? new Date(vehicleData.created_at).toLocaleDateString() : 'Not specified'}</div>
+                  <div class="print-value">${vehicleData.created_at ? formatDateTime(vehicleData.created_at) : 'Not specified'}</div>
                 </div>
                 <div class="print-field">
                   <div class="print-label">Updated At</div>
-                  <div class="print-value">${vehicleData.updated_at ? new Date(vehicleData.updated_at).toLocaleDateString() : 'Not specified'}</div>
+                  <div class="print-value">${vehicleData.updated_at ? formatDateTime(vehicleData.updated_at) : 'Not specified'}</div>
                 </div>
               </div>
             </div>
             <div class="print-footer">
-              Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+              Generated on ${formatDateTime(new Date())}
             </div>
           </body>
         </html>
@@ -1588,76 +1888,88 @@ export default function VehicleProfile() {
           
           {/* Center Section - Vehicle Details */}
           <div className="flex-1 min-w-0">
-            {/* Vehicle Name */}
-            <h1 className={`text-2xl font-normal mb-6 ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {vehicle.reg_number || 'N/A'}
-            </h1>
-            
             {/* First Row - Key Information */}
             <div className="flex flex-wrap gap-6 mb-4">
               <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${vehicle.status === 'Active' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {vehicle.status?.toLowerCase()}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title="Registration Number">
                   <TruckIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className={`text-sm font-bold ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                   {vehicle.reg_number || 'N/A'}
                 </span>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
+              <div className="flex items-start space-x-3 w-full max-w-md">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0 mt-0.5" title="Address">
                   <MapPinIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {vehicle.subsidiary?.name || 'N/A'}
-                </span>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center">
-                  <CalendarIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                  {new Date(vehicle.created_at).toLocaleString()}
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'} break-words leading-relaxed min-w-0 flex-1`}>
+                  {latestTrackingData?.address || 'N/A'}
                 </span>
               </div>
             </div>
             
-            {/* Second Row - Additional Details */}
-            <div className="flex items-center space-x-4">
-              <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                Last Updated: {new Date(vehicle.updated_at).toLocaleString()}
+            {/* Second Row - GPS Time, Speed, Odometer, Fuel Level */}
+            <div className="flex flex-wrap gap-6 mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title="GPS Time">
+                  <ClockIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {latestTrackingData?.gps_time_utc ? formatDateTime(latestTrackingData.gps_time_utc) : 'N/A'}
+                </span>
               </div>
-              <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                Driver: {vehicle.driver || 'Unassigned'}
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title="Speed">
+                  <CpuChipIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {latestTrackingData?.speed ? `${latestTrackingData.speed} km/h` : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title="Odometer">
+                  <TruckIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {latestTrackingData?.odometer ? `${latestTrackingData.odometer} km` : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title={latestSensorData?.sensor_type === 'Battery' ? 'Battery Level' : 'Fuel Level'}>
+                  <BeakerIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {latestSensorData?.value ? `${latestSensorData.value}${latestSensorData.measurement_sign || '%'}` : 'No Data'}
+                </span>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center" title="Assigned Driver">
+                  <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {vehicle.driver || 'Unassigned'}
+                </span>
               </div>
             </div>
+            
           </div>
           
-          {/* Right Section - QR Code */}
+          {/* Right Section - Active Status */}
           <div className="flex flex-col items-center space-y-6 ml-8">
-            {/* QR Code */}
-            <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-200 dark:border-gray-600 p-2">
-              <img 
-                src="/qr.png" 
-                alt="QR Code" 
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                  e.currentTarget.nextElementSibling.style.display = 'block'
-                }}
-              />
-              <span 
-                className={`text-xs font-medium ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'} hidden`}
-              >
-                QR Code
+            {/* Active Status */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${
+                vehicle.status === 'Active' ? 'bg-green-500' : 
+                vehicle.status === 'Inactive' ? 'bg-red-500' : 
+                'bg-gray-400'
+              }`}></div>
+              <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                {vehicle.status?.toLowerCase()}
               </span>
             </div>
           </div>
@@ -1666,7 +1978,7 @@ export default function VehicleProfile() {
 
       {/* Action Buttons Section */}
       <div className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <button 
             onClick={() => handleButtonClick('Profile')}
             className={`p-2 rounded-2xl transition-all hover:scale-105 flex items-center justify-center space-x-2 ${
@@ -1744,6 +2056,32 @@ export default function VehicleProfile() {
             <DocumentCheckIcon className="w-5 h-5" />
             <span className="text-sm font-normal">Roadworthy</span>
           </button>
+          
+          <button 
+            onClick={() => handleButtonClick('Sensor')}
+            className={`p-2 rounded-2xl transition-all hover:scale-105 flex items-center justify-center space-x-2 ${
+              activeButton === 'Sensor'
+                ? 'bg-gray-600 text-white'
+                : themeMode === 'dark' 
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}>
+            <CpuChipIcon className="w-5 h-5" />
+            <span className="text-sm font-normal">Sensor</span>
+          </button>
+          
+          <button 
+            onClick={() => handleButtonClick('Tracking')}
+            className={`p-2 rounded-2xl transition-all hover:scale-105 flex items-center justify-center space-x-2 ${
+              activeButton === 'Tracking'
+                ? 'bg-gray-600 text-white'
+                : themeMode === 'dark' 
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}>
+            <TrackingIcon className="w-5 h-5" />
+            <span className="text-sm font-normal">Tracking</span>
+          </button>
         </div>
       </div>
 
@@ -1756,6 +2094,8 @@ export default function VehicleProfile() {
              activeButton === 'Fuel Logs' ? 'Vehicle Fuel Logs' :
              activeButton === 'Insurance' ? 'Vehicle Insurance' :
              activeButton === 'Roadworthy' ? 'Vehicle Roadworthy' :
+             activeButton === 'Sensor' ? 'Vehicle Sensors' :
+             activeButton === 'Tracking' ? 'Vehicle Tracking' :
              'Vehicle Profile'}
           </h2>
           <button
@@ -1999,7 +2339,7 @@ export default function VehicleProfile() {
               Created At
             </label>
             <div className={`p-3 rounded-2xl ${themeMode === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-              {vehicle?.created_at ? new Date(vehicle.created_at).toLocaleString() : 'Not specified'}
+              {vehicle?.created_at ? formatDateTime(vehicle.created_at) : 'Not specified'}
             </div>
           </div>
 
@@ -2009,7 +2349,7 @@ export default function VehicleProfile() {
               Updated At
             </label>
             <div className={`p-3 rounded-2xl ${themeMode === 'dark' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-              {vehicle?.updated_at ? new Date(vehicle.updated_at).toLocaleString() : 'Not specified'}
+              {vehicle?.updated_at ? formatDateTime(vehicle.updated_at) : 'Not specified'}
             </div>
           </div>
         </div>
@@ -2233,7 +2573,7 @@ export default function VehicleProfile() {
                             {index + 1}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {maintenance.service_date ? new Date(maintenance.service_date).toLocaleString() : 'N/A'}
+                            {maintenance.service_date ? formatDateTime(maintenance.service_date) : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {vehicle?.reg_number || 'N/A'}
@@ -2775,7 +3115,7 @@ export default function VehicleProfile() {
                           {index + 1}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {repair.service_date ? new Date(repair.service_date).toLocaleDateString() : 'N/A'}
+                          {repair.service_date ? formatDateTime(repair.service_date) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {vehicle?.reg_number || 'N/A'}
@@ -3735,10 +4075,10 @@ export default function VehicleProfile() {
                           {roadworthy.vehicle_number || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {roadworthy.date_issued ? new Date(roadworthy.date_issued).toLocaleDateString() : 'N/A'}
+                          {roadworthy.date_issued ? formatDateTime(roadworthy.date_issued) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {roadworthy.date_expired ? new Date(roadworthy.date_expired).toLocaleDateString() : 'N/A'}
+                          {roadworthy.date_expired ? formatDateTime(roadworthy.date_expired) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <span className={`px-2 py-1 text-xs rounded-full ${
@@ -4198,7 +4538,7 @@ export default function VehicleProfile() {
                           {index + 1}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {fuelLog.refuel_date ? new Date(fuelLog.refuel_date).toLocaleDateString() : 'N/A'}
+                          {fuelLog.refuel_date ? formatDateTime(fuelLog.refuel_date) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {fuelLog.quantity || 'N/A'}
@@ -4472,6 +4812,408 @@ export default function VehicleProfile() {
               </div>
             </div>
           </div>
+    ) : activeButton === 'Sensor' ? (
+      <div className="p-6">
+        {/* Top Controls */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {/* Entries per page */}
+            <div className="flex items-center gap-2">
+              <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Show
+              </span>
+              <select
+                value={sensorEntriesPerPage}
+                onChange={(e) => {
+                  setSensorEntriesPerPage(Number(e.target.value))
+                  setSensorCurrentPage(1)
+                }}
+                className={`px-2 py-1 border rounded text-sm ${
+                  themeMode === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                entries
+              </span>
+            </div>
+
+            {/* Export Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportSensorToExcel}
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+              >
+                <DocumentArrowDownIcon className="w-4 h-4" />
+                EXCEL
+              </button>
+              <button
+                onClick={exportSensorToCSV}
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+              >
+                <DocumentTextIcon className="w-4 h-4" />
+                CSV
+              </button>
+              <button
+                onClick={exportSensorToPDF}
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+              >
+                <DocumentIcon className="w-4 h-4" />
+                PDF
+              </button>
+              <button
+                onClick={printSensorData}
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+              >
+                <PrinterIcon className="w-4 h-4" />
+                PRINT
+              </button>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Search:
+            </span>
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={sensorSearchQuery}
+                onChange={(e) => setSensorSearchQuery(e.target.value)}
+                placeholder="Search by sensor type, name, value..."
+                className={`pl-10 pr-3 py-1 border rounded text-sm ${
+                  themeMode === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-700 placeholder-gray-500'
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Sensor Data Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-600">
+                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                  No
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                  Sensor Type
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                  Value
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                  Reading Time
+                </th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${themeMode === 'dark' ? 'divide-gray-600' : 'divide-gray-200'}`}>
+              {paginatedSensorData.length > 0 ? (
+                paginatedSensorData.map((sensor, index) => (
+                  <tr key={sensor.id || index} className={`hover:bg-gray-50 ${themeMode === 'dark' ? 'hover:bg-gray-700' : ''}`}>
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {sensorStartIndex + index + 1}
+                    </td>
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        sensor.sensor_type === 'Temperature' ? 'bg-red-100 text-red-800' :
+                        sensor.sensor_type === 'Pressure' ? 'bg-blue-100 text-blue-800' :
+                        sensor.sensor_type === 'Speed' ? 'bg-green-100 text-green-800' :
+                        sensor.sensor_type === 'Fuel Level' ? 'bg-yellow-100 text-yellow-800' :
+                        sensor.sensor_type === 'Battery' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {sensor.sensor_type}
+                      </span>
+                    </td>
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {sensor.name}
+                    </td>
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {sensor.value !== null && sensor.value !== undefined ? 
+                        `${typeof sensor.value === 'object' ? sensor.value.toString() : sensor.value}${sensor.measurement_sign || ''}` : 'N/A'}
+                    </td>
+                    <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {sensor.reading_time_local ? formatDateTime(sensor.reading_time_local) : 'N/A'}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className={`px-4 py-8 text-center text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    No sensor data available for this vehicle
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4">
+          <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            Showing {sensorStartIndex + 1} to {Math.min(sensorEndIndex, filteredSensorData.length)} of {filteredSensorData.length} entries
+            {sensorSearchQuery && (
+              <span className="ml-2 text-blue-600">
+                (filtered from {sensorData.length} total)
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setSensorCurrentPage(sensorCurrentPage - 1)}
+              disabled={sensorCurrentPage === 1}
+              className={`px-3 py-1 rounded-2xl text-sm ${
+                sensorCurrentPage === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Prev
+            </button>
+            <span className="px-3 py-1 text-sm text-gray-700">
+              Page {sensorCurrentPage} of {sensorTotalPages}
+            </span>
+            <button 
+              onClick={() => setSensorCurrentPage(sensorCurrentPage + 1)}
+              disabled={sensorCurrentPage === sensorTotalPages}
+              className={`px-3 py-1 rounded-2xl text-sm ${
+                sensorCurrentPage === sensorTotalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+        ) : activeButton === 'Tracking' ? (
+          <div className="p-6">
+            {/* Top Controls */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                {/* Entries per page */}
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Show
+                  </span>
+                  <select
+                    value={trackingEntriesPerPage}
+                    onChange={(e) => {
+                      setTrackingEntriesPerPage(Number(e.target.value))
+                      setTrackingCurrentPage(1)
+                    }}
+                    className={`px-2 py-1 border rounded text-sm ${
+                      themeMode === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-700'
+                    }`}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    entries
+                  </span>
+                </div>
+
+                {/* Export Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportTrackingToExcel}
+                    className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    <DocumentArrowDownIcon className="w-4 h-4" />
+                    EXCEL
+                  </button>
+                  <button
+                    onClick={exportTrackingToCSV}
+                    className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    <DocumentTextIcon className="w-4 h-4" />
+                    CSV
+                  </button>
+                  <button
+                    onClick={exportTrackingToPDF}
+                    className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    <DocumentIcon className="w-4 h-4" />
+                    PDF
+                  </button>
+                  <button
+                    onClick={printTrackingData}
+                    className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    <PrinterIcon className="w-4 h-4" />
+                    PRINT
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Search:
+                </span>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={trackingSearchQuery}
+                    onChange={(e) => setTrackingSearchQuery(e.target.value)}
+                    placeholder="Search by address, speed, odometer, engine status..."
+                    className={`pl-10 pr-3 py-1 border rounded text-sm ${
+                      themeMode === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-700 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tracking Data Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-600">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      Actions
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      No
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      Address
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      Speed
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      Odometer
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      Engine Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
+                      GPS Time
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${themeMode === 'dark' ? 'divide-gray-600' : 'divide-gray-200'}`}>
+                  {paginatedTrackingData.length > 0 ? (
+                    paginatedTrackingData.map((tracking, index) => (
+                      <tr key={tracking.id || index} className={`hover:bg-gray-50 ${themeMode === 'dark' ? 'hover:bg-gray-700' : ''}`}>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          <button 
+                            onClick={() => handleOpenMapsModal(tracking)}
+                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            title="View Location on Map"
+                          >
+                            <LocationIcon className="w-4 h-4" />
+                          </button>
+                        </td>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {trackingStartIndex + index + 1}
+                        </td>
+                        <td className={`px-4 py-4 text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'} break-words max-w-xs`}>
+                          {tracking.address}
+                        </td>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm font-medium ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            parseFloat(tracking.speed?.toString() || '0') > 50 ? 'bg-red-100 text-red-800' :
+                            parseFloat(tracking.speed?.toString() || '0') > 30 ? 'bg-yellow-100 text-yellow-800' :
+                            parseFloat(tracking.speed?.toString() || '0') > 0 ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {tracking.speed?.toString() || '0'} km/h
+                          </span>
+                        </td>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {tracking.odometer?.toString() || '0'} km
+                        </td>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            tracking.engine_status === 'Running' ? 'bg-green-100 text-green-800' :
+                            tracking.engine_status === 'Idle' ? 'bg-yellow-100 text-yellow-800' :
+                            tracking.engine_status === 'Stopped' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {tracking.engine_status}
+                          </span>
+                        </td>
+                        <td className={`px-4 py-4 whitespace-nowrap text-sm ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {tracking.gps_time_utc ? formatDateTime(tracking.gps_time_utc) : 'N/A'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className={`px-4 py-8 text-center text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        No tracking data available for this vehicle
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-4">
+              <div className={`text-sm ${themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Showing {trackingStartIndex + 1} to {Math.min(trackingEndIndex, filteredTrackingData.length)} of {filteredTrackingData.length} entries
+                {trackingSearchQuery && (
+                  <span className="ml-2 text-blue-600">
+                    (filtered from {trackingData.length} total)
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setTrackingCurrentPage(trackingCurrentPage - 1)}
+                  disabled={trackingCurrentPage === 1}
+                  className={`px-3 py-1 rounded-2xl text-sm ${
+                    trackingCurrentPage === 1 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Prev
+                </button>
+                <span className="px-3 py-1 text-sm text-gray-700">
+                  Page {trackingCurrentPage} of {trackingTotalPages}
+                </span>
+                <button 
+                  onClick={() => setTrackingCurrentPage(trackingCurrentPage + 1)}
+                  disabled={trackingCurrentPage === trackingTotalPages}
+                  className={`px-3 py-1 rounded-2xl text-sm ${
+                    trackingCurrentPage === trackingTotalPages
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="p-4 text-center">
             <p className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -4669,6 +5411,19 @@ export default function VehicleProfile() {
         }}
         fuelLogRecord={selectedFuelLogRecord}
       />
+
+      {/* Google Maps Modal */}
+      {isMapsModalOpen && selectedLocation && (
+        <GoogleMapsModal
+          isOpen={isMapsModalOpen}
+          onClose={handleCloseMapsModal}
+          address={selectedLocation.address}
+          latitude={selectedLocation.latitude}
+          longitude={selectedLocation.longitude}
+          themeMode={themeMode}
+          vehicleName={vehicle?.name || vehicle?.reg_number || 'Vehicle Location'}
+        />
+      )}
     </div>
   )
 }

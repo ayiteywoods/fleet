@@ -24,6 +24,7 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
+import { formatDateTime } from '@/lib/dateUtils'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import AddRepairModal from '@/components/AddRepairModal'
 import ViewRepairModal from '@/components/ViewRepairModal'
@@ -159,9 +160,9 @@ export default function RepairsPage() {
     
     switch (fieldType) {
       case 'date':
-        return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
       case 'datetime':
-        return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
       case 'currency':
         return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'status':
@@ -197,9 +198,9 @@ export default function RepairsPage() {
     
     switch (fieldType) {
       case 'date':
-        return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
       case 'datetime':
-        return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
       case 'currency':
         return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'status':

@@ -1,179 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { fuelRequestHandlers } from '@/lib/apiWrapper'
 
-// Helper function to serialize BigInts
-function serializeBigInt(obj: any) {
-  return JSON.parse(
-    JSON.stringify(obj, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    )
-  )
-}
-
-// GET - Fetch all fuel requests (excluding those already converted to expense logs by default)
+// GET - Fetch all fuel request records
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const includeConverted = searchParams.get('include_converted') === 'true'
-
-    const whereClause = includeConverted 
-      ? {} // Include all requests
-      : {
-          // Exclude fuel requests that have been converted to expense logs
-          fuel_expense_log: {
-            none: {}
-          }
-        }
-
-    const fuelRequests = await prisma.fuel_request.findMany({
-      where: whereClause,
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
-      },
-      orderBy: {
-        created_at: 'desc'
-      }
-    })
-    return NextResponse.json(serializeBigInt(fuelRequests))
-  } catch (error) {
-    console.error('Error fetching fuel requests:', error)
+    return await fuelRequestHandlers.getFuelRequests(request)
+  } catch (error: any) {
+    console.error('Error in fuel request handler:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch fuel requests' },
+      { error: 'Failed to fetch fuel request records' },
       { status: 500 }
     )
   }
 }
 
-// POST - Create new fuel request
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { justification, quantity, unit_cost, total_cost, status, vehicle_id } = body
+    const {
+      justification,
+      quantity,
+      unit_cost,
+      total_cost,
+      status,
+      vehicle_id
+    } = body
 
-    if (!justification || !quantity || !unit_cost || !total_cost || !status || !vehicle_id) {
-      return NextResponse.json(
-        { error: 'Missing required fields: justification, quantity, unit_cost, total_cost, status, vehicle_id' },
-        { status: 400 }
-      )
-    }
-
-    // Validate that the vehicle exists
-    const vehicle = await prisma.vehicles.findUnique({
-      where: { id: BigInt(vehicle_id) }
-    })
-    if (!vehicle) {
-      return NextResponse.json(
-        { error: 'Vehicle not found' },
-        { status: 400 }
-      )
-    }
-
-    const newFuelRequest = await prisma.fuel_request.create({
+    const fuelRequestRecord = await prisma.fuel_request.create({
       data: {
-        justification: justification,
-        quantity: Number(quantity),
-        unit_cost: Number(unit_cost),
-        total_cost: Number(total_cost),
-        status: status,
-        vehicle_id: BigInt(vehicle_id),
-        created_at: new Date(),
-        updated_at: new Date(),
-        created_by: 1, // Assuming a default user for now
-        updated_by: 1 // Assuming a default user for now
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
+        justification,
+        quantity: parseFloat(quantity),
+        unit_cost: parseFloat(unit_cost),
+        total_cost: parseFloat(total_cost),
+        status,
+        vehicle_id: BigInt(vehicle_id)
       }
     })
 
-    return NextResponse.json(serializeBigInt(newFuelRequest), { status: 201 })
+    return NextResponse.json({
+      ...fuelRequestRecord,
+      id: fuelRequestRecord.id.toString()
+    })
   } catch (error) {
     console.error('Error creating fuel request:', error)
     return NextResponse.json(
-      { error: 'Failed to create fuel request' },
+      { error: 'Failed to create fuel request record' },
       { status: 500 }
     )
   }
 }
 
-// PUT - Update fuel request
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Fuel request ID is required' },
-        { status: 400 }
-      )
-    }
-
     const body = await request.json()
-    const { justification, quantity, unit_cost, total_cost, status, vehicle_id } = body
+    const { id, ...updateData } = body
 
-    // Validate that the vehicle exists (if provided)
-    if (vehicle_id) {
-      const vehicle = await prisma.vehicles.findUnique({
-        where: { id: BigInt(vehicle_id) }
-      })
-      if (!vehicle) {
-        return NextResponse.json(
-          { error: 'Vehicle not found' },
-          { status: 400 }
-        )
-      }
-    }
-
-    const updatedFuelRequest = await prisma.fuel_request.update({
+    const fuelRequestRecord = await prisma.fuel_request.update({
       where: { id: BigInt(id) },
-      data: {
-        justification: justification || undefined,
-        quantity: quantity ? Number(quantity) : undefined,
-        unit_cost: unit_cost ? Number(unit_cost) : undefined,
-        total_cost: total_cost ? Number(total_cost) : undefined,
-        status: status || undefined,
-        vehicle_id: vehicle_id ? BigInt(vehicle_id) : undefined,
-        updated_at: new Date(),
-        updated_by: 1 // Assuming a default user for now
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
-      }
+      data: updateData
     })
 
-    return NextResponse.json(serializeBigInt(updatedFuelRequest))
+    return NextResponse.json({
+      ...fuelRequestRecord,
+      id: fuelRequestRecord.id.toString()
+    })
   } catch (error) {
     console.error('Error updating fuel request:', error)
     return NextResponse.json(
-      { error: 'Failed to update fuel request' },
+      { error: 'Failed to update fuel request record' },
       { status: 500 }
     )
   }
 }
 
-// DELETE - Delete fuel request
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -186,21 +86,15 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // First delete related fuel expense logs
-    await prisma.fuel_expense_log.deleteMany({
-      where: { fuel_request_id: BigInt(id) }
-    })
-
-    // Then delete the fuel request
     await prisma.fuel_request.delete({
       where: { id: BigInt(id) }
     })
 
-    return NextResponse.json({ message: 'Fuel request deleted successfully' })
+    return NextResponse.json({ message: 'Fuel request record deleted successfully' })
   } catch (error) {
     console.error('Error deleting fuel request:', error)
     return NextResponse.json(
-      { error: 'Failed to delete fuel request' },
+      { error: 'Failed to delete fuel request record' },
       { status: 500 }
     )
   }

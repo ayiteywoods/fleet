@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-export type ThemeColor = 'blue' | 'gray' | 'gold'
+export type ThemeColor = 'blue' | 'green' | 'purple' | 'red' | 'orange' | 'pink' | 'indigo' | 'teal' | 'gray' | 'gold'
 export type ThemeMode = 'light' | 'dark'
 
 interface ThemeContextType {
@@ -36,7 +36,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const savedColor = localStorage.getItem('themeColor') as ThemeColor
     const savedMode = localStorage.getItem('themeMode') as ThemeMode
     
-    if (savedColor && ['blue', 'gray', 'gold'].includes(savedColor)) {
+    if (savedColor && ['blue', 'green', 'purple', 'red', 'orange', 'pink', 'indigo', 'teal', 'gray', 'gold'].includes(savedColor)) {
       setThemeColorState(savedColor)
     }
     

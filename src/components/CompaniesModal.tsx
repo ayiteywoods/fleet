@@ -64,6 +64,26 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const [viewingCompany, setViewingCompany] = useState<Company | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [showColumnSelector, setShowColumnSelector] = useState(false)
+  const [selectedFields, setSelectedFields] = useState([
+    'name', 'location', 'loc_code', 'phone', 'email', 'address', 'contact_person', 'contact_phone', 'status', 'description', 'created_at', 'updated_at'
+  ])
+
+  // Available fields configuration
+  const availableFields = [
+    { key: 'name', label: 'Company Name' },
+    { key: 'location', label: 'Location' },
+    { key: 'loc_code', label: 'Location Code' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'email', label: 'Email' },
+    { key: 'address', label: 'Address' },
+    { key: 'contact_person', label: 'Contact Person' },
+    { key: 'contact_phone', label: 'Contact Phone' },
+    { key: 'status', label: 'Status' },
+    { key: 'description', label: 'Description' },
+    { key: 'created_at', label: 'Created At' },
+    { key: 'updated_at', label: 'Updated At' }
+  ]
 
   const [formData, setFormData] = useState({
     name: '',
@@ -86,9 +106,13 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   useEffect(() => {
     let filtered = companies.filter(company =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.contact_person.toLowerCase().includes(searchTerm.toLowerCase())
+      (company.location && company.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.email && company.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.contact_person && company.contact_person.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.phone && company.phone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.address && company.address.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.loc_code && company.loc_code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (company.description && company.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
 
     filtered.sort((a, b) => {
@@ -114,6 +138,22 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
     setFilteredCompanies(filtered)
     setCurrentPage(1)
   }, [companies, searchTerm, sortField, sortDirection])
+
+  const toggleField = (fieldKey: string) => {
+    if (selectedFields.includes(fieldKey)) {
+      setSelectedFields(selectedFields.filter(f => f !== fieldKey))
+    } else {
+      setSelectedFields([...selectedFields, fieldKey])
+    }
+  }
+
+  const handleSelectAllFields = () => {
+    if (selectedFields.length === availableFields.length) {
+      setSelectedFields([])
+    } else {
+      setSelectedFields(availableFields.map(field => field.key))
+    }
+  }
 
   const fetchCompanies = async () => {
     try {
@@ -404,7 +444,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="text"
-                          value={formData.name}
+                          value={formData.name || ''}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter company name"
@@ -423,7 +463,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="text"
-                          value={formData.location}
+                          value={formData.location || ''}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter location"
@@ -442,7 +482,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="text"
-                          value={formData.loc_code}
+                          value={formData.loc_code || ''}
                           onChange={(e) => setFormData({ ...formData, loc_code: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter location code"
@@ -460,7 +500,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="tel"
-                          value={formData.phone}
+                          value={formData.phone || ''}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter phone number"
@@ -479,7 +519,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="email"
-                          value={formData.email}
+                          value={formData.email || ''}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter email address"
@@ -498,7 +538,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="text"
-                          value={formData.contact_person}
+                          value={formData.contact_person || ''}
                           onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter contact person"
@@ -517,7 +557,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         </div>
                         <input
                           type="tel"
-                          value={formData.contact_phone}
+                          value={formData.contact_phone || ''}
                           onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter contact phone"
@@ -535,7 +575,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                           <Hash className="h-5 w-5 text-gray-400" />
                         </div>
                         <select
-                          value={formData.status}
+                          value={formData.status || ''}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                           required
@@ -555,7 +595,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         Address *
                       </label>
                       <textarea
-                        value={formData.address}
+                        value={formData.address || ''}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter address"
@@ -569,7 +609,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         Description
                       </label>
                       <textarea
-                        value={formData.description}
+                        value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter description"
@@ -655,6 +695,17 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                   </div>
                 </div>
                 
+                {/* Control Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowColumnSelector(true)}
+                    className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-3xl hover:bg-gray-200 transition-colors"
+                    title="Select Columns"
+                  >
+                    SELECT COLUMNS
+                  </button>
+                </div>
+                
                 {/* Export Buttons */}
                 <div className="flex gap-2">
                   <button
@@ -718,83 +769,162 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                         <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b">
                           Actions
                         </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('name')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Company Name
-                            {sortField === 'name' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('location')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Location
-                            {sortField === 'location' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('email')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Email
-                            {sortField === 'email' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('contact_person')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Contact Person
-                            {sortField === 'contact_person' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('status')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Status
-                            {sortField === 'status' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('created_at')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Created At
-                            {sortField === 'created_at' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                          onClick={() => handleSort('updated_at')}
-                        >
-                          <div className="flex items-center gap-1">
-                            Updated At
-                            {sortField === 'updated_at' && (
-                              sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                            )}
-                          </div>
-                        </th>
+                        {selectedFields.includes('name') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('name')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Company Name
+                              {sortField === 'name' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('location') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('location')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Location
+                              {sortField === 'location' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('loc_code') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('loc_code')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Location Code
+                              {sortField === 'loc_code' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('phone') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('phone')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Phone
+                              {sortField === 'phone' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('email') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('email')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Email
+                              {sortField === 'email' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('contact_person') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('contact_person')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Contact Person
+                              {sortField === 'contact_person' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('contact_phone') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('contact_phone')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Contact Phone
+                              {sortField === 'contact_phone' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('address') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('address')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Address
+                              {sortField === 'address' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('status') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('status')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Status
+                              {sortField === 'status' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('description') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('description')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Description
+                              {sortField === 'description' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('created_at') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('created_at')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Created At
+                              {sortField === 'created_at' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
+                        {selectedFields.includes('updated_at') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('updated_at')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Updated At
+                              {sortField === 'updated_at' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${
@@ -828,36 +958,77 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {company.name}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {company.location}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {company.email}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {company.contact_person}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              company.status === 'Active' 
-                                ? 'bg-green-100 text-green-800' 
-                                : company.status === 'Inactive'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {company.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {company.created_at ? new Date(company.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {company.updated_at ? new Date(company.updated_at).toLocaleDateString() : 'N/A'}
-                          </td>
+                            </td>
+                            {selectedFields.includes('name') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {company.name}
+                              </td>
+                            )}
+                            {selectedFields.includes('location') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.location}
+                              </td>
+                            )}
+                            {selectedFields.includes('loc_code') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.loc_code}
+                              </td>
+                            )}
+                            {selectedFields.includes('phone') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.phone}
+                              </td>
+                            )}
+                            {selectedFields.includes('email') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.email}
+                              </td>
+                            )}
+                            {selectedFields.includes('contact_person') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.contact_person}
+                              </td>
+                            )}
+                            {selectedFields.includes('contact_phone') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.contact_phone}
+                              </td>
+                            )}
+                            {selectedFields.includes('address') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.address}
+                              </td>
+                            )}
+                            {selectedFields.includes('status') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                  company.status === 'Active' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : company.status === 'Inactive'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {company.status}
+                                </span>
+                              </td>
+                            )}
+                            {selectedFields.includes('description') && (
+                              <td className="px-4 py-4 text-sm text-gray-900 max-w-xs">
+                                <div className="truncate" title={company.description || ''}>
+                                  {company.description}
+                                </div>
+                              </td>
+                            )}
+                            {selectedFields.includes('created_at') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.created_at ? new Date(company.created_at).toLocaleDateString() : 'N/A'}
+                              </td>
+                            )}
+                            {selectedFields.includes('updated_at') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.updated_at ? new Date(company.updated_at).toLocaleDateString() : 'N/A'}
+                              </td>
+                            )}
                         </tr>
                       ))}
                     </tbody>
@@ -962,6 +1133,88 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
           onClose={() => setViewingCompany(null)}
           company={viewingCompany}
         />
+      )}
+
+      {/* Column Selector Modal */}
+      {showColumnSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+          <div className={`rounded-lg p-6 w-96 max-h-96 overflow-y-auto ${
+            themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${
+                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                Select Columns
+              </h3>
+              <button
+                onClick={() => setShowColumnSelector(false)}
+                className={`${
+                  themeMode === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedFields.length === availableFields.length}
+                    onChange={handleSelectAllFields}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span className={`text-sm font-medium ${
+                    themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Select All Columns
+                  </span>
+                </label>
+                <p className={`text-xs mt-1 ml-7 ${
+                  themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  {selectedFields.length} of {availableFields.length} columns selected
+                </p>
+              </div>
+              {availableFields.map((field) => (
+                <label key={field.key} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedFields.includes(field.key)}
+                    onChange={() => toggleField(field.key)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className={`text-sm ${
+                    themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    {field.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowColumnSelector(false)}
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                  themeMode === 'dark' 
+                    ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' 
+                    : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowColumnSelector(false)}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Notification */}

@@ -108,16 +108,11 @@ export default function DriversPage() {
     const today = new Date()
     return expiryDate < today
   }).length
-  const regionalDrivers = drivers.filter(d => d.region).length
-  const districtDrivers = drivers.filter(d => d.district).length
-
   const kpiCards = [
     { title: 'Total', value: totalDrivers.toString(), icon: UserGroupIcon, color: 'blue', status: null },
     { title: 'Active', value: activeDrivers.toString(), icon: CheckCircleIcon, color: 'blue', status: 'Active' },
     { title: 'Inactive', value: inactiveDrivers.toString(), icon: UserMinusIcon, color: 'blue', status: 'Inactive' },
-    { title: 'Expired Licenses', value: expiredLicenses.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'expired' },
-    { title: 'Regional', value: regionalDrivers.toString(), icon: UserIcon, color: 'blue', status: 'regional' },
-    { title: 'District', value: districtDrivers.toString(), icon: WrenchScrewdriverIcon, color: 'blue', status: 'district' }
+    { title: 'Expired Licenses', value: expiredLicenses.toString(), icon: ExclamationTriangleIcon, color: 'red', status: 'expired' }
   ]
 
   const handleCardClick = (status: string | null) => {
@@ -595,12 +590,6 @@ export default function DriversPage() {
         const expiryDate = new Date(driver.license_expire)
         const today = new Date()
         if (expiryDate >= today) return false
-      } else if (statusFilter === 'regional') {
-        // Filter for drivers with region
-        if (!driver.region) return false
-      } else if (statusFilter === 'district') {
-        // Filter for drivers with district
-        if (!driver.district) return false
       } else {
         // Filter by exact status match
         if (driver.status !== statusFilter) return false
@@ -663,7 +652,7 @@ export default function DriversPage() {
           <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
         </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             const isActive = statusFilter === card.status
@@ -686,7 +675,8 @@ export default function DriversPage() {
                     isActive ? 'bg-blue-100' : ''
                   }`}>
                     <IconComponent className={`w-6 h-6 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-brand-500'
+                      isActive ? 'text-blue-600' : 
+                      card.color === 'red' ? 'text-red-500' : 'text-brand-500'
                     }`} />
                   </div>
                   <div className="ml-4">

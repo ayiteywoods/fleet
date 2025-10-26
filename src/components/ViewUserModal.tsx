@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, FileSpreadsheet, FileText, File, Printer, User, Mail, Phone, Shield, Calendar, MapPin, Building2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -14,8 +14,8 @@ interface User {
   role: string
   region: string | null
   district: string | null
-  spcode: string | null
-  group: string | null
+  spcode: number | null
+  group: number | null
   email_verified_at: string | null
   password: string
   license_number: string | null
@@ -32,6 +32,46 @@ interface User {
   user_code: string | null
   status: string | null
   user_type: string | null
+  role_id: string | null
+  api_token: string | null
+  password_reset: string | null
+  deleted_at: string | null
+  providers: string | null
+  branch_id: string | null
+  user_level: string | null
+  type: string | null
+  full_name: string | null
+  picture: string | null
+  wc_id: string | null
+  district_id: number | null
+}
+
+interface Company {
+  id: string
+  name: string
+  location: string | null
+  loc_code: string | null
+  phone: string | null
+  description: string | null
+  group_id: number | null
+  email: string | null
+  address: string | null
+  contact_person: string | null
+  contact_phone: string | null
+  status: string | null
+  created_at: string | null
+  updated_at: string | null
+  created_by: string | null
+  updated_by: string | null
+  external_id: string | null
+  data: any
+  fetched_at: string | null
+  contact_email: string | null
+  notes: string | null
+  contact_position: string | null
+  deleted_by: string | null
+  deleted_at: string | null
+  service_type: string | null
 }
 
 interface ViewUserModalProps {
@@ -40,6 +80,31 @@ interface ViewUserModalProps {
 }
 
 export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
+  const [companies, setCompanies] = useState<Company[]>([])
+
+  useEffect(() => {
+    fetchCompanies()
+  }, [])
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/companies')
+      if (response.ok) {
+        const data = await response.json()
+        setCompanies(data)
+      } else {
+        console.error('Failed to fetch companies')
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error)
+    }
+  }
+
+  const getCompanyName = (spcode: number | null) => {
+    if (!spcode) return 'N/A'
+    const company = companies.find(c => c.id === spcode.toString())
+    return company ? company.name : spcode.toString()
+  }
   const handleExportExcel = () => {
     const data = [{
       'Name': user.name,
@@ -355,7 +420,45 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-700">SP Code</p>
-                  <p className="text-gray-900">{user.spcode || 'N/A'}</p>
+                  <p className="text-gray-900">{getCompanyName(user.spcode)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">District ID</p>
+                  <p className="text-gray-900">{user.district_id || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* License Information */}
+          <div className="mb-6">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">License Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">License Number</p>
+                  <p className="text-gray-900">{user.license_number || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">License Category</p>
+                  <p className="text-gray-900">{user.license_category || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">License Expiry</p>
+                  <p className="text-gray-900">
+                    {user.license_expiry ? (() => {
+                      try {
+                        const date = new Date(user.license_expiry)
+                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
+                      } catch (error) {
+                        return 'N/A'
+                      }
+                    })() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Specialization</p>
+                  <p className="text-gray-900">{user.specialization || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -385,6 +488,18 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
                   <p className="text-gray-900">{user.user_code || 'N/A'}</p>
                 </div>
                 <div>
+                  <p className="text-sm font-medium text-gray-700">User Level</p>
+                  <p className="text-gray-900">{user.user_level || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Type</p>
+                  <p className="text-gray-900">{user.type || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Full Name</p>
+                  <p className="text-gray-900">{user.full_name || 'N/A'}</p>
+                </div>
+                <div>
                   <p className="text-sm font-medium text-gray-700">Email Verified</p>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     user.email_verified_at 
@@ -393,6 +508,10 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
                   }`}>
                     {user.email_verified_at ? 'Verified' : 'Not Verified'}
                   </span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">User Status</p>
+                  <p className="text-gray-900">{user.status || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -443,6 +562,18 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
                   <p className="text-gray-900">{user.id}</p>
                 </div>
                 <div>
+                  <p className="text-sm font-medium text-gray-700">Role ID</p>
+                  <p className="text-gray-900">{user.role_id || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Branch ID</p>
+                  <p className="text-gray-900">{user.branch_id || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">WC ID</p>
+                  <p className="text-gray-900">{user.wc_id || 'N/A'}</p>
+                </div>
+                <div>
                   <p className="text-sm font-medium text-gray-700">Created By</p>
                   <p className="text-gray-900">{user.created_by || 'N/A'}</p>
                 </div>
@@ -453,6 +584,35 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
                 <div>
                   <p className="text-sm font-medium text-gray-700">Profile Image</p>
                   <p className="text-gray-900">{user.profile_image ? 'Available' : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Picture</p>
+                  <p className="text-gray-900">{user.picture ? 'Available' : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Providers</p>
+                  <p className="text-gray-900">{user.providers || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Password Reset</p>
+                  <p className="text-gray-900">{user.password_reset || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">API Token</p>
+                  <p className="text-gray-900">{user.api_token ? 'Available' : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Deleted At</p>
+                  <p className="text-gray-900">
+                    {user.deleted_at ? (() => {
+                      try {
+                        const date = new Date(user.deleted_at)
+                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleString()
+                      } catch (error) {
+                        return 'N/A'
+                      }
+                    })() : 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>

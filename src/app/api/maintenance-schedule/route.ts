@@ -1,101 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withDatabaseFallback, maintenanceScheduleHandlers } from '@/lib/apiWrapper'
 
 // GET - Fetch all maintenance schedules
-export async function GET() {
+export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    const maintenanceSchedules = await prisma.maintenance_schedule.findMany({
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
-      },
-      orderBy: { due_date: 'desc' }
-    })
-
-    // Serialize BigInt values
-    const serializedSchedules = maintenanceSchedules.map(schedule => ({
-      ...schedule,
-      id: schedule.id.toString(),
-      vehicle_id: schedule.vehicle_id.toString(),
-      created_by: schedule.created_by?.toString(),
-      updated_by: schedule.updated_by?.toString()
-    }))
-
-    return NextResponse.json(serializedSchedules)
-  } catch (error) {
-    console.error('Error fetching maintenance schedules:', error)
+    // Try to use the mock handler first
+    return await maintenanceScheduleHandlers.getMaintenanceSchedule(request)
+  } catch (error: any) {
+    console.error('Error in maintenance schedule handler:', error)
     return NextResponse.json(
       { error: 'Failed to fetch maintenance schedules' },
       { status: 500 }
     )
   }
-}
+})
 
-// POST - Create new maintenance schedule
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
       due_date,
-      vehicle_id
+      vehicle_id,
+      service_type,
+      description,
+      priority,
+      status
     } = body
 
-    // Validate required fields
-    if (!due_date || !vehicle_id) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    // Validate that the vehicle exists
-    const vehicle = await prisma.vehicles.findUnique({
-      where: { id: BigInt(vehicle_id) }
-    })
-    if (!vehicle) {
-      return NextResponse.json(
-        { error: 'Vehicle not found' },
-        { status: 400 }
-      )
-    }
-
-    const newMaintenanceSchedule = await prisma.maintenance_schedule.create({
+    const maintenanceSchedule = await prisma.maintenance_schedule.create({
       data: {
         due_date: new Date(due_date),
         vehicle_id: BigInt(vehicle_id),
-        created_at: new Date(),
-        updated_at: new Date(),
-        created_by: 1,
-        updated_by: 1
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
+        service_type,
+        description,
+        priority,
+        status
       }
     })
 
-    // Serialize BigInt values
-    const serializedSchedule = {
-      ...newMaintenanceSchedule,
-      id: newMaintenanceSchedule.id.toString(),
-      vehicle_id: newMaintenanceSchedule.vehicle_id.toString(),
-      created_by: newMaintenanceSchedule.created_by?.toString(),
-      updated_by: newMaintenanceSchedule.updated_by?.toString()
-    }
-
-    return NextResponse.json(serializedSchedule, { status: 201 })
+    return NextResponse.json({
+      message: 'Maintenance schedule created successfully',
+      schedule: {
+        ...maintenanceSchedule,
+        id: maintenanceSchedule.id.toString(),
+        vehicle_id: maintenanceSchedule.vehicle_id.toString()
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating maintenance schedule:', error)
     return NextResponse.json(
@@ -105,68 +56,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update maintenance schedule
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const body = await request.json()
+    const { id, ...updateData } = body
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Maintenance schedule ID is required' },
+        { error: 'Schedule ID is required' },
         { status: 400 }
       )
     }
 
-    const body = await request.json()
-    const {
-      due_date,
-      vehicle_id
-    } = body
-
-    // Validate that the vehicle exists (if provided)
-    if (vehicle_id) {
-      const vehicle = await prisma.vehicles.findUnique({
-        where: { id: BigInt(vehicle_id) }
-      })
-      if (!vehicle) {
-        return NextResponse.json(
-          { error: 'Vehicle not found' },
-          { status: 400 }
-        )
-      }
-    }
-
-    const updatedMaintenanceSchedule = await prisma.maintenance_schedule.update({
+    const maintenanceSchedule = await prisma.maintenance_schedule.update({
       where: { id: BigInt(id) },
       data: {
-        due_date: due_date ? new Date(due_date) : undefined,
-        vehicle_id: vehicle_id ? BigInt(vehicle_id) : undefined,
-        updated_at: new Date(),
-        updated_by: 1
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        }
+        ...updateData,
+        vehicle_id: updateData.vehicle_id ? BigInt(updateData.vehicle_id) : undefined,
+        due_date: updateData.due_date ? new Date(updateData.due_date) : undefined
       }
     })
 
-    // Serialize BigInt values
-    const serializedSchedule = {
-      ...updatedMaintenanceSchedule,
-      id: updatedMaintenanceSchedule.id.toString(),
-      vehicle_id: updatedMaintenanceSchedule.vehicle_id.toString(),
-      created_by: updatedMaintenanceSchedule.created_by?.toString(),
-      updated_by: updatedMaintenanceSchedule.updated_by?.toString()
-    }
-
-    return NextResponse.json(serializedSchedule)
+    return NextResponse.json({
+      message: 'Maintenance schedule updated successfully',
+      schedule: {
+        ...maintenanceSchedule,
+        id: maintenanceSchedule.id.toString(),
+        vehicle_id: maintenanceSchedule.vehicle_id.toString()
+      }
+    })
   } catch (error) {
     console.error('Error updating maintenance schedule:', error)
     return NextResponse.json(
@@ -176,7 +94,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete maintenance schedule
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -184,7 +101,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Maintenance schedule ID is required' },
+        { error: 'Schedule ID is required' },
         { status: 400 }
       )
     }
@@ -193,7 +110,9 @@ export async function DELETE(request: NextRequest) {
       where: { id: BigInt(id) }
     })
 
-    return NextResponse.json({ message: 'Maintenance schedule deleted successfully' })
+    return NextResponse.json({
+      message: 'Maintenance schedule deleted successfully'
+    })
   } catch (error) {
     console.error('Error deleting maintenance schedule:', error)
     return NextResponse.json(

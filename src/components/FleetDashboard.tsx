@@ -13,34 +13,70 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   EyeIcon,
-  Cog6ToothIcon,
   ChevronRightIcon,
-  BoltIcon
+  BoltIcon,
+  XCircleIcon,
+  InformationCircleIcon,
+  CheckCircleIcon,
+  BeakerIcon,
+  BellIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
-import { getIconColor } from '@/lib/themeUtils'
-import FleetMapWrapper from './FleetMapWrapper'
+import { formatDateTime } from '@/lib/dateUtils'
+import { getIconColor, getBrandColor } from '@/lib/themeUtils'
+import GoogleFleetMapWrapper from './GoogleFleetMapWrapper'
+import FloatingSettings from './FloatingSettings'
+import GoogleMapsModal from './GoogleMapsModal'
+import DatabaseErrorDisplay from './DatabaseErrorDisplay'
 
 interface Trip {
   id: string
+  vehicle: {
+    id: string
+    reg_number: string
+    name: string
+    status: string
+    company_name: string
+  }
+  position: {
+    id: string
+    address: string
+    speed: string
+    odometer: string
+    engine_status: string
+    gps_time_utc: string
+  }
+  trip: {
   status: 'Start' | 'Stop'
   time: string
+    timeAgo: string
   location: string
-  driver: string
-  vehicle: string
-  details?: {
-    time: string
-    distance: string
-    incidents: string
   }
 }
 
 interface Alert {
   id: string
-  vehicleName: string
-  timestamp: string
-  message: string
-  type: 'warning' | 'info' | 'error'
+  vehicle: {
+    id: string
+    reg_number: string
+    name: string
+    status: string
+    company_name: string
+  }
+  alert: {
+    id: string
+    unit_name: string
+    alert_type: string
+    alert_description: string
+    last_reported_time_utc: string
+    address: string
+    latitude: string
+    longitude: string
+    speed: string
+    odometer: string
+    engine_status: string
+    gps_time_utc: string
+  }
 }
 
 interface FuelLog {
@@ -89,6 +125,7 @@ export default function FleetDashboard() {
   const [maintenanceCount, setMaintenanceCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [monthlyFuelData, setMonthlyFuelData] = useState<MonthlyFuelData[]>([])
+  const [fuelTypeDistribution, setFuelTypeDistribution] = useState<{ petrol: number; diesel: number }>({ petrol: 0, diesel: 0 })
   const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceSchedule[]>([])
   const [isLoadingFuelData, setIsLoadingFuelData] = useState(true)
   const [hoveredMonth, setHoveredMonth] = useState<string | null>(null)
@@ -125,18 +162,17 @@ export default function FleetDashboard() {
   // Update fleet counts when time period changes
   useEffect(() => {
     if (filteredVehicles.length > 0) {
-      const timeFilteredVehicles = filterVehiclesByTimePeriod(filteredVehicles, fleetTimePeriod)
+      // DON'T apply time filtering to KPI counts - show all vehicles regardless of creation date
+      // The KPI should always show total active/inactive vehicles, not time-filtered ones
       
-      // Count on road and off road vehicles for the filtered period
-      const onRoad = timeFilteredVehicles.filter((vehicle: any) => 
-        vehicle.status?.toLowerCase() === 'active' || 
-        vehicle.status?.toLowerCase() === 'on-road'
+      const onRoad = filteredVehicles.filter((vehicle: any) => 
+        vehicle.status === 'Active'
       ).length
-      const offRoad = timeFilteredVehicles.filter((vehicle: any) => 
-        vehicle.status?.toLowerCase() === 'inactive' || 
-        vehicle.status?.toLowerCase() === 'off-road' ||
-        vehicle.status?.toLowerCase() === 'maintenance' ||
-        vehicle.status?.toLowerCase() === 'repair'
+      const offRoad = filteredVehicles.filter((vehicle: any) => 
+        vehicle.status === 'Inactive' ||
+        vehicle.status === 'Suspended' ||
+        vehicle.status === 'Maintenance' ||
+        vehicle.status === 'Repair'
       ).length
       
       setOnRoadCount(onRoad)
@@ -144,45 +180,90 @@ export default function FleetDashboard() {
     }
   }, [fleetTimePeriod, filteredVehicles])
   
-  const [recentAlerts, setRecentAlerts] = useState<Alert[]>([
-    {
-      id: '1',
-      vehicleName: "David's Van",
-      timestamp: 'Today at 12:23',
-      message: 'Out of hours used Detected',
-      type: 'warning'
-    },
-    {
-      id: '2',
-      vehicleName: "David's Van",
-      timestamp: 'Today at 12:23',
-      message: 'Entered Kwame Nkrumah Mausoleum, Accra',
-      type: 'info'
-    }
-  ])
-  const [recentTrips, setRecentTrips] = useState<Trip[]>([
-    {
-      id: '1',
-      status: 'Start',
-      time: '17:16',
-      location: 'Agbado, 24 Accra Main, Osu',
-      driver: 'Osei Kyei',
-      vehicle: 'GE 1245 -19'
-    },
-    {
-      id: '2',
-      status: 'Stop',
-      time: '17:36',
-      location: 'Papaye, 16 Loop Main, Osu',
-      driver: 'Saint Obi',
-      vehicle: 'GN 2266 -21',
-      details: {
-        time: '30 mins driving',
-        distance: '16 KM',
-        incidents: '2 Incidents'
+  const [recentAlerts, setRecentAlerts] = useState<Alert[]>([])
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(true)
+  const [isMapsModalOpen, setIsMapsModalOpen] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<{
+    address: string
+    latitude?: number
+    longitude?: number
+  } | null>(null)
+  const [recentTrips, setRecentTrips] = useState<Trip[]>([])
+  const [isLoadingTrips, setIsLoadingTrips] = useState(true)
+  const [tripsFilter, setTripsFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL')
+
+  // Google Maps Modal handlers
+  const handleOpenMapsModal = (alert: Alert) => {
+    setSelectedLocation({
+      address: alert.alert.address || 'Unknown Location',
+      latitude: alert.alert.latitude ? parseFloat(alert.alert.latitude) : undefined,
+      longitude: alert.alert.longitude ? parseFloat(alert.alert.longitude) : undefined
+    })
+    setIsMapsModalOpen(true)
+  }
+
+  const handleCloseMapsModal = () => {
+    setIsMapsModalOpen(false)
+    setSelectedLocation(null)
+  }
+
+  // Fetch recent trips data
+  const fetchRecentTrips = async () => {
+    try {
+      setIsLoadingTrips(true)
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const tripsResponse = await fetch('/api/recent-trips', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (tripsResponse.ok) {
+        const tripsData = await tripsResponse.json()
+        setRecentTrips(tripsData)
       }
+    } catch (error) {
+      console.error('Error fetching recent trips:', error)
+    } finally {
+      setIsLoadingTrips(false)
     }
-  ])
+  }
+
+  // Fetch recent alerts data
+  const fetchRecentAlerts = async () => {
+    try {
+      setIsLoadingAlerts(true)
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const alertsResponse = await fetch('/api/recent-alerts', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json()
+        setRecentAlerts(alertsData)
+      }
+    } catch (error) {
+      console.error('Error fetching recent alerts:', error)
+    } finally {
+      setIsLoadingAlerts(false)
+    }
+  }
+
+  // Filter trips based on selected filter
+  const filteredTrips = recentTrips.filter(trip => {
+    switch (tripsFilter) {
+      case 'ACTIVE':
+        return trip.trip.status === 'Start'
+      case 'COMPLETED':
+        return trip.trip.status === 'Stop'
+      default:
+        return true
+    }
+  })
 
   // Fetch dashboard data
   useEffect(() => {
@@ -194,23 +275,32 @@ export default function FleetDashboard() {
         const vehiclesResponse = await fetch('/api/vehicles')
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json()
+          
           setVehiclesCount(vehiclesData.length)
           setFilteredVehicles(vehiclesData) // Store vehicles for filtering
           
-          // Count on road and off road vehicles
-          const onRoad = vehiclesData.filter((vehicle: any) => 
-            vehicle.status?.toLowerCase() === 'active' || 
-            vehicle.status?.toLowerCase() === 'on-road'
-          ).length
-          const offRoad = vehiclesData.filter((vehicle: any) => 
-            vehicle.status?.toLowerCase() === 'inactive' || 
-            vehicle.status?.toLowerCase() === 'off-road' ||
-            vehicle.status?.toLowerCase() === 'maintenance' ||
-            vehicle.status?.toLowerCase() === 'repair'
-          ).length
+          // Count on road and off road vehicles - calculate directly from fresh data
+          const onRoad = vehiclesData.filter((vehicle: any) => {
+            return vehicle.status === 'Active'
+          }).length
+          
+          const offRoad = vehiclesData.filter((vehicle: any) => {
+            return vehicle.status === 'Inactive' ||
+            vehicle.status === 'Suspended' ||
+            vehicle.status === 'Maintenance' ||
+            vehicle.status === 'Repair'
+          }).length
           
           setOnRoadCount(onRoad)
           setOffRoadCount(offRoad)
+        } else {
+          const errorData = await vehiclesResponse.json()
+          console.error('Vehicles API Error:', {
+            status: vehiclesResponse.status,
+            statusText: vehiclesResponse.statusText,
+            error: errorData,
+            url: '/api/vehicles'
+          })
         }
 
         // Fetch drivers data
@@ -218,6 +308,14 @@ export default function FleetDashboard() {
         if (driversResponse.ok) {
           const driversData = await driversResponse.json()
           setDriversCount(driversData.length)
+        } else {
+          const errorData = await driversResponse.json()
+          console.error('Drivers API Error:', {
+            status: driversResponse.status,
+            statusText: driversResponse.statusText,
+            error: errorData,
+            url: '/api/drivers'
+          })
         }
 
         // Fetch insurance data
@@ -225,6 +323,14 @@ export default function FleetDashboard() {
         if (insuranceResponse.ok) {
           const insuranceData = await insuranceResponse.json()
           setInsuranceCount(insuranceData.length)
+        } else {
+          const errorData = await insuranceResponse.json()
+          console.error('Insurance API Error:', {
+            status: insuranceResponse.status,
+            statusText: insuranceResponse.statusText,
+            error: errorData,
+            url: '/api/insurance'
+          })
         }
 
         // Fetch maintenance data
@@ -232,14 +338,43 @@ export default function FleetDashboard() {
         if (maintenanceResponse.ok) {
           const maintenanceData = await maintenanceResponse.json()
           setMaintenanceCount(maintenanceData.length)
+        } else {
+          const errorData = await maintenanceResponse.json()
+          console.error('Maintenance API Error:', {
+            status: maintenanceResponse.status,
+            statusText: maintenanceResponse.statusText,
+            error: errorData,
+            url: '/api/maintenance'
+          })
         }
 
-          // Fetch fuel logs data for monthly chart
+          // Fetch fuel logs data for monthly chart and fuel type distribution
           const fuelResponse = await fetch('/api/fuel-logs')
           if (fuelResponse.ok) {
             const fuelData = await fuelResponse.json()
             const monthlyData = processMonthlyFuelData(fuelData)
             setMonthlyFuelData(monthlyData)
+            
+            // Calculate fuel type distribution
+            const fuelTypeCounts = fuelData.reduce((acc: { petrol: number; diesel: number }, log: any) => {
+              const fuelType = (log.fuel_type || '').toLowerCase()
+              if (fuelType === 'petrol') {
+                acc.petrol += 1
+              } else if (fuelType === 'diesel') {
+                acc.diesel += 1
+              }
+              return acc
+            }, { petrol: 0, diesel: 0 })
+            
+            setFuelTypeDistribution(fuelTypeCounts)
+        } else {
+          const errorData = await fuelResponse.json()
+          console.error('Fuel Logs API Error:', {
+            status: fuelResponse.status,
+            statusText: fuelResponse.statusText,
+            error: errorData,
+            url: '/api/fuel-logs'
+          })
         }
 
         // Fetch maintenance schedules data
@@ -247,7 +382,21 @@ export default function FleetDashboard() {
         if (maintenanceScheduleResponse.ok) {
           const scheduleData = await maintenanceScheduleResponse.json()
           setMaintenanceSchedules(scheduleData)
+        } else {
+          const errorData = await maintenanceScheduleResponse.json()
+          console.error('Maintenance Schedule API Error:', {
+            status: maintenanceScheduleResponse.status,
+            statusText: maintenanceScheduleResponse.statusText,
+            error: errorData,
+            url: '/api/maintenance-schedule'
+          })
         }
+
+        // Fetch recent trips data
+        await fetchRecentTrips()
+        
+        // Fetch recent alerts data
+        await fetchRecentAlerts()
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -407,7 +556,7 @@ export default function FleetDashboard() {
                   themeMode === 'dark' ? 'bg-navy-700' : 'bg-gray-100'
                 }`}>
                   <IconComponent className={`w-6 h-6 ${
-                    card.color === 'blue' ? 'text-brand-500' : getIconColor(themeColor)
+getBrandColor(themeColor)
                 }`} />
               </div>
                 <div className="ml-4">
@@ -426,7 +575,7 @@ export default function FleetDashboard() {
               <div className="flex justify-end mt-2">
               <Link 
                 href={card.subtitleLink} 
-                  className="flex items-center text-xs text-brand-500 hover:text-brand-600 transition-colors"
+                  className={`flex items-center text-xs ${getBrandColor(themeColor)} hover:opacity-80 transition-colors`}
                   title={card.title === 'Active Vehicles' ? 'View all vehicles (filter by Active status)' : 
                          card.title === 'Inactive Vehicles' ? 'View all vehicles (filter by Inactive status)' : 
                        `View all ${card.title.toLowerCase()}`}
@@ -544,7 +693,7 @@ export default function FleetDashboard() {
           </div>
 
           {/* Map */}
-          <FleetMapWrapper />
+          <GoogleFleetMapWrapper />
           
           {/* Maintenance and Reminders Tables under Map */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -694,12 +843,12 @@ export default function FleetDashboard() {
         {/* Right Column - Pie Chart, Recent Trips and Alerts */}
         <div className="lg:col-span-1 space-y-6">
           {/* Pie Chart Section */}
-          <div className={`p-6 rounded-2xl h-96 ${
+          <div className={`p-6 rounded-2xl ${
             themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
           }`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-semibold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Fleet Distribution
+                Fuel Type Distribution
               </h3>
               <div className="flex items-center gap-2">
                 <select 
@@ -718,29 +867,38 @@ export default function FleetDashboard() {
               </div>
             </div>
             
-            <div className="flex items-center justify-center">
-              <div className="relative w-48 h-48">
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative w-40 h-40">
                 <svg className="w-full h-full drop-shadow-lg" viewBox="0 0 120 120">
                   <defs>
-                    {/* Gradient definitions */}
-                    <linearGradient id="activeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#059669" />
+                    {/* Gradient definitions for fuel types */}
+                    <linearGradient id="petrolGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#d97706" />
                     </linearGradient>
-                    <linearGradient id="inactiveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#ef4444" />
-                      <stop offset="100%" stopColor="#dc2626" />
+                    <linearGradient id="dieselGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#6b7280" />
+                      <stop offset="100%" stopColor="#4b5563" />
                     </linearGradient>
                   </defs>
                   
                   {(() => {
-                    // Create fleet distribution data
+                    // Create fuel type distribution data
                     const fleetData = [
-                      { type: 'Active Vehicles', count: onRoadCount },
-                      { type: 'Inactive Vehicles', count: offRoadCount }
+                      { type: 'Petrol', count: fuelTypeDistribution.petrol },
+                      { type: 'Diesel', count: fuelTypeDistribution.diesel }
                     ].filter(item => item.count > 0)
                     
-                    if (fleetData.length === 0) return null
+                    if (fleetData.length === 0) {
+                      return (
+                        <g>
+                          <circle cx="60" cy="60" r="50" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="2" />
+                          <text x="60" y="60" textAnchor="middle" dominantBaseline="middle" className="text-sm fill-gray-500">
+                            No Data
+                          </text>
+                        </g>
+                      )
+                    }
                     
                     const total = fleetData.reduce((sum, item) => sum + item.count, 0)
                     let currentAngle = 0
@@ -779,12 +937,12 @@ export default function FleetDashboard() {
                         `Z`
                       ].join(' ')
                       
-                      // Get gradient ID based on vehicle type
+                      // Get gradient ID based on fuel type
                       const getGradientId = (type: string) => {
                         switch (type) {
-                          case 'Active Vehicles': return 'url(#activeGradient)'
-                          case 'Inactive Vehicles': return 'url(#inactiveGradient)'
-                          default: return 'url(#activeGradient)'
+                          case 'Petrol': return 'url(#petrolGradient)'
+                          case 'Diesel': return 'url(#dieselGradient)'
+                          default: return 'url(#petrolGradient)'
                         }
                       }
                       
@@ -861,11 +1019,11 @@ export default function FleetDashboard() {
             </div>
             
             {/* Modern Legend */}
-            <div className="mt-6 grid grid-cols-1 gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-2">
               {(() => {
                 const fleetData = [
-                  { type: 'Active Vehicles', count: onRoadCount },
-                  { type: 'Inactive Vehicles', count: offRoadCount }
+                  { type: 'Petrol', count: fuelTypeDistribution.petrol },
+                  { type: 'Diesel', count: fuelTypeDistribution.diesel }
                 ].filter(item => item.count > 0)
                 
                 const total = fleetData.reduce((sum, item) => sum + item.count, 0)
@@ -873,27 +1031,27 @@ export default function FleetDashboard() {
                 return fleetData.map((item, index) => {
                   const percentage = ((item.count / total) * 100).toFixed(0)
                   
-                  const getVehicleTypeColor = (type: string) => {
+                  const getFuelTypeColor = (type: string) => {
                     switch (type) {
-                      case 'Active Vehicles': return '#10b981'
-                      case 'Inactive Vehicles': return '#ef4444'
-                      default: return '#10b981'
+                      case 'Petrol': return '#f59e0b'
+                      case 'Diesel': return '#6b7280'
+                      default: return '#f59e0b'
                     }
                   }
                   
                   return (
-                    <div key={item.type} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                      <div className="flex items-center gap-3">
+                    <div key={item.type} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center gap-2">
                         <div 
-                          className="w-3 h-3 rounded-full shadow-sm" 
+                          className="w-2.5 h-2.5 rounded-full shadow-sm" 
                           style={{ backgroundColor: getVehicleTypeColor(item.type) }}
                         ></div>
-                        <span className={`text-sm font-medium ${themeMode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                        <span className={`text-xs font-medium ${themeMode === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                           {item.type}
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className={`text-sm font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <div className={`text-xs font-bold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {item.count}
                         </div>
                         <div className={`text-xs ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -908,7 +1066,7 @@ export default function FleetDashboard() {
           </div>
 
           {/* Recent Trips Section */}
-          <div className={`p-6 rounded-2xl ${
+          <div className={`p-6 rounded-2xl h-[500px] flex flex-col ${
             themeMode === 'dark' 
               ? 'bg-navy-800' 
               : 'bg-white'
@@ -920,28 +1078,60 @@ export default function FleetDashboard() {
               }`}>
                 Recent Trips
               </h3>
-              <button className={`text-sm ${getIconColor(themeColor)} hover:opacity-80`}>
-                View all
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchRecentTrips}
+                  disabled={isLoadingTrips}
+                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                    isLoadingTrips 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : themeMode === 'dark' 
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {isLoadingTrips ? 'Loading...' : 'Refresh'}
               </button>
+                <div className="text-sm text-gray-500">
+                  {filteredTrips.length} trips
+                </div>
+              </div>
             </div>
 
             {/* Filter Dropdown */}
             <div className="mb-4">
-              <select className={`w-full p-2 rounded border text-sm ${
+              <select 
+                value={tripsFilter}
+                onChange={(e) => setTripsFilter(e.target.value as 'ALL' | 'ACTIVE' | 'COMPLETED')}
+                className={`w-full p-2 rounded border text-sm ${
                 themeMode === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-white' 
                   : 'bg-white border-gray-300 text-gray-900'
-              }`}>
-                <option>ALL TRIPS</option>
-                <option>ACTIVE TRIPS</option>
-                <option>COMPLETED TRIPS</option>
+                }`}
+              >
+                <option value="ALL">ALL TRIPS</option>
+                <option value="ACTIVE">ACTIVE TRIPS</option>
+                <option value="COMPLETED">COMPLETED TRIPS</option>
               </select>
             </div>
 
-            {/* Trips List */}
-            <div className="space-y-3">
-              {recentTrips.map((trip) => (
-                <div key={trip.id} className={`p-4 rounded-2xl border ${
+            {/* Trips List - Scrollable */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+              {isLoadingTrips ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : filteredTrips.length === 0 ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center">
+                    <p className={`text-sm ${themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      No {tripsFilter.toLowerCase()} trips found
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                filteredTrips.map((trip) => (
+                  <div key={trip.id} className={`p-3 rounded-xl border ${
                   themeMode === 'dark' 
                     ? 'bg-navy-700 border-navy-600' 
                     : 'bg-gray-50 border-gray-200'
@@ -949,86 +1139,63 @@ export default function FleetDashboard() {
                   {/* Trip Header */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      {getStatusIcon(trip.status)}
-                      <span className={`text-sm font-medium ${getStatusColor(trip.status)}`}>
-                        {trip.status}
+                        {getStatusIcon(trip.trip.status)}
+                        <span className={`text-xs font-medium ${getStatusColor(trip.trip.status)}`}>
+                          {trip.trip.status}
                       </span>
                     </div>
-                    <span className={`text-sm ${
+                      <div className="text-right">
+                        <span className={`text-xs font-medium ${
                       themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                     }`}>
-                      {trip.time}
+                          {trip.trip.time}
                     </span>
-                  </div>
-
-                  {/* Location */}
-                  <div className="mb-2">
-                    <p className={`text-sm font-medium ${
-                      themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {trip.location}
-                    </p>
-                  </div>
-
-                  {/* Driver and Vehicle */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-1">
-                      <UserGroupIcon className="w-4 h-4 text-brand-500" />
-                      <span className={`text-xs ${
-                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                      }`}>
-                        {trip.driver}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <TruckIcon className="w-4 h-4 text-brand-500" />
-                      <span className={`text-xs ${
-                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                      }`}>
-                        {trip.vehicle}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Trip Details */}
-                  {trip.details && (
-                    <div className={`pt-2 border-t ${
-                      themeMode === 'dark' ? 'border-gray-600' : 'border-gray-200'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center space-x-1">
-                          <ClockIcon className="w-4 h-4 text-brand-500" />
-                          <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                            {trip.details.time}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <MapPinIcon className="w-4 h-4 text-brand-500" />
-                          <span className={themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                            {trip.details.distance}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
-                          <span className="text-red-500">
-                            {trip.details.incidents}
-                          </span>
+                        <div className={`text-xs ${
+                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {trip.trip.timeAgo}
                         </div>
                       </div>
+                  </div>
+
+                    {/* Vehicle Name - Primary Info */}
+                  <div className="mb-2">
+                      <div className="flex items-center space-x-2">
+                        <TruckIcon className={`w-4 h-4 ${getBrandColor(themeColor)} flex-shrink-0`} />
+                        <h4 className={`text-sm font-semibold ${
+                      themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>
+                          {trip.vehicle.reg_number}
+                        </h4>
+                      </div>
+                      {trip.vehicle.name && trip.vehicle.name !== trip.vehicle.reg_number && (
+                        <p className={`text-xs truncate max-w-full ml-6 ${
+                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`} title={trip.vehicle.name}>
+                          {trip.vehicle.name.length > 25 ? 
+                            `${trip.vehicle.name.substring(0, 25)}...` : 
+                            trip.vehicle.name
+                          }
+                        </p>
+                      )}
+                  </div>
+
+                    {/* Location - Secondary Info */}
+                    <div className="mb-1">
+                      <div className="flex items-start space-x-2">
+                        <MapPinIcon className={`w-3 h-3 ${getBrandColor(themeColor)} mt-0.5 flex-shrink-0`} />
+                        <p className={`text-xs break-words ${
+                        themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
+                          {trip.address}
+                        </p>
                     </div>
-                  )}
-                </div>
-              ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            {/* Settings Icon */}
-            <div className="mt-4 flex justify-end">
-              <button className={`p-2 rounded hover:bg-opacity-10 ${
-                themeMode === 'dark' ? 'hover:bg-white' : 'hover:bg-gray-100'
-              }`}>
-                <Cog6ToothIcon className="w-5 h-5 text-brand-500" />
-              </button>
-            </div>
           </div>
 
           {/* Recent Alerts Section */}
@@ -1044,14 +1211,119 @@ export default function FleetDashboard() {
               }`}>
                 Recent Alerts
               </h3>
+              <div className="flex items-center gap-3">
+                {!isLoadingAlerts && (
+                  <span className={`text-xs font-medium ${
+                    themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {recentAlerts.length} Alerts
+                  </span>
+                )}
               <button className={`text-sm ${getIconColor(themeColor)} hover:opacity-80`}>
                 View all
               </button>
+              </div>
             </div>
 
             {/* Alerts List */}
-            <div className="space-y-3 pb-2">
-              {recentAlerts.map((alert) => (
+            <div className="space-y-3 pb-2 max-h-80 overflow-y-auto">
+              {isLoadingAlerts ? (
+                <div className={`text-center py-8 ${
+                  themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
+                  <p className="text-sm">Loading alerts...</p>
+                </div>
+              ) : recentAlerts.length === 0 ? (
+                <div className={`text-center py-8 ${
+                  themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  <p className="text-sm">No recent alerts</p>
+                </div>
+              ) : (
+                recentAlerts.map((alert) => {
+                  // Get alert type color
+                  const getAlertTypeColor = (alertType: string) => {
+                    switch (alertType?.toLowerCase()) {
+                      case 'warning':
+                      case 'warn':
+                        return 'text-orange-500'
+                      case 'error':
+                      case 'critical':
+                      case 'emergency':
+                        return 'text-red-500'
+                      case 'info':
+                      case 'information':
+                        return 'text-blue-500'
+                      case 'success':
+                      case 'completed':
+                        return 'text-green-500'
+                      case 'maintenance':
+                        return 'text-purple-500'
+                      case 'fuel':
+                        return 'text-yellow-600'
+                      case 'speed':
+                        return 'text-pink-500'
+                      default:
+                        return 'text-gray-500'
+                    }
+                  }
+
+                  // Get alert type background color
+                  const getAlertTypeBgColor = (alertType: string) => {
+                    switch (alertType?.toLowerCase()) {
+                      case 'warning':
+                      case 'warn':
+                        return 'bg-orange-500'
+                      case 'error':
+                      case 'critical':
+                      case 'emergency':
+                        return 'bg-red-500'
+                      case 'info':
+                      case 'information':
+                        return 'bg-blue-500'
+                      case 'success':
+                      case 'completed':
+                        return 'bg-green-500'
+                      case 'maintenance':
+                        return 'bg-purple-500'
+                      case 'fuel':
+                        return 'bg-yellow-600'
+                      case 'speed':
+                        return 'bg-pink-500'
+                      default:
+                        return 'bg-gray-500'
+                    }
+                  }
+
+                  // Get alert type icon
+                  const getAlertTypeIcon = (alertType: string) => {
+                    switch (alertType?.toLowerCase()) {
+                      case 'warning':
+                      case 'warn':
+                        return <ExclamationTriangleIcon className="w-4 h-4" />
+                      case 'error':
+                      case 'critical':
+                      case 'emergency':
+                        return <XCircleIcon className="w-4 h-4" />
+                      case 'info':
+                      case 'information':
+                        return <InformationCircleIcon className="w-4 h-4" />
+                      case 'success':
+                      case 'completed':
+                        return <CheckCircleIcon className="w-4 h-4" />
+                      case 'maintenance':
+                        return <WrenchScrewdriverIcon className="w-4 h-4" />
+                      case 'fuel':
+                        return <BeakerIcon className="w-4 h-4" />
+                      case 'speed':
+                        return <TruckIcon className="w-4 h-4" />
+                      default:
+                        return <BellIcon className="w-4 h-4" />
+                    }
+                  }
+
+                  return (
                 <div key={alert.id} className={`p-4 rounded-2xl border ${
                   themeMode === 'dark' 
                     ? 'bg-navy-700 border-navy-600' 
@@ -1062,36 +1334,67 @@ export default function FleetDashboard() {
                     <h4 className={`text-sm font-semibold ${
                       themeMode === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
-                      {alert.vehicleName}
+                          {alert.alert.unit_name || alert.vehicle.reg_number}
                     </h4>
-                    <MapPinIcon className="w-4 h-4 text-brand-500" />
+                        <button 
+                          onClick={() => handleOpenMapsModal(alert)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title="View Location on Map"
+                        >
+                          <MapPinIcon className={`w-4 h-4 ${getBrandColor(themeColor)}`} />
+                        </button>
+                      </div>
+
+                      {/* Alert Type */}
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className={`w-3 h-3 rounded-full ${getAlertTypeBgColor(alert.alert.alert_type)}`}></div>
+                        <span className={`text-xs font-medium ${getAlertTypeColor(alert.alert.alert_type)}`}>
+                          {alert.alert.alert_type || 'Alert'}
+                        </span>
                   </div>
 
                   {/* Timestamp */}
                   <p className={`text-xs mb-2 ${
                     themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                   }`}>
-                    {alert.timestamp}
+                        {formatDateTime(alert.alert.last_reported_time_utc)}
                   </p>
 
-                  {/* Alert Message */}
+                      {/* Alert Description */}
                   <div className="flex items-start space-x-2">
-                    <ClockIcon className={`w-4 h-4 mt-0.5 ${
-                      alert.type === 'warning' ? 'text-orange-500' :
-                      alert.type === 'error' ? 'text-red-500' : 'text-blue-500'
-                    }`} />
+                        <div className={getAlertTypeColor(alert.alert.alert_type)}>
+                          {getAlertTypeIcon(alert.alert.alert_type)}
+                        </div>
                     <p className={`text-sm ${
                       themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                     }`}>
-                      {alert.message}
+                          {alert.alert.alert_description || 'No description available'}
                     </p>
                   </div>
                 </div>
-              ))}
+                  )
+                })
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Floating Settings Button */}
+      <FloatingSettings />
+
+      {/* Google Maps Modal */}
+      {isMapsModalOpen && selectedLocation && (
+        <GoogleMapsModal
+          isOpen={isMapsModalOpen}
+          onClose={handleCloseMapsModal}
+          address={selectedLocation.address}
+          latitude={selectedLocation.latitude}
+          longitude={selectedLocation.longitude}
+          themeMode={themeMode}
+          vehicleName="Alert Location"
+        />
+      )}
     </div>
   )
 }

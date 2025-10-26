@@ -24,6 +24,7 @@ import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useTheme } from '@/contexts/ThemeContext'
+import { formatDateTime } from '@/lib/dateUtils'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import AddMaintenanceModal from '@/components/AddMaintenanceModal'
 import ViewMaintenanceModal from '@/components/ViewMaintenanceModal'
@@ -208,7 +209,7 @@ export default function MaintenancePage() {
         return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'date':
         try {
-          return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
         } catch (error) {
           return stringValue
         }
@@ -267,7 +268,7 @@ export default function MaintenancePage() {
         return `${Number(stringValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       case 'date':
         try {
-          return new Date(stringValue).toLocaleString()
+          return formatDateTime(stringValue)
         } catch (error) {
           return stringValue
         }

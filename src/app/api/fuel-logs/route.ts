@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withDatabaseFallback, fuelLogsHandlers } from '@/lib/apiWrapper'
 
 // Helper function to serialize BigInts
 function serializeBigInt(obj: any) {
@@ -11,134 +12,52 @@ function serializeBigInt(obj: any) {
 }
 
 // GET - Fetch all fuel logs
-export async function GET(request: NextRequest) {
+export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    const { searchParams } = new URL(request.url)
-    const vehicleId = searchParams.get('vehicle_id')
-
-    // Build the query with optional vehicle filter
-    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
-
-    const fuelLogs = await prisma.fuel_logs.findMany({
-      where: whereClause, // Apply the filter here
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        },
-        driver_operators: {
-          select: {
-            name: true,
-            phone: true,
-            license_number: true
-          }
-        }
-      },
-      orderBy: {
-        refuel_date: 'desc'
-      }
-    })
-    return NextResponse.json(serializeBigInt(fuelLogs))
-  } catch (error) {
-    console.error('Error fetching fuel logs:', error)
+    // Try to use the mock handler first
+    return await fuelLogsHandlers.getFuelLogs(request)
+  } catch (error: any) {
+    console.error('Error in fuel logs handler:', error)
     return NextResponse.json(
       { error: 'Failed to fetch fuel logs' },
       { status: 500 }
     )
   }
-}
+})
 
-// POST - Create new fuel log
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { 
       refuel_date, 
       quantity, 
-      unit_cost, 
-      total_cost, 
-      mileage_before, 
-      mileage_after, 
+      cost, 
       fuel_type, 
-      vendor, 
-      receipt_number, 
-      notes, 
-      vehicle_id, 
-      driver_id 
+      station_name, 
+      odometer_reading, 
+      vehicle_id 
     } = body
 
-    if (!refuel_date || !quantity || !unit_cost || !total_cost || !mileage_before || !mileage_after || !fuel_type || !vendor || !vehicle_id || !driver_id) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    // Validate that the vehicle exists
-    const vehicle = await prisma.vehicles.findUnique({
-      where: { id: BigInt(vehicle_id) }
-    })
-    if (!vehicle) {
-      return NextResponse.json(
-        { error: 'Vehicle not found' },
-        { status: 400 }
-      )
-    }
-
-    // Validate that the driver exists
-    const driver = await prisma.driver_operators.findUnique({
-      where: { id: BigInt(driver_id) }
-    })
-    if (!driver) {
-      return NextResponse.json(
-        { error: 'Driver not found' },
-        { status: 400 }
-      )
-    }
-
-    const newFuelLog = await prisma.fuel_logs.create({
+    const fuelLog = await prisma.fuel_logs.create({
       data: {
         refuel_date: new Date(refuel_date),
-        quantity: Number(quantity),
-        unit_cost: Number(unit_cost),
-        total_cost: Number(total_cost),
-        mileage_before: Number(mileage_before),
-        mileage_after: Number(mileage_after),
-        fuel_type: fuel_type,
-        vendor: vendor,
-        receipt_number: receipt_number || null,
-        notes: notes || null,
-        vehicle_id: BigInt(vehicle_id),
-        driver_id: BigInt(driver_id),
-        created_at: new Date(),
-        updated_at: new Date(),
-        created_by: 1, // Assuming a default user for now
-        updated_by: 1 // Assuming a default user for now
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        },
-        driver_operators: {
-          select: {
-            name: true,
-            phone: true,
-            license_number: true
-          }
-        }
+        quantity: parseFloat(quantity),
+        cost: parseFloat(cost),
+        fuel_type,
+        station_name,
+        odometer_reading: parseInt(odometer_reading),
+        vehicle_id: BigInt(vehicle_id)
       }
     })
 
-    return NextResponse.json(serializeBigInt(newFuelLog), { status: 201 })
+    return NextResponse.json({
+      message: 'Fuel log created successfully',
+      fuelLog: {
+        ...fuelLog,
+        id: fuelLog.id.toString(),
+        vehicle_id: fuelLog.vehicle_id.toString()
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating fuel log:', error)
     return NextResponse.json(
@@ -148,11 +67,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update fuel log
 export async function PUT(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const body = await request.json()
+    const { id, ...updateData } = body
 
     if (!id) {
       return NextResponse.json(
@@ -161,86 +79,26 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { 
-      refuel_date, 
-      quantity, 
-      unit_cost, 
-      total_cost, 
-      mileage_before, 
-      mileage_after, 
-      fuel_type, 
-      vendor, 
-      receipt_number, 
-      notes, 
-      vehicle_id, 
-      driver_id 
-    } = body
-
-    // Validate that the vehicle exists (if provided)
-    if (vehicle_id) {
-      const vehicle = await prisma.vehicles.findUnique({
-        where: { id: BigInt(vehicle_id) }
-      })
-      if (!vehicle) {
-        return NextResponse.json(
-          { error: 'Vehicle not found' },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Validate that the driver exists (if provided)
-    if (driver_id) {
-      const driver = await prisma.driver_operators.findUnique({
-        where: { id: BigInt(driver_id) }
-      })
-      if (!driver) {
-        return NextResponse.json(
-          { error: 'Driver not found' },
-          { status: 400 }
-        )
-      }
-    }
-
-    const updatedFuelLog = await prisma.fuel_logs.update({
+    const fuelLog = await prisma.fuel_logs.update({
       where: { id: BigInt(id) },
       data: {
-        refuel_date: refuel_date ? new Date(refuel_date) : undefined,
-        quantity: quantity ? Number(quantity) : undefined,
-        unit_cost: unit_cost ? Number(unit_cost) : undefined,
-        total_cost: total_cost ? Number(total_cost) : undefined,
-        mileage_before: mileage_before ? Number(mileage_before) : undefined,
-        mileage_after: mileage_after ? Number(mileage_after) : undefined,
-        fuel_type: fuel_type || undefined,
-        vendor: vendor || undefined,
-        receipt_number: receipt_number || undefined,
-        notes: notes || undefined,
-        vehicle_id: vehicle_id ? BigInt(vehicle_id) : undefined,
-        driver_id: driver_id ? BigInt(driver_id) : undefined,
-        updated_at: new Date(),
-        updated_by: 1 // Assuming a default user for now
-      },
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true,
-            status: true
-          }
-        },
-        driver_operators: {
-          select: {
-            name: true,
-            phone: true,
-            license_number: true
-          }
-        }
+        ...updateData,
+        vehicle_id: updateData.vehicle_id ? BigInt(updateData.vehicle_id) : undefined,
+        refuel_date: updateData.refuel_date ? new Date(updateData.refuel_date) : undefined,
+        quantity: updateData.quantity ? parseFloat(updateData.quantity) : undefined,
+        cost: updateData.cost ? parseFloat(updateData.cost) : undefined,
+        odometer_reading: updateData.odometer_reading ? parseInt(updateData.odometer_reading) : undefined
       }
     })
 
-    return NextResponse.json(serializeBigInt(updatedFuelLog))
+    return NextResponse.json({
+      message: 'Fuel log updated successfully',
+      fuelLog: {
+        ...fuelLog,
+        id: fuelLog.id.toString(),
+        vehicle_id: fuelLog.vehicle_id.toString()
+      }
+    })
   } catch (error) {
     console.error('Error updating fuel log:', error)
     return NextResponse.json(
@@ -250,7 +108,6 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Delete fuel log
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -267,7 +124,9 @@ export async function DELETE(request: NextRequest) {
       where: { id: BigInt(id) }
     })
 
-    return NextResponse.json({ message: 'Fuel log deleted successfully' })
+    return NextResponse.json({
+      message: 'Fuel log deleted successfully'
+    })
   } catch (error) {
     console.error('Error deleting fuel log:', error)
     return NextResponse.json(

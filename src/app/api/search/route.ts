@@ -10,14 +10,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Search query is required' }, { status: 400 })
     }
 
-    // Search for vehicles by ID or registration number
+    // Decode URL-encoded query
+    const decodedQuery = decodeURIComponent(query)
+    console.log('Search query:', query, 'Decoded:', decodedQuery)
+
+    // Create a more flexible search pattern by removing spaces and special characters
+    const normalizedQuery = decodedQuery.replace(/[\s\-_]/g, '').toLowerCase()
+    console.log('Normalized query:', normalizedQuery)
+
+    // Search for vehicles with flexible matching
     const vehicles = await prisma.vehicles.findMany({
       where: {
         OR: [
           // Only try BigInt conversion if query is numeric
-          ...(isNaN(Number(query)) ? [] : [{ id: { equals: BigInt(query) } }]),
-          { reg_number: { contains: query, mode: 'insensitive' } },
-          { notes: { contains: query, mode: 'insensitive' } }
+          ...(isNaN(Number(decodedQuery)) ? [] : [{ id: { equals: BigInt(decodedQuery) } }]),
+          // Search in registration number (case insensitive)
+          { reg_number: { contains: decodedQuery, mode: 'insensitive' } },
+          // Search in notes (case insensitive)
+          { notes: { contains: decodedQuery, mode: 'insensitive' } }
         ]
       },
       include: {
@@ -27,15 +37,35 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // If no exact match found, try word-based search
+    if (vehicles.length === 0 && decodedQuery.split(' ').length > 1) {
+      const words = decodedQuery.split(' ').filter(word => word.length >= 2) // Filter out short words
+      if (words.length >= 2) {
+        const wordBasedVehicles = await prisma.vehicles.findMany({
+          where: {
+            AND: words.map(word => ({
+              reg_number: { contains: word, mode: 'insensitive' }
+            }))
+          },
+          include: {
+            vehicle_types: true,
+            vehicle_makes: true,
+            driver_operators: true
+          }
+        })
+        vehicles.push(...wordBasedVehicles)
+      }
+    }
+
     // Search for drivers by ID, name, phone, or license number
     const drivers = await prisma.driver_operators.findMany({
       where: {
         OR: [
           // Only try BigInt conversion if query is numeric
-          ...(isNaN(Number(query)) ? [] : [{ id: { equals: BigInt(query) } }]),
-          { name: { contains: query, mode: 'insensitive' } },
-          { phone: { contains: query, mode: 'insensitive' } },
-          { license_number: { contains: query, mode: 'insensitive' } }
+          ...(isNaN(Number(decodedQuery)) ? [] : [{ id: { equals: BigInt(decodedQuery) } }]),
+          { name: { contains: decodedQuery, mode: 'insensitive' } },
+          { phone: { contains: decodedQuery, mode: 'insensitive' } },
+          { license_number: { contains: decodedQuery, mode: 'insensitive' } }
         ]
       },
       include: {

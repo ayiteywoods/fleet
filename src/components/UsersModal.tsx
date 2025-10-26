@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, Eye, User, Mail, Phone, Shield, Search } from 'lucide-react'
+import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, Eye, User, Mail, Phone, Shield, Search, Settings } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import Notification from './Notification'
 import ViewUserModal from './ViewUserModal'
@@ -17,8 +17,8 @@ interface User {
   role: string
   region: string | null
   district: string | null
-  spcode: string | null
-  group: string | null
+  spcode: number | null
+  group: number | null
   email_verified_at: string | null
   password: string
   license_number: string | null
@@ -35,6 +35,18 @@ interface User {
   user_code: string | null
   status: string | null
   user_type: string | null
+  role_id: string | null
+  api_token: string | null
+  password_reset: string | null
+  deleted_at: string | null
+  providers: string | null
+  branch_id: string | null
+  user_level: string | null
+  type: string | null
+  full_name: string | null
+  picture: string | null
+  wc_id: string | null
+  district_id: number | null
 }
 
 interface Role {
@@ -43,6 +55,34 @@ interface Role {
   description: string | null
   created_at: string | null
   updated_at: string | null
+}
+
+interface Company {
+  id: string
+  name: string
+  location: string | null
+  loc_code: string | null
+  phone: string | null
+  description: string | null
+  group_id: number | null
+  email: string | null
+  address: string | null
+  contact_person: string | null
+  contact_phone: string | null
+  status: string | null
+  created_at: string | null
+  updated_at: string | null
+  created_by: string | null
+  updated_by: string | null
+  external_id: string | null
+  data: any
+  fetched_at: string | null
+  contact_email: string | null
+  notes: string | null
+  contact_position: string | null
+  deleted_by: string | null
+  deleted_at: string | null
+  service_type: string | null
 }
 
 interface UsersModalProps {
@@ -54,6 +94,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const { themeMode } = useTheme()
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -65,7 +106,21 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     phone: '',
     role: '',
     password: '',
-    is_active: true
+    is_active: true,
+    region: '',
+    district: '',
+    spcode: '',
+    group: '',
+    license_number: '',
+    license_category: '',
+    license_expiry: '',
+    specialization: '',
+    user_code: '',
+    user_type: '',
+    user_level: '',
+    type: '',
+    full_name: '',
+    district_id: ''
   })
   const [notification, setNotification] = useState({
     isOpen: false,
@@ -80,12 +135,57 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Column selection state
+  const [showFieldSelector, setShowFieldSelector] = useState(false)
+  const [selectedFields, setSelectedFields] = useState([
+    'name', 'email', 'phone', 'role', 'is_active', 'created_at'
+  ])
 
-  // Fetch users and roles
+  // Available fields for the table
+  const availableFields = [
+    { key: 'name', label: 'Full Name', type: 'text' },
+    { key: 'email', label: 'Email Address', type: 'email' },
+    { key: 'phone', label: 'Phone Number', type: 'text' },
+    { key: 'role', label: 'Role', type: 'text' },
+    { key: 'region', label: 'Region', type: 'text' },
+    { key: 'district', label: 'District', type: 'text' },
+    { key: 'spcode', label: 'Company', type: 'text' },
+    { key: 'group', label: 'Group', type: 'number' },
+    { key: 'email_verified_at', label: 'Email Verified At', type: 'date' },
+    { key: 'license_number', label: 'License Number', type: 'text' },
+    { key: 'license_category', label: 'License Category', type: 'text' },
+    { key: 'license_expiry', label: 'License Expiry', type: 'date' },
+    { key: 'specialization', label: 'Specialization', type: 'text' },
+    { key: 'is_active', label: 'Status', type: 'status' },
+    { key: 'created_at', label: 'Created Date', type: 'date' },
+    { key: 'updated_at', label: 'Last Updated', type: 'date' },
+    { key: 'created_by', label: 'Created By', type: 'text' },
+    { key: 'updated_by', label: 'Updated By', type: 'text' },
+    { key: 'profile_image', label: 'Profile Image', type: 'text' },
+    { key: 'user_code', label: 'User Code', type: 'text' },
+    { key: 'status', label: 'User Status', type: 'text' },
+    { key: 'user_type', label: 'User Type', type: 'text' },
+    { key: 'role_id', label: 'Role ID', type: 'text' },
+    { key: 'api_token', label: 'API Token', type: 'text' },
+    { key: 'password_reset', label: 'Password Reset', type: 'text' },
+    { key: 'deleted_at', label: 'Deleted At', type: 'date' },
+    { key: 'providers', label: 'Providers', type: 'text' },
+    { key: 'branch_id', label: 'Branch ID', type: 'text' },
+    { key: 'user_level', label: 'User Level', type: 'text' },
+    { key: 'type', label: 'Type', type: 'text' },
+    { key: 'full_name', label: 'Full Name', type: 'text' },
+    { key: 'picture', label: 'Picture', type: 'text' },
+    { key: 'wc_id', label: 'WC ID', type: 'text' },
+    { key: 'district_id', label: 'District ID', type: 'number' }
+  ]
+
+  // Fetch users, roles, and companies
   useEffect(() => {
     if (isOpen) {
       fetchUsers()
       fetchRoles()
+      fetchCompanies()
     }
   }, [isOpen])
 
@@ -117,6 +217,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       }
     } catch (error) {
       console.error('Error fetching roles:', error)
+    }
+  }
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/companies')
+      if (response.ok) {
+        const data = await response.json()
+        setCompanies(data)
+      } else {
+        console.error('Failed to fetch companies')
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error)
     }
   }
 
@@ -215,7 +329,21 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       phone: user.phone || '',
       role: user.role,
       password: '', // Don't populate password for security
-      is_active: user.is_active
+      is_active: user.is_active,
+      region: user.region || '',
+      district: user.district || '',
+      spcode: user.spcode?.toString() || '',
+      group: user.group?.toString() || '',
+      license_number: user.license_number || '',
+      license_category: user.license_category || '',
+      license_expiry: user.license_expiry || '',
+      specialization: user.specialization || '',
+      user_code: user.user_code || '',
+      user_type: user.user_type || '',
+      user_level: user.user_level || '',
+      type: user.type || '',
+      full_name: user.full_name || '',
+      district_id: user.district_id?.toString() || ''
     })
     setShowAddForm(true)
   }
@@ -272,179 +400,297 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   }
 
   const handleCancel = () => {
-    setFormData({ name: '', email: '', phone: '', role: '', password: '', is_active: true })
+    setFormData({ 
+      name: '', 
+      email: '', 
+      phone: '', 
+      role: '', 
+      password: '', 
+      is_active: true,
+      region: '',
+      district: '',
+      spcode: '',
+      group: '',
+      license_number: '',
+      license_category: '',
+      license_expiry: '',
+      specialization: '',
+      user_code: '',
+      user_type: '',
+      user_level: '',
+      type: '',
+      full_name: '',
+      district_id: ''
+    })
     setEditingUser(null)
     setShowAddForm(false)
   }
 
-  // Export functions
-  const handleExportExcel = () => {
-    const data = filteredAndSortedUsers.map(user => ({
-      'Name': user.name,
-      'Email': user.email || 'N/A',
-      'Phone': user.phone || 'N/A',
-      'Role': user.role,
-      'Status': user.is_active ? 'Active' : 'Inactive',
-      'Created At': user.created_at ? (() => {
-        try {
-          const date = new Date(user.created_at)
-          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-        } catch (error) {
-          return 'N/A'
-        }
-      })() : 'N/A',
-      'Updated At': user.updated_at ? (() => {
-        try {
-          const date = new Date(user.updated_at)
-          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-        } catch (error) {
-          return 'N/A'
-        }
-      })() : 'N/A'
-    }))
+  // Column selection utility functions
+  const toggleField = (fieldKey: string) => {
+    if (selectedFields.includes(fieldKey)) {
+      setSelectedFields(selectedFields.filter(f => f !== fieldKey))
+    } else {
+      setSelectedFields([...selectedFields, fieldKey])
+    }
+  }
 
-    const ws = XLSX.utils.json_to_sheet(data)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Users')
-    XLSX.writeFile(wb, 'users.xlsx')
+  const getSelectedFieldsData = () => {
+    return selectedFields.map(fieldKey => 
+      availableFields.find(field => field.key === fieldKey)
+    ).filter(Boolean)
+  }
+
+  const formatFieldValue = (field: any, value: any) => {
+    if (!value && value !== 0) return '-'
+    
+    if (typeof value === 'object' && value !== null) {
+      return '-'
+    }
+    
+    let stringValue = String(value).trim()
+    stringValue = stringValue.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim()
+    
+    if (stringValue.length > 50) {
+      stringValue = stringValue.substring(0, 47) + '...'
+    }
+    
+    // Special handling for SP Code (Company)
+    if (field.key === 'spcode') {
+      const company = companies.find(c => c.id === stringValue)
+      return company ? company.name : stringValue
+    }
+    
+    switch (field.type) {
+      case 'number':
+        return Number(stringValue).toLocaleString()
+      case 'date':
+        try {
+          return new Date(stringValue).toLocaleDateString()
+        } catch (error) {
+          return stringValue
+        }
+      case 'status':
+        const getStatusColor = (status: string) => {
+          switch (status?.toLowerCase()) {
+            case 'active':
+            case 'true':
+              return 'bg-green-100 text-green-800 border-green-200'
+            case 'inactive':
+            case 'false':
+              return 'bg-red-100 text-red-800 border-red-200'
+            default:
+              return 'bg-gray-100 text-gray-800 border-gray-200'
+          }
+        }
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(stringValue)}`}>
+            {stringValue === 'true' ? 'Active' : stringValue === 'false' ? 'Inactive' : stringValue?.charAt(0).toUpperCase() + stringValue?.slice(1).toLowerCase()}
+          </span>
+        )
+      default:
+        return stringValue
+    }
+  }
+
+  // Export functions
+  const formatFieldValueForExport = (fieldKey: string, value: any, fieldType: string) => {
+    if (!value && value !== 0) return '-'
+    
+    if (typeof value === 'object' && value !== null) {
+      return '-'
+    }
+    
+    let stringValue = String(value).trim()
+    stringValue = stringValue.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim()
+    
+    // Special handling for SP Code (Company)
+    if (fieldKey === 'spcode') {
+      const company = companies.find(c => c.id === stringValue)
+      return company ? company.name : stringValue
+    }
+    
+    switch (fieldType) {
+      case 'number':
+        return Number(stringValue).toLocaleString()
+      case 'date':
+        try {
+          return new Date(stringValue).toLocaleDateString()
+        } catch (error) {
+          return stringValue
+        }
+      case 'status':
+        return stringValue === 'true' ? 'Active' : stringValue === 'false' ? 'Inactive' : stringValue?.charAt(0).toUpperCase() + stringValue?.slice(1).toLowerCase()
+      default:
+        return stringValue
+    }
+  }
+
+  const handleExportExcel = () => {
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = selectedFieldsData.map(field => field.label)
+    
+    const data = currentUsers.map((user) => {
+      const row: (string | number)[] = []
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users')
+    
+    XLSX.writeFile(workbook, `users-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'Excel Export Successful!',
+      message: 'Users data has been exported to Excel file.'
+    })
   }
 
   const handleExportCSV = () => {
-    const data = filteredAndSortedUsers.map(user => ({
-      'Name': user.name,
-      'Email': user.email || 'N/A',
-      'Phone': user.phone || 'N/A',
-      'Role': user.role,
-      'Status': user.is_active ? 'Active' : 'Inactive',
-      'Created At': user.created_at ? (() => {
-        try {
-          const date = new Date(user.created_at)
-          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-        } catch (error) {
-          return 'N/A'
-        }
-      })() : 'N/A',
-      'Updated At': user.updated_at ? (() => {
-        try {
-          const date = new Date(user.updated_at)
-          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-        } catch (error) {
-          return 'N/A'
-        }
-      })() : 'N/A'
-    }))
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = selectedFieldsData.map(field => field.label)
+    
+    const data = currentUsers.map((user) => {
+      const row: (string | number)[] = []
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
 
-    const ws = XLSX.utils.json_to_sheet(data)
-    const csv = XLSX.utils.sheet_to_csv(ws)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const csvContent = [headers, ...data]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', 'users.csv')
+    link.setAttribute('download', `users-${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'CSV Export Successful!',
+      message: 'Users data has been exported to CSV file.'
+    })
   }
 
   const handleExportPDF = () => {
-    const doc = new jsPDF()
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = selectedFieldsData.map(field => field.label)
     
-    // Add title
-    doc.setFontSize(18)
+    const data = currentUsers.map((user) => {
+      const row: (string | number)[] = []
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const doc = new jsPDF('l', 'mm', 'a4') // landscape orientation
+    doc.setFontSize(16)
     doc.text('Users Report', 14, 22)
-    
-    // Add date
     doc.setFontSize(10)
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30)
-    
-    // Prepare table data
-    const tableData = filteredAndSortedUsers.map(user => [
-      user.name,
-      user.email || 'N/A',
-      user.phone || 'N/A',
-      user.role,
-      user.is_active ? 'Active' : 'Inactive',
-      user.created_at ? (() => {
-        try {
-          const date = new Date(user.created_at)
-          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-        } catch (error) {
-          return 'N/A'
-        }
-      })() : 'N/A'
-    ])
-    
+
+    // Add table
     autoTable(doc, {
-      head: [['Name', 'Email', 'Phone', 'Role', 'Status', 'Created At']],
-      body: tableData,
+      head: [headers],
+      body: data,
       startY: 40,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [71, 85, 105] }
+      headStyles: { fillColor: [59, 130, 246] }, // Blue header
+      alternateRowStyles: { fillColor: [249, 250, 251] }, // Light gray alternating rows
+      margin: { top: 40 }
     })
+
+    doc.save(`users-${new Date().toISOString().split('T')[0]}.pdf`)
     
-    doc.save('users.pdf')
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'PDF Export Successful!',
+      message: 'Users data has been exported to PDF file.'
+    })
   }
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      const sortedUsers = filteredAndSortedUsers
-      
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Users Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #333; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; font-weight: bold; }
-              .status-active { color: green; font-weight: bold; }
-              .status-inactive { color: red; font-weight: bold; }
-            </style>
-          </head>
-          <body>
-            <h1>Users Report</h1>
-            <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Created At</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${sortedUsers.map(user => `
-                  <tr>
-                    <td>${user.name}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>${user.phone || 'N/A'}</td>
-                    <td>${user.role}</td>
-                    <td class="${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</td>
-                    <td>${user.created_at ? (() => {
-                      try {
-                        const date = new Date(user.created_at)
-                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-                      } catch (error) {
-                        return 'N/A'
-                      }
-                    })() : 'N/A'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
-    }
+    if (!printWindow) return
+
+    const selectedFieldsData = getSelectedFieldsData()
+    const headers = selectedFieldsData.map(field => field.label)
+    
+    const data = currentUsers.map((user) => {
+      const row: (string | number)[] = []
+      selectedFieldsData.forEach(field => {
+        const value = user[field.key]
+        row.push(formatFieldValueForExport(field.key, value, field.type))
+      })
+      return row
+    })
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Users Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #333; margin-bottom: 10px; }
+          .date { color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #3b82f6; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f9fafb; }
+          tr:hover { background-color: #f3f4f6; }
+        </style>
+      </head>
+      <body>
+        <h1>Users Report</h1>
+        <div class="date">Generated on: ${new Date().toLocaleDateString()}</div>
+        <table>
+          <thead>
+            <tr>
+              ${headers.map(header => `<th>${header}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(row => 
+              `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+            ).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
+    
+    setNotification({
+      isOpen: true,
+      type: 'success',
+      title: 'Print Successful!',
+      message: 'Users data has been sent to printer.'
+    })
   }
 
   // Sorting function
@@ -548,6 +794,13 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                 {/* Export Controls */}
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => setShowFieldSelector(!showFieldSelector)}
+                    className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-3xl text-sm hover:bg-gray-200 transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    SELECT COLUMNS ({selectedFields.length})
+                  </button>
+                  <button
                     onClick={handleExportExcel}
                     className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-3xl text-sm hover:bg-gray-200 transition-colors"
                   >
@@ -578,6 +831,95 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                 </div>
               </div>
             </div>
+
+            {/* Field Selector Modal */}
+            {showFieldSelector && (
+              <div 
+                className="fixed inset-0 flex items-center justify-center z-50"
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  backdropFilter: 'blur(4px)',
+                  WebkitBackdropFilter: 'blur(4px)'
+                }}
+              >
+                <div className={`w-96 max-h-96 rounded-2xl ${
+                  themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
+                }`}>
+                  <div className={`p-4 border-b ${
+                    themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <h3 className={`text-lg font-medium ${
+                        themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        Select Columns to Display
+                      </h3>
+                      <button
+                        onClick={() => setShowFieldSelector(false)}
+                        className={`p-1 rounded ${
+                          themeMode === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className={`text-sm mt-1 ${
+                      themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
+                      Choose columns to display in the table (6 columns by default, more will enable horizontal scroll)
+                    </p>
+                  </div>
+                  <div className="p-4 max-h-64 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-2">
+                      {availableFields.map((field) => (
+                        <label
+                          key={field.key}
+                          className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                            selectedFields.includes(field.key)
+                              ? themeMode === 'dark'
+                                ? 'bg-orange-600 text-white'
+                                : 'bg-orange-100 text-orange-900'
+                              : themeMode === 'dark'
+                              ? 'hover:bg-gray-700 text-gray-300'
+                              : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedFields.includes(field.key)}
+                            onChange={() => toggleField(field.key)}
+                            className="mr-3"
+                          />
+                          <span className="text-sm">{field.label}</span>
+                          <span className={`ml-auto text-xs ${
+                            themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {field.type}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={`p-4 border-t ${
+                    themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <div className="flex justify-between items-center">
+                      <span className={`text-sm ${
+                        themeMode === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        {selectedFields.length} columns selected
+                      </span>
+                      <button
+                        onClick={() => setShowFieldSelector(false)}
+                        className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Add/Edit Form */}
             {showAddForm && (
@@ -693,6 +1035,182 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                       </select>
                     </div>
                   </div>
+                  
+                  {/* Additional Fields Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Region
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.region}
+                        onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter region"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        District
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.district}
+                        onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter district"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Company (SP Code)
+                      </label>
+                      <select
+                        value={formData.spcode}
+                        onChange={(e) => setFormData({ ...formData, spcode: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      >
+                        <option value="">Select Company</option>
+                        {companies.map(company => (
+                          <option key={company.id} value={company.id}>
+                            {company.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Group
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.group}
+                        onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter group"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        License Number
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.license_number}
+                        onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter license number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        License Category
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.license_category}
+                        onChange={(e) => setFormData({ ...formData, license_category: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter license category"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        License Expiry
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.license_expiry}
+                        onChange={(e) => setFormData({ ...formData, license_expiry: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Specialization
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.specialization}
+                        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter specialization"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        User Code
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.user_code}
+                        onChange={(e) => setFormData({ ...formData, user_code: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter user code"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        User Type
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.user_type}
+                        onChange={(e) => setFormData({ ...formData, user_type: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter user type"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        User Level
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.user_level}
+                        onChange={(e) => setFormData({ ...formData, user_level: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter user level"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.type}
+                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter type"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter full name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        District ID
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.district_id}
+                        onChange={(e) => setFormData({ ...formData, district_id: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter district ID"
+                      />
+                    </div>
+                  </div>
                   <div className="flex justify-end gap-3">
                     <button
                       type="button"
@@ -726,72 +1244,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Actions
                     </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('name')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Name
-                        {sortField === 'name' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('email')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Email
-                        {sortField === 'email' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('phone')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Phone
-                        {sortField === 'phone' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('role')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Role
-                        {sortField === 'role' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('is_active')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Status
-                        {sortField === 'is_active' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
-                      onClick={() => handleSort('created_at')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Created At
-                        {sortField === 'created_at' && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                        )}
-                      </div>
-                    </th>
+                    {getSelectedFieldsData().map((field) => (
+                      <th 
+                        key={field.key}
+                        className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                        onClick={() => handleSort(field.key)}
+                      >
+                        <div className="flex items-center gap-1">
+                          {field.label}
+                          {sortField === field.key && (
+                            sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                          )}
+                        </div>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${
@@ -799,13 +1265,13 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                 }`}>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={selectedFields.length + 1} className="px-6 py-4 text-center text-gray-500">
                         Loading users...
                       </td>
                     </tr>
                   ) : currentUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={selectedFields.length + 1} className="px-6 py-4 text-center text-gray-500">
                         No users found
                       </td>
                     </tr>
@@ -837,47 +1303,11 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.email || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.phone || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.role === 'admin' 
-                              ? 'bg-red-100 text-red-700' 
-                              : user.role === 'manager'
-                              ? 'bg-blue-100 text-blue-700'
-                              : user.role === 'supervisor'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.is_active 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-red-100 text-red-700'
-                          }`}>
-                            {user.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.created_at ? (() => {
-                            try {
-                              const date = new Date(user.created_at)
-                              return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString()
-                            } catch (error) {
-                              return 'N/A'
-                            }
-                          })() : 'N/A'}
-                        </td>
+                        {getSelectedFieldsData().map((field) => (
+                          <td key={field.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatFieldValue(field, user[field.key])}
+                          </td>
+                        ))}
                       </tr>
                     ))
                   )}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withDatabaseFallback, driverHandlers } from '@/lib/apiWrapper'
 
 function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) return obj
@@ -16,68 +17,18 @@ function serializeBigInt(obj: any): any {
   return obj
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    const { searchParams } = new URL(request.url)
-    const subsidiaryId = searchParams.get('subsidiary_id')
-
-    let whereClause = {}
-    if (subsidiaryId) {
-      // Find drivers by spcode (subsidiary ID)
-      whereClause = { spcode: BigInt(subsidiaryId) }
-    }
-
-    const drivers = await prisma.driver_operators.findMany({
-      where: whereClause,
-      include: {
-        vehicles: {
-          select: {
-            reg_number: true,
-            trim: true,
-            year: true
-          }
-        }
-      },
-      orderBy: { created_at: 'desc' }
-    })
-
-    // Fetch subsidiary data for each driver and add subsidiary_name
-    const driversWithSubsidiaryName = await Promise.all(
-      drivers.map(async (driver) => {
-        let subsidiary = null
-        if (driver.spcode) {
-          subsidiary = await prisma.subsidiary.findUnique({
-            where: { id: driver.spcode }
-          })
-        }
-
-        return {
-          ...driver,
-          id: driver.id.toString(),
-          spcode: driver.spcode?.toString() || null,
-          vehicle_id: driver.vehicle_id?.toString() || null,
-          created_by: driver.created_by?.toString() || null,
-          updated_by: driver.updated_by?.toString() || null,
-          vehicle_reg_number: driver.vehicles?.reg_number || null,
-          subsidiary_name: subsidiary?.name || null,
-          subsidiary: subsidiary ? {
-            id: subsidiary.id.toString(),
-            name: subsidiary.name
-          } : null
-        }
-      })
-    )
-
-    const serializedDrivers = serializeBigInt(driversWithSubsidiaryName)
-    return NextResponse.json(serializedDrivers)
-  } catch (error) {
-    console.error('Error fetching drivers:', error)
+    // Try to use the mock handler first
+    return await driverHandlers.getDrivers(request)
+  } catch (error: any) {
+    console.error('Error in drivers handler:', error)
     return NextResponse.json(
       { error: 'Failed to fetch drivers' },
       { status: 500 }
     )
   }
-}
+})
 
 export async function POST(request: NextRequest) {
   try {

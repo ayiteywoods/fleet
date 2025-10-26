@@ -20,7 +20,7 @@ import {
   ShieldCheckIcon as RoadworthyIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
-import { getIconColor, getButtonColor } from '@/lib/themeUtils'
+import { getIconColor, getButtonColor, getBrandBgColor } from '@/lib/themeUtils'
 
 interface SidebarProps {
   isCollapsed: boolean
@@ -144,11 +144,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             />
           )}
           {isCollapsed && (
-            <div className={`w-8 h-7 rounded-lg flex items-center justify-center ${
-              themeColor === 'blue' ? 'bg-brand-500' :
-              themeColor === 'gray' ? 'bg-gray-600' :
-              'bg-yellow-600'
-            }`}>
+            <div className={`w-8 h-7 rounded-lg flex items-center justify-center ${getBrandBgColor(themeColor)}`}>
               <span className="text-white font-bold text-sm">NF</span>
             </div>
           )}
@@ -180,9 +176,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              themeMode === 'dark' ? 'bg-brand-500' : 'bg-brand-500'
-            }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getBrandBgColor(themeColor)}`}>
               <UserIcon className="w-6 h-6 text-white" />
             </div>
             {!isCollapsed && (
@@ -205,15 +199,21 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         
         {expandedSections.admin && !isCollapsed && (
           <div className="mt-2 ml-8 space-y-1">
-            <Link href="/profile" className={`block text-sm ${
-              themeMode === 'dark' ? 'text-white hover:text-blue-200' : 'text-gray-700 hover:text-gray-900'
+            <Link href="/profile" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname === '/profile' 
+                ? 'bg-blue-600 text-white' 
+                : themeMode === 'dark' ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}>
-              MP My Profile
+              <UserIcon className="w-4 h-4" />
+              My Profile
             </Link>
-            <Link href="/logout" className={`block text-sm ${
-              themeMode === 'dark' ? 'text-white hover:text-blue-200' : 'text-gray-700 hover:text-gray-900'
+            <Link href="/logout" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname === '/logout' 
+                ? 'bg-red-600 text-white' 
+                : themeMode === 'dark' ? 'text-red-400 hover:bg-gray-700 hover:text-red-300' : 'text-red-600 hover:bg-gray-100 hover:text-red-700'
             }`}>
-              L Logout
+              <span className="w-4 h-4">L</span>
+              Logout
             </Link>
           </div>
         )}
@@ -230,7 +230,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                   href={item.href}
                   className={`flex items-center px-3 py-2 rounded-3xl transition-colors ${
                     item.active
-                      ? themeMode === 'dark' ? 'bg-brand-500 text-white shadow-sm' : 'bg-brand-500 text-white shadow-sm'
+                      ? `${getBrandBgColor(themeColor)} text-white shadow-sm`
                       : themeMode === 'dark' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
@@ -277,7 +277,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                   href={item.href}
                   className={`flex items-center justify-between px-3 py-1 rounded-3xl transition-colors ${
                     item.active
-                      ? themeMode === 'dark' ? 'bg-brand-500 text-white shadow-sm' : 'bg-brand-500 text-white shadow-sm'
+                      ? `${getBrandBgColor(themeColor)} text-white shadow-sm`
                       : themeMode === 'dark' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >

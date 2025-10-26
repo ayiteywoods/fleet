@@ -23,9 +23,28 @@ interface NavbarProps {
 const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: NavbarProps) => {
   const { themeMode, toggleThemeMode } = useTheme();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Load read notifications from localStorage
+  const getReadNotifications = (): Set<string> => {
+    try {
+      const read = localStorage.getItem('readNotifications');
+      return read ? new Set(JSON.parse(read)) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  // Save read notifications to localStorage
+  const saveReadNotifications = (readIds: Set<string>) => {
+    localStorage.setItem('readNotifications', JSON.stringify(Array.from(readIds)));
+  };
 
   const getPageDescription = (pageTitle: string) => {
     const descriptions: { [key: string]: string } = {
@@ -74,11 +93,49 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
     }
   };
 
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/notifications', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Load read state from localStorage
+          const readIds = getReadNotifications();
+          const notificationsWithReadState = data.map((n: any) => ({
+            ...n,
+            read: readIds.has(n.id)
+          }));
+          setNotifications(notificationsWithReadState);
+          setUnreadCount(notificationsWithReadState.filter((n: any) => !n.read).length);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+    // Refresh notifications every 5 minutes
+    const interval = setInterval(fetchNotifications, 300000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationDropdownOpen(false);
       }
     };
 
@@ -87,6 +144,32 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notificationIds: [notificationId] })
+      });
+
+      // Save to localStorage
+      const readIds = getReadNotifications();
+      readIds.add(notificationId);
+      saveReadNotifications(readIds);
+
+      setNotifications(notifications.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      ));
+      setUnreadCount(unreadCount - 1);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
 
   return (
     <nav className="fixed top-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]" style={{
@@ -118,10 +201,102 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
         </span>
         
         {/* Notifications */}
-        <div className="relative">
-          <button className="cursor-pointer">
+        <div className="relative" ref={notificationRef}>
+          <button 
+            onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+            className="cursor-pointer relative"
+          >
             <IoMdNotificationsOutline className="h-4 w-4 text-gray-600 dark:text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 text-xs font-semibold text-white bg-red-600 rounded-full">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
+
+          {/* Notification Dropdown */}
+          {isNotificationDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-navy-800 rounded-xl shadow-lg border border-gray-200 dark:border-navy-700 z-50">
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-navy-700 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Notifications
+                </h3>
+                {unreadCount > 0 && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                    {unreadCount} new
+                  </span>
+                )}
+              </div>
+
+              {/* Notifications List */}
+              <div className="max-h-96 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No notifications
+                    </p>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      onClick={() => markAsRead(notification.id)}
+                      className={`px-4 py-3 border-b border-gray-100 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-700 transition-colors cursor-pointer ${
+                        !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
+                          !notification.read ? 'bg-blue-600' : 'bg-transparent'
+                        }`}></div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${
+                            !notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'
+                          }`}>
+                            {notification.title}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            {notification.time}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Footer */}
+              {notifications.length > 0 && (
+                <div className="px-4 py-3 border-t border-gray-200 dark:border-navy-700 flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      const allIds = notifications.map(n => n.id);
+                      const readIds = getReadNotifications();
+                      allIds.forEach(id => readIds.add(id));
+                      saveReadNotifications(readIds);
+                      
+                      setNotifications(notifications.map(n => ({ ...n, read: true })));
+                      setUnreadCount(0);
+                    }}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                  <a
+                    href="/notifications"
+                    onClick={() => setIsNotificationDropdownOpen(false)}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                  >
+                    View All
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Info */}

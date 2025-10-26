@@ -14,15 +14,15 @@ export default function Footer() {
         : 'bg-white border-t border-gray-200'
     }`}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-end items-end">
           {/* Copyright */}
-          <div className={`text-sm ${
+          <div className={`text-xs ${
             themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
           }`}>
             ©{currentYear} NeraFleet. All Rights Reserved.
           </div>
 
-          {/* Links */}
+          {/* Links 
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/support" className={`text-sm hover:text-brand-500 transition-colors ${
               themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
@@ -39,7 +39,7 @@ export default function Footer() {
             }`}>
               Terms of Use
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

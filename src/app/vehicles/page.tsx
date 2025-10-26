@@ -19,7 +19,8 @@ import {
   XMarkIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  PauseCircleIcon
 } from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -85,16 +86,19 @@ export default function VehiclesPage() {
     message: ''
   })
   const [selectedFields, setSelectedFields] = useState([
-    'reg_number', 'vin_number', 'trim', 'year', 'status', 'color', 'vehicle_type_name', 'vehicle_make_name', 'subsidiary_name'
+    'reg_number', 'trim', 'vehicle_type_name', 'year', 'status'
   ])
 
   // All available fields from the vehicles table
   const availableFields = [
-    { key: 'reg_number', label: 'Registration Number', type: 'text' },
-    { key: 'vin_number', label: 'VIN Number', type: 'text' },
-    { key: 'trim', label: 'Model/Trim', type: 'text' },
+    { key: 'reg_number', label: 'Vehicle Number', type: 'text' },
+    { key: 'trim', label: 'Vehicle Model', type: 'text' },
+    { key: 'vehicle_type_name', label: 'Type', type: 'text' },
     { key: 'year', label: 'Year', type: 'number' },
     { key: 'status', label: 'Status', type: 'status' },
+    { key: 'id', label: 'Vehicle ID', type: 'number' },
+    { key: 'company_name', label: 'Company', type: 'text' },
+    { key: 'vin_number', label: 'VIN Number', type: 'text' },
     { key: 'color', label: 'Color', type: 'text' },
     { key: 'engine_number', label: 'Engine Number', type: 'text' },
     { key: 'chassis_number', label: 'Chassis Number', type: 'text' },
@@ -103,7 +107,6 @@ export default function VehiclesPage() {
     { key: 'current_mileage', label: 'Current Mileage (Km)', type: 'number' },
     { key: 'last_service_date', label: 'Last Service Date', type: 'date' },
     { key: 'next_service_km', label: 'Next Service (Km)', type: 'number' },
-    { key: 'vehicle_type_name', label: 'Vehicle Type', type: 'text' },
     { key: 'vehicle_make_name', label: 'Make', type: 'text' },
     { key: 'subsidiary_name', label: 'Subsidiary', type: 'text' },
     { key: 'notes', label: 'Notes', type: 'text' },
@@ -133,17 +136,20 @@ export default function VehiclesPage() {
     fetchVehicles()
   }, [])
 
+
   // Calculate KPI values from vehicles data
   const totalVehicles = vehicles.length
   const activeVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'active').length
   const maintenanceVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'maintenance').length
   const repairVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'repair').length
   const inactiveVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'inactive').length
+  const suspendedVehicles = vehicles.filter(v => v?.status?.toLowerCase() === 'suspended').length
 
   const kpiCards = [
     { title: 'Total', value: totalVehicles.toString(), icon: TruckIcon, color: 'blue', status: null },
     { title: 'Active', value: activeVehicles.toString(), icon: CheckCircleIcon, color: 'blue', status: 'active' },
     { title: 'Inactive', value: inactiveVehicles.toString(), icon: UserMinusIcon, color: 'blue', status: 'inactive' },
+    { title: 'Suspended', value: suspendedVehicles.toString(), icon: PauseCircleIcon, color: 'blue', status: 'suspended' },
     { title: 'Maintenance', value: maintenanceVehicles.toString(), icon: WrenchScrewdriverIcon, color: 'blue', status: 'maintenance' },
     { title: 'Repair', value: repairVehicles.toString(), icon: ExclamationTriangleIcon, color: 'blue', status: 'repair' }
   ]
@@ -397,12 +403,35 @@ export default function VehiclesPage() {
 
   const handleAddVehicle = async (vehicleData: any) => {
     try {
+      // Transform form data to API format
+      const apiData = {
+        reg_number: vehicleData.registrationNumber,
+        vin_number: vehicleData.vin,
+        trim: vehicleData.model,
+        year: vehicleData.year,
+        status: vehicleData.status || 'active',
+        color: vehicleData.color,
+        engine_number: vehicleData.engineNumber,
+        chassis_number: vehicleData.chassisNumber,
+        current_region: vehicleData.location,
+        current_district: vehicleData.currentDistrict,
+        current_mileage: vehicleData.currentMileage,
+        last_service_date: vehicleData.purchaseDate,
+        next_service_km: vehicleData.nextServiceKm,
+        type_id: vehicleData.vehicleType,
+        make_id: vehicleData.make,
+        notes: vehicleData.additionalNotes,
+        spcode: vehicleData.subsidiary,
+        company_name: vehicleData.companyName,
+        uid: vehicleData.uid || vehicleData.registrationNumber
+      }
+      
       const response = await fetch('/api/vehicles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(vehicleData),
+        body: JSON.stringify(apiData),
       })
 
       const result = await response.json()
@@ -464,12 +493,35 @@ export default function VehiclesPage() {
     console.log('Vehicle ID:', vehicleData.id) // Debug log
     console.log('Subsidiary value:', vehicleData.subsidiary) // Debug log
     try {
+      // Transform form data to API format
+      const apiData = {
+        id: vehicleData.id,
+        reg_number: vehicleData.registrationNumber,
+        vin_number: vehicleData.vin,
+        trim: vehicleData.model,
+        year: vehicleData.year,
+        status: vehicleData.status || 'active',
+        color: vehicleData.color,
+        engine_number: vehicleData.engineNumber,
+        chassis_number: vehicleData.chassisNumber,
+        current_region: vehicleData.location,
+        current_district: vehicleData.currentDistrict,
+        current_mileage: vehicleData.currentMileage,
+        last_service_date: vehicleData.lastServiceDate,
+        next_service_km: vehicleData.nextServiceKm,
+        type_id: vehicleData.vehicleType,
+        make_id: vehicleData.make,
+        notes: vehicleData.additionalNotes,
+        spcode: vehicleData.subsidiary,
+        company_name: vehicleData.companyName
+      }
+      
       const response = await fetch('/api/vehicles', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(vehicleData),
+        body: JSON.stringify(apiData),
       })
 
       const result = await response.json()
@@ -582,8 +634,8 @@ export default function VehiclesPage() {
     const selectedFieldsData = getSelectedFieldsData()
     const headers = ['No', ...selectedFieldsData.map(field => field.label), 'Actions']
     
-    const data = vehicles.map((vehicle, index) => {
-      const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
+    const data = paginatedVehicles.map((vehicle, index) => {
+      const row: (string | number)[] = [startIndex + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
         row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
@@ -620,8 +672,8 @@ export default function VehiclesPage() {
     const selectedFieldsData = getSelectedFieldsData()
     const headers = ['No', ...selectedFieldsData.map(field => field.label), 'Actions']
     
-    const data = vehicles.map((vehicle, index) => {
-      const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
+    const data = paginatedVehicles.map((vehicle, index) => {
+      const row: (string | number)[] = [startIndex + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
         row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
@@ -656,8 +708,8 @@ export default function VehiclesPage() {
     const selectedFieldsData = getSelectedFieldsData()
     const headers = ['No', ...selectedFieldsData.map(field => field.label)]
     
-    const data = vehicles.map((vehicle, index) => {
-      const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
+    const data = paginatedVehicles.map((vehicle, index) => {
+      const row: (string | number)[] = [startIndex + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
         row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
@@ -699,8 +751,8 @@ export default function VehiclesPage() {
     const selectedFieldsData = getSelectedFieldsData()
     const headers = ['No', ...selectedFieldsData.map(field => field.label)]
     
-    const data = vehicles.map((vehicle, index) => {
-      const row: (string | number)[] = [(currentPage - 1) * entriesPerPage + index + 1]
+    const data = paginatedVehicles.map((vehicle, index) => {
+      const row: (string | number)[] = [startIndex + index + 1]
       selectedFieldsData.forEach(field => {
         const value = vehicle[field.key]
         row.push(formatFieldValueForExport(field.key, value, field.type, vehicle))
@@ -780,10 +832,47 @@ export default function VehiclesPage() {
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
+    
+    // Convert % wildcards to regex pattern
+    const regexPattern = searchLower
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special regex characters
+      .replace(/\\%/g, '.*') // Convert % to .* (match any characters)
+    
+    const regex = new RegExp(regexPattern, 'i') // Case-insensitive
+    
+    // Priority search fields (name, registration number, VIN)
+    const priorityFields = [
+      vehicle?.reg_number,
+      vehicle?.vin_number,
+      vehicle?.trim, // Model/Trim
+      vehicle?.vehicle_make_name, // Make
+      vehicle?.vehicle_type_name, // Vehicle Type
+      vehicle?.subsidiary_name
+    ]
+    
+    // Check priority fields first - use regex pattern matching
+    const priorityMatch = priorityFields.some(field => 
+      field && regex.test(String(field).toLowerCase())
+    )
+    
+    if (priorityMatch) return true
+    
+    // If no priority match, search all fields with regex pattern matching
     return Object.values(vehicle).some(value => 
-      String(value).toLowerCase().includes(searchLower)
+      value && regex.test(String(value).toLowerCase())
     )
   })
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredVehicles.length / entriesPerPage)
+  const startIndex = (currentPage - 1) * entriesPerPage
+  const endIndex = startIndex + entriesPerPage
+  const paginatedVehicles = filteredVehicles.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter])
 
   return (
     <HorizonDashboardLayout>
@@ -804,7 +893,7 @@ export default function VehiclesPage() {
           <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
         </div>
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {kpiCards.map((card, index) => {
             const IconComponent = card.icon
             const isActive = statusFilter === card.status
@@ -1013,7 +1102,7 @@ export default function VehiclesPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search vehicles..."
+                    placeholder="Search by registration number, VIN, make, model, or any field..."
                     className={`pl-10 pr-4 py-2 border rounded-3xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       themeMode === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -1170,6 +1259,7 @@ export default function VehiclesPage() {
                                field.key === 'year' ? '80px' :
                                field.key === 'color' ? '100px' :
                                field.key === 'trim' ? '120px' :
+                               field.key === 'company_name' ? '150px' :
                                field.key === 'spcode' ? '120px' : '150px',
                         minWidth: field.key === 'reg_number' ? '150px' : 
                                  field.key === 'vin_number' ? '180px' :
@@ -1181,6 +1271,7 @@ export default function VehiclesPage() {
                                  field.key === 'year' ? '80px' :
                                  field.key === 'color' ? '100px' :
                                  field.key === 'trim' ? '120px' :
+                                 field.key === 'company_name' ? '150px' :
                                  field.key === 'spcode' ? '120px' : '150px'
                       }}
                     >
@@ -1195,7 +1286,7 @@ export default function VehiclesPage() {
               <tbody className={`divide-y ${
                 themeMode === 'dark' ? 'divide-gray-700' : 'divide-gray-200'
               }`}>
-                {filteredVehicles.map((vehicle) => (
+                {paginatedVehicles.map((vehicle) => (
                   <tr key={vehicle.id} className={`hover:bg-gray-50 ${
                     themeMode === 'dark' ? 'hover:bg-gray-700' : ''
                   }`}>
@@ -1242,7 +1333,8 @@ export default function VehiclesPage() {
                                field.key === 'current_mileage' ? '120px' :
                                field.key === 'year' ? '80px' :
                                field.key === 'color' ? '100px' :
-                               field.key === 'trim' ? '120px' : '150px',
+                               field.key === 'trim' ? '120px' :
+                               field.key === 'company_name' ? '150px' : '150px',
                         minWidth: field.key === 'reg_number' ? '150px' : 
                                  field.key === 'vin_number' ? '180px' :
                                  field.key === 'status' ? '100px' :
@@ -1252,7 +1344,8 @@ export default function VehiclesPage() {
                                  field.key === 'current_mileage' ? '120px' :
                                  field.key === 'year' ? '80px' :
                                  field.key === 'color' ? '100px' :
-                                 field.key === 'trim' ? '120px' : '150px'
+                                 field.key === 'trim' ? '120px' :
+                                 field.key === 'company_name' ? '150px' : '150px'
                       }}>
                         {formatFieldValue(field.key, vehicle[field.key as keyof typeof vehicle], field.type, vehicle)}
                       </td>
@@ -1268,7 +1361,7 @@ export default function VehiclesPage() {
             <div className={`text-sm ${
               themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
             }`}>
-              Showing 1 to {filteredVehicles.length} of {filteredVehicles.length} entries
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredVehicles.length)} of {filteredVehicles.length} entries
               {(searchQuery || statusFilter) && (
                 <span className="ml-2 text-blue-600">
                   (filtered from {vehicles.length} total)
@@ -1277,6 +1370,7 @@ export default function VehiclesPage() {
             </div>
             <div className="flex items-center gap-2">
               <button 
+                onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`px-3 py-1 rounded-2xl text-sm ${
                   currentPage === 1 
@@ -1286,12 +1380,17 @@ export default function VehiclesPage() {
               >
                 Prev
               </button>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
-                1
-              </button>
+              <span className="px-3 py-1 text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
               <button 
-                disabled={true}
-                className="px-3 py-1 bg-gray-100 text-gray-400 rounded-2xl text-sm cursor-not-allowed"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-2xl text-sm ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
               >
                 Next
               </button>
@@ -1311,11 +1410,6 @@ export default function VehiclesPage() {
           isOpen={showViewVehicleModal}
           onClose={() => setShowViewVehicleModal(false)}
           vehicle={selectedVehicle as any}
-          onEdit={(vehicle) => {
-            setShowViewVehicleModal(false)
-            setSelectedVehicle(vehicle as any)
-            setShowEditVehicleModal(true)
-          }}
         />
 
         {/* Edit Vehicle Modal */}

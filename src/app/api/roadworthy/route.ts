@@ -6,9 +6,13 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const vehicleId = searchParams.get('vehicle_id')
+    const companyFilter = searchParams.get('company')
+    const statusFilter = searchParams.get('status')
+    const vehicleNumber = searchParams.get('vehicle_number')
 
-    // Build the query with optional vehicle filter
-    let whereClause = {}
+    // Build the query with optional filters
+    let whereClause: any = {}
+    
     if (vehicleId) {
       // First get the vehicle registration number
       const vehicle = await prisma.vehicles.findUnique({
@@ -16,12 +20,42 @@ export async function GET(request: NextRequest) {
         select: { reg_number: true }
       })
       if (vehicle) {
-        whereClause = { vehicle_number: vehicle.reg_number }
+        whereClause.vehicle_number = vehicle.reg_number
+      }
+    }
+    
+    if (companyFilter) {
+      whereClause.company = {
+        contains: companyFilter,
+        mode: 'insensitive'
+      }
+    }
+    
+    if (vehicleNumber) {
+      whereClause.vehicle_number = {
+        contains: vehicleNumber,
+        mode: 'insensitive'
+      }
+    }
+    
+    if (statusFilter) {
+      // Filter by expiry date based on status
+      const today = new Date()
+      const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+      today.setHours(0, 0, 0, 0)
+      thirtyDaysFromNow.setHours(0, 0, 0, 0)
+      
+      if (statusFilter === 'Expired') {
+        whereClause.date_expired = { lt: today }
+      } else if (statusFilter === 'Expiring Soon') {
+        whereClause.date_expired = { gte: today, lte: thirtyDaysFromNow }
+      } else if (statusFilter === 'Valid') {
+        whereClause.date_expired = { gt: thirtyDaysFromNow }
       }
     }
 
     const roadworthyRecords = await prisma.roadworthy.findMany({
-      where: whereClause, // Apply the filter here
+      where: whereClause,
       orderBy: { created_at: 'desc' }
     })
 
