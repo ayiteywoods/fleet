@@ -108,12 +108,14 @@ interface MaintenanceSchedule {
   updated_at?: string
   created_by?: string
   updated_by?: string
-  vehicles: {
+  vehicles?: {
     reg_number: string
     trim: string
     year: number
     status: string
   }
+  vehicle_reg?: string
+  vehicle_name?: string
   service_type?: string
 }
 
@@ -788,7 +790,7 @@ getBrandColor(themeColor)
                           <p className={`text-sm font-medium ${
                             themeMode === 'dark' ? 'text-white' : 'text-gray-900'
                           }`}>
-                            {schedule.vehicles.reg_number} - {schedule.service_type || 'Maintenance'}
+                            {(schedule.vehicles?.reg_number || schedule.vehicle_reg || 'N/A')} - {schedule.service_type || 'Maintenance'}
                           </p>
                           <p className={`text-xs ${
                             isUrgent ? 'text-red-500' : 
