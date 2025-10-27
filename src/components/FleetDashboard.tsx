@@ -101,7 +101,8 @@ interface MonthlyFuelData {
 
 interface MaintenanceSchedule {
   id: string
-  due_date: string
+  service_date?: string
+  due_date?: string
   vehicle_id: string
   created_at?: string
   updated_at?: string
@@ -113,6 +114,7 @@ interface MaintenanceSchedule {
     year: number
     status: string
   }
+  service_type?: string
 }
 
 export default function FleetDashboard() {
@@ -403,7 +405,7 @@ export default function FleetDashboard() {
         }
 
         // Fetch maintenance schedules data
-        const maintenanceScheduleResponse = await fetch('/api/maintenance-schedule')
+        const maintenanceScheduleResponse = await fetch('/api/maintenance')
         if (maintenanceScheduleResponse.ok) {
           const scheduleData = await maintenanceScheduleResponse.json()
           setMaintenanceSchedules(scheduleData)
@@ -486,20 +488,30 @@ export default function FleetDashboard() {
   // Process maintenance schedules to get upcoming maintenance
   const getUpcomingMaintenance = (schedules: MaintenanceSchedule[]): MaintenanceSchedule[] => {
     const today = new Date()
-    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+    const sevenDaysFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     
     return schedules
       .filter(schedule => {
-        const dueDate = new Date(schedule.due_date)
-        return dueDate >= today && dueDate <= thirtyDaysFromNow
+        // Use service_date if available, otherwise fall back to due_date
+        const scheduleDate = schedule.service_date || schedule.due_date
+        if (!scheduleDate) return false
+        
+        const targetDate = new Date(scheduleDate)
+        return targetDate >= today && targetDate <= sevenDaysFromNow
       })
-      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+      .sort((a, b) => {
+        const dateA = new Date(a.service_date || a.due_date || '')
+        const dateB = new Date(b.service_date || b.due_date || '')
+        return dateA.getTime() - dateB.getTime()
+      })
       .slice(0, 3) // Show only top 3 upcoming maintenance
   }
 
   // Calculate days until maintenance is due
-  const getDaysUntilDue = (dueDate: string): number => {
+  const getDaysUntilDue = (schedule: MaintenanceSchedule): number => {
     const today = new Date()
+    const dueDate = schedule.service_date || schedule.due_date
+    if (!dueDate) return 0
     const due = new Date(dueDate)
     const diffTime = due.getTime() - today.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -759,9 +771,9 @@ getBrandColor(themeColor)
                   </div>
                 ) : getUpcomingMaintenance(maintenanceSchedules).length > 0 ? (
                   getUpcomingMaintenance(maintenanceSchedules).map((schedule) => {
-                    const daysLeft = getDaysUntilDue(schedule.due_date)
-                    const isUrgent = daysLeft <= 7
-                    const isWarning = daysLeft <= 14
+                    const daysLeft = getDaysUntilDue(schedule)
+                    const isUrgent = daysLeft <= 3
+                    const isWarning = daysLeft <= 7
                     
                     return (
                       <div 
@@ -776,7 +788,7 @@ getBrandColor(themeColor)
                           <p className={`text-sm font-medium ${
                             themeMode === 'dark' ? 'text-white' : 'text-gray-900'
                           }`}>
-                            {schedule.vehicles.reg_number} - {schedule.vehicles.trim} ({schedule.vehicles.year})
+                            {schedule.vehicles.reg_number} - {schedule.service_type || 'Maintenance'}
                           </p>
                           <p className={`text-xs ${
                             isUrgent ? 'text-red-500' : 
