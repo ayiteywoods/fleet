@@ -1286,7 +1286,7 @@ getBrandColor(themeColor)
                         <p className={`text-xs break-words ${
                         themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                       }`}>
-                          {trip.address}
+                          {trip.position?.address || trip.address || 'Unknown Location'}
                         </p>
                     </div>
                     </div>
