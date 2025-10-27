@@ -652,7 +652,7 @@ export const recentTripsHandlers = {
     const trips = await prisma.positions_data.findMany({
       where: whereClause,
       orderBy: { gps_time_utc: 'desc' },
-      take: 10
+      take: 50  // Increased to get more trips
     })
     
     // Get vehicle information for each trip
