@@ -670,23 +670,44 @@ export const recentTripsHandlers = {
       const timeDiff = now.getTime() - gpsTime.getTime()
       const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60))
       
+      // Determine trip status from engine_status
+      let tripStatus = 'Stop' // Default to completed/stopped
+      if (trip.engine_status) {
+        const engineStatusLower = trip.engine_status.toLowerCase()
+        if (engineStatusLower.includes('on') || engineStatusLower.includes('running')) {
+          tripStatus = 'Start' // Active trip
+        } else if (engineStatusLower.includes('off') || engineStatusLower.includes('stopped')) {
+          tripStatus = 'Stop' // Completed trip
+        }
+      }
+
       return {
         id: trip.id.toString(),
         vehicle: {
+          id: '0',
           reg_number: vehicle?.reg_number || trip.unit_name || trip.unit_uid,
-          name: vehicle?.name || trip.unit_name || trip.unit_uid
+          name: vehicle?.name || trip.unit_name || trip.unit_uid,
+          status: tripStatus === 'Start' ? 'Active' : 'Inactive',
+          company_name: ''
+        },
+        position: {
+          id: trip.id.toString(),
+          address: trip.address || '',
+          speed: trip.speed?.toString() || '0',
+          odometer: trip.odometer?.toString() || '0',
+          engine_status: trip.engine_status || '',
+          gps_time_utc: trip.gps_time_utc?.toISOString() || ''
         },
         trip: {
-          status: "Active",
+          status: tripStatus,
           time: gpsTime.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
             hour12: true 
           }),
-          timeAgo: hoursAgo > 0 ? `${hoursAgo}h ago` : 'Just now'
-        },
-        address: trip.address,
-        gps_time_utc: trip.gps_time_utc
+          timeAgo: hoursAgo > 0 ? `${hoursAgo}h ago` : 'Just now',
+          location: trip.address || ''
+        }
       }
     }))
     
