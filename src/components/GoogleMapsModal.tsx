@@ -217,7 +217,7 @@ export default function GoogleMapsModal({
           map: mapInstance,
           title: vehicleName,
           animation: google.maps.Animation.DROP,
-          icon: {
+            icon: {
             url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
               <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -227,11 +227,11 @@ export default function GoogleMapsModal({
                 </defs>
                 <g filter="url(#shadow)">
                   <!-- Vehicle body -->
-                  <rect x="8" y="18" width="36" height="18" rx="3" fill="#1F2937" stroke="#fff" stroke-width="2"/>
+                  <rect x="8" y="18" width="36" height="18" rx="3" fill="#dc2626" stroke="#fff" stroke-width="2"/>
                   <!-- Vehicle cab -->
-                  <rect x="12" y="8" width="24" height="14" rx="2" fill="#1F2937" stroke="#fff" stroke-width="2"/>
+                  <rect x="12" y="8" width="24" height="14" rx="2" fill="#dc2626" stroke="#fff" stroke-width="2"/>
                   <!-- Windshield -->
-                  <rect x="14" y="10" width="20" height="10" rx="1" fill="#374151"/>
+                  <rect x="14" y="10" width="20" height="10" rx="1" fill="#991b1b"/>
                   <!-- Wheels -->
                   <circle cx="18" cy="40" r="4.5" fill="#111827" stroke="#fff" stroke-width="1.5"/>
                   <circle cx="46" cy="40" r="4.5" fill="#111827" stroke="#fff" stroke-width="1.5"/>
@@ -242,7 +242,7 @@ export default function GoogleMapsModal({
                   <circle cx="26" cy="14" r="2" fill="#FEF3C7"/>
                   <circle cx="32" cy="14" r="2" fill="#FEF3C7"/>
                   <!-- Grille -->
-                  <rect x="22" y="16" width="10" height="2" rx="1" fill="#4B5563"/>
+                  <rect x="22" y="16" width="10" height="2" rx="1" fill="#991b1b"/>
                 </g>
               </svg>
             `),
@@ -315,7 +315,7 @@ export default function GoogleMapsModal({
             <h2 className={`text-xl font-semibold ${
               themeMode === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              Vehicle Location
+              {vehicleName}
             </h2>
           </div>
           <button

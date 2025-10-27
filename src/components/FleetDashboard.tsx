@@ -191,6 +191,7 @@ export default function FleetDashboard() {
     address: string
     latitude?: number
     longitude?: number
+    vehicleName?: string
   } | null>(null)
   const [recentTrips, setRecentTrips] = useState<Trip[]>([])
   const [isLoadingTrips, setIsLoadingTrips] = useState(true)
@@ -200,10 +201,12 @@ export default function FleetDashboard() {
 
   // Google Maps Modal handlers
   const handleOpenMapsModal = (alert: Alert) => {
+    const vehicleName = alert.vehicle?.reg_number || alert.alert.unit_name || 'Unknown Vehicle'
     setSelectedLocation({
       address: alert.alert.address || 'Unknown Location',
       latitude: alert.alert.latitude ? parseFloat(alert.alert.latitude) : undefined,
-      longitude: alert.alert.longitude ? parseFloat(alert.alert.longitude) : undefined
+      longitude: alert.alert.longitude ? parseFloat(alert.alert.longitude) : undefined,
+      vehicleName
     })
     setIsMapsModalOpen(true)
   }
@@ -1488,7 +1491,7 @@ getBrandColor(themeColor)
           latitude={selectedLocation.latitude}
           longitude={selectedLocation.longitude}
           themeMode={themeMode}
-          vehicleName="Alert Location"
+          vehicleName={selectedLocation.vehicleName || 'Vehicle Location'}
         />
       )}
     </div>
