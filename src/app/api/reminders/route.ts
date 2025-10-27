@@ -1,0 +1,144 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+// GET - Fetch all reminders (items expiring within 2 weeks)
+export async function GET(request: NextRequest) {
+  try {
+    const reminders: any[] = []
+    const today = new Date()
+    const twoWeeksFromNow = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
+    
+    // Reset hours to start of day for comparison
+    today.setHours(0, 0, 0, 0)
+    twoWeeksFromNow.setHours(23, 59, 59, 999)
+
+    // Get drivers with licenses expiring within 2 weeks
+    const drivers = await prisma.driver_operators.findMany({
+      select: {
+        id: true,
+        name: true,
+        license_number: true,
+        license_expire: true
+      }
+    })
+
+    drivers.forEach(driver => {
+      try {
+        const expiryDate = new Date(driver.license_expire)
+        expiryDate.setHours(0, 0, 0, 0)
+        
+        if (expiryDate >= today && expiryDate <= twoWeeksFromNow) {
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          
+          reminders.push({
+            id: `driver-${driver.id}`,
+            type: 'Driver License',
+            title: `${driver.name}'s License`,
+            description: `License Number: ${driver.license_number}`,
+            expiryDate: expiryDate.toISOString(),
+            daysUntilExpiry,
+            driver_id: driver.id.toString(),
+            urgency: daysUntilExpiry <= 7 ? 'high' : daysUntilExpiry <= 14 ? 'medium' : 'low'
+          })
+        }
+      } catch (error) {
+        // Skip drivers with invalid dates
+        console.log(`Invalid date for driver ${driver.id}: ${driver.license_expire}`)
+      }
+    })
+
+    // Get insurance policies expiring within 2 weeks
+    const insurancePolicies = await prisma.insurance.findMany({
+      select: {
+        id: true,
+        policy_number: true,
+        insurance_company: true,
+        end_date: true,
+        vehicles: {
+          select: {
+            reg_number: true,
+            name: true
+          }
+        }
+      }
+    })
+
+    insurancePolicies.forEach(insurance => {
+      try {
+        const expiryDate = new Date(insurance.end_date)
+        expiryDate.setHours(0, 0, 0, 0)
+        
+        if (expiryDate >= today && expiryDate <= twoWeeksFromNow) {
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          
+          reminders.push({
+            id: `insurance-${insurance.id}`,
+            type: 'Insurance',
+            title: insurance.vehicles?.name || 'Insurance Policy',
+            description: `Policy #${insurance.policy_number} - ${insurance.insurance_company}`,
+            vehicleReg: insurance.vehicles?.reg_number,
+            expiryDate: expiryDate.toISOString(),
+            daysUntilExpiry,
+            insurance_id: insurance.id.toString(),
+            urgency: daysUntilExpiry <= 7 ? 'high' : daysUntilExpiry <= 14 ? 'medium' : 'low'
+          })
+        }
+      } catch (error) {
+        console.log(`Invalid date for insurance ${insurance.id}`)
+      }
+    })
+
+    // Get roadworthy certificates expiring within 2 weeks
+    const roadworthyRecords = await prisma.roadworthy.findMany({
+      select: {
+        id: true,
+        vehicle_number: true,
+        company: true,
+        date_expired: true
+      }
+    })
+
+    roadworthyRecords.forEach(roadworthy => {
+      try {
+        const expiryDate = new Date(roadworthy.date_expired)
+        expiryDate.setHours(0, 0, 0, 0)
+        
+        if (expiryDate >= today && expiryDate <= twoWeeksFromNow) {
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          
+          reminders.push({
+            id: `roadworthy-${roadworthy.id}`,
+            type: 'Roadworthy',
+            title: `Vehicle ${roadworthy.vehicle_number}`,
+            description: `Company: ${roadworthy.company}`,
+            vehicleReg: roadworthy.vehicle_number,
+            expiryDate: expiryDate.toISOString(),
+            daysUntilExpiry,
+            roadworthy_id: roadworthy.id.toString(),
+            urgency: daysUntilExpiry <= 7 ? 'high' : daysUntilExpiry <= 14 ? 'medium' : 'low'
+          })
+        }
+      } catch (error) {
+        console.log(`Invalid date for roadworthy ${roadworthy.id}`)
+      }
+    })
+
+    // Sort by urgency and days until expiry
+    reminders.sort((a, b) => {
+      const urgencyOrder = { 'high': 0, 'medium': 1, 'low': 2 }
+      if (urgencyOrder[a.urgency as keyof typeof urgencyOrder] !== urgencyOrder[b.urgency as keyof typeof urgencyOrder]) {
+        return urgencyOrder[a.urgency as keyof typeof urgencyOrder] - urgencyOrder[b.urgency as keyof typeof urgencyOrder]
+      }
+      return a.daysUntilExpiry - b.daysUntilExpiry
+    })
+
+    return NextResponse.json(reminders)
+  } catch (error: any) {
+    console.error('Error fetching reminders:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch reminders' },
+      { status: 500 }
+    )
+  }
+}
+

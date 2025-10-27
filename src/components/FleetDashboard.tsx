@@ -191,6 +191,8 @@ export default function FleetDashboard() {
   const [recentTrips, setRecentTrips] = useState<Trip[]>([])
   const [isLoadingTrips, setIsLoadingTrips] = useState(true)
   const [tripsFilter, setTripsFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED'>('ALL')
+  const [reminders, setReminders] = useState<any[]>([])
+  const [isLoadingReminders, setIsLoadingReminders] = useState(true)
 
   // Google Maps Modal handlers
   const handleOpenMapsModal = (alert: Alert) => {
@@ -250,6 +252,29 @@ export default function FleetDashboard() {
       console.error('Error fetching recent alerts:', error)
     } finally {
       setIsLoadingAlerts(false)
+    }
+  }
+
+  // Fetch reminders data
+  const fetchReminders = async () => {
+    try {
+      setIsLoadingReminders(true)
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const remindersResponse = await fetch('/api/reminders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (remindersResponse.ok) {
+        const remindersData = await remindersResponse.json()
+        setReminders(remindersData)
+      }
+    } catch (error) {
+      console.error('Error fetching reminders:', error)
+    } finally {
+      setIsLoadingReminders(false)
     }
   }
 
@@ -397,6 +422,9 @@ export default function FleetDashboard() {
         
         // Fetch recent alerts data
         await fetchRecentAlerts()
+        
+        // Fetch reminders data
+        await fetchReminders()
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -816,24 +844,78 @@ getBrandColor(themeColor)
                 </Link>
               </div>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Ike&apos;s BMW - Insurance</p>
-                    <p className="text-xs text-gray-500">30 Days left</p>
+                {isLoadingReminders ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Ansah&apos;s VW - MOT</p>
-                    <p className="text-xs text-gray-500">54 Days left</p>
+                ) : reminders.slice(0, 3).length > 0 ? (
+                  reminders.slice(0, 3).map((reminder) => {
+                    const isUrgent = reminder.urgency === 'high'
+                    const isWarning = reminder.urgency === 'medium'
+                    
+                    return (
+                      <div 
+                        key={reminder.id}
+                        className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
+                          themeMode === 'dark' 
+                            ? 'bg-gray-700 hover:bg-gray-600' 
+                            : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${
+                            themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {reminder.title}
+                          </p>
+                          <p className={`text-xs ${
+                            themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {reminder.description}
+                          </p>
+                          <p className={`text-xs mt-1 ${
+                            isUrgent ? 'text-red-500' : 
+                            isWarning ? 'text-yellow-500' : 
+                            themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            {reminder.daysUntilExpiry === 0 ? 'Expires today' : 
+                             reminder.daysUntilExpiry === 1 ? 'Expires tomorrow' : 
+                             `${reminder.daysUntilExpiry} days left`}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            reminder.type === 'Driver License' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+                            reminder.type === 'Insurance' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
+                            'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                          }`}>
+                            {reminder.type}
+                          </span>
+                          <div className={`w-2 h-2 rounded-full ${
+                            isUrgent ? 'bg-red-500' : 
+                            isWarning ? 'bg-yellow-500' : 
+                            'bg-green-500'
+                          }`}></div>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="text-center">
+                      <div className={`text-sm font-medium ${
+                        themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        No reminders due
+                      </div>
+                      <div className={`text-xs ${
+                        themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        All items are up to date
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Quaye&apos;s Car - Road Tax</p>
-                    <p className="text-xs text-gray-500">30 Days left</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
