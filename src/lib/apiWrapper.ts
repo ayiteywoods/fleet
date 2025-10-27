@@ -674,9 +674,16 @@ export const recentTripsHandlers = {
       let tripStatus = 'Stop' // Default to completed/stopped
       if (trip.engine_status) {
         const engineStatusLower = trip.engine_status.toLowerCase()
-        if (engineStatusLower.includes('on') || engineStatusLower.includes('running')) {
+        // Check for active statuses
+        if (engineStatusLower.includes('on') || 
+            engineStatusLower.includes('running') || 
+            engineStatusLower === 'in transit' ||
+            engineStatusLower === 'idling' ||
+            engineStatusLower.includes('active')) {
           tripStatus = 'Start' // Active trip
-        } else if (engineStatusLower.includes('off') || engineStatusLower.includes('stopped')) {
+        } else if (engineStatusLower.includes('off') || 
+                   engineStatusLower.includes('stopped') ||
+                   engineStatusLower.includes('parked')) {
           tripStatus = 'Stop' // Completed trip
         }
       }
