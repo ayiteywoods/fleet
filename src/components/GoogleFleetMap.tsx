@@ -312,19 +312,8 @@ export default function GoogleFleetMap() {
       
       // Determine marker color based on vehicle status
       const getMarkerColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-          case 'active':
-            return '#22c55e' // Green
-          case 'inactive':
-            return '#ef4444' // Red
-          case 'maintenance':
-            return '#f59e0b' // Yellow
-          default:
-            return '#6b7280' // Gray
-        }
+        return '#dc2626' // Deep red for all markers
       }
-
-      // Create custom marker icon
       const markerIcon = {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
           <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
