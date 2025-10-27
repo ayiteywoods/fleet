@@ -23,27 +23,53 @@ export async function POST(request: NextRequest) {
       service_date,
       cost,
       mileage,
+      mileage_at_service,
       description,
+      service_details,
       next_service_date,
       next_service_mileage,
       vehicle_id,
       mechanic_id,
       workshop_id,
-      service_type
+      service_type,
+      status,
+      parts_replaced
     } = body
+
+    // Handle both field name formats (mileage vs mileage_at_service, description vs service_details)
+    const finalMileage = mileage || mileage_at_service || '0'
+    const finalDescription = description || service_details || ''
+    const finalStatus = status || 'completed'
+    const finalPartsReplaced = parts_replaced || ''
+
+    // Validate required fields
+    if (!service_date || !cost || !service_type || !vehicle_id) {
+      return NextResponse.json(
+        { error: 'Missing required fields: service_date, cost, service_type, and vehicle_id are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if mechanic_id and workshop_id are required and provided
+    if (!mechanic_id || !workshop_id) {
+      return NextResponse.json(
+        { error: 'Mechanic and Workshop are required fields' },
+        { status: 400 }
+      )
+    }
 
     const maintenanceRecord = await prisma.maintenance_history.create({
       data: {
         service_date: new Date(service_date),
         cost: parseFloat(cost),
-        mileage: parseInt(mileage),
-        description,
-        next_service_date: next_service_date ? new Date(next_service_date) : null,
-        next_service_mileage: next_service_mileage ? parseInt(next_service_mileage) : null,
+        status: finalStatus,
+        service_details: finalDescription,
+        service_type,
+        mileage_at_service: parseInt(finalMileage),
+        parts_replaced: finalPartsReplaced,
         vehicle_id: BigInt(vehicle_id),
-        mechanic_id: mechanic_id ? BigInt(mechanic_id) : null,
-        workshop_id: workshop_id ? BigInt(workshop_id) : null,
-        service_type
+        mechanic_id: BigInt(mechanic_id),
+        workshop_id: BigInt(workshop_id)
       }
     })
 
