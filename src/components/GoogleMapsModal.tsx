@@ -315,7 +315,7 @@ export default function GoogleMapsModal({
             <h2 className={`text-xl font-semibold ${
               themeMode === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              {vehicleName}
+              Vehicle Location
             </h2>
           </div>
           <button
