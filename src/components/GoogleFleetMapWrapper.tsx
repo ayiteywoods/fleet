@@ -33,7 +33,7 @@ export default function GoogleFleetMapWrapper() {
         <h3 className={`text-lg font-semibold ${
           themeMode === 'dark' ? 'text-white' : 'text-gray-900'
         }`}>
-          Fleet Map
+          Alerts Map
         </h3>
         <div className="flex items-center gap-4">
           <button
@@ -49,30 +49,9 @@ export default function GoogleFleetMapWrapper() {
             {useSimpleView ? 'Switch to Map' : 'Simple View'}
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className={`text-sm ${
-                themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Active
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className={`text-sm ${
-                themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Inactive
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <span className={`text-sm ${
-                themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                Maintenance
-              </span>
-            </div>
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
           </div>
         </div>
       </div>
