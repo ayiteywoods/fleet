@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
   TruckIcon,
@@ -63,7 +63,7 @@ interface Vehicle {
   [key: string]: any // Add index signature for dynamic property access
 }
 
-export default function VehiclesPage() {
+function VehiclesPageContent() {
   const { themeMode } = useTheme()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
@@ -1454,5 +1454,20 @@ export default function VehiclesPage() {
         />
       </div>
     </HorizonDashboardLayout>
+  )
+}
+
+export default function VehiclesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading vehicles...</p>
+        </div>
+      </div>
+    }>
+      <VehiclesPageContent />
+    </Suspense>
   )
 }
