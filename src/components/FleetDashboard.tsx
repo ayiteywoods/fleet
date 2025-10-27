@@ -509,7 +509,7 @@ export default function FleetDashboard() {
         const dateB = new Date(b.service_date || b.due_date || '')
         return dateA.getTime() - dateB.getTime()
       })
-      .slice(0, 3) // Show only top 3 upcoming maintenance
+      // Remove slice to show all items - will be made scrollable in UI
   }
 
   // Calculate days until maintenance is due
@@ -769,7 +769,7 @@ getBrandColor(themeColor)
                   All
                 </Link>
               </div>
-              <div className="space-y-3">
+              <div className={`space-y-3 ${getUpcomingMaintenance(maintenanceSchedules).length > 3 ? 'max-h-96 overflow-y-auto' : ''}`}>
                 {loading ? (
                   <div className="flex items-center justify-center py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -899,7 +899,7 @@ getBrandColor(themeColor)
                              reminder.daysUntilExpiry === 1 ? 'Expires tomorrow' : 
                              `${reminder.daysUntilExpiry} days left`}
                           </p>
-                        </div>
+                </div>
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
                             reminder.type === 'Driver License' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
@@ -913,8 +913,8 @@ getBrandColor(themeColor)
                             isWarning ? 'bg-yellow-500' : 
                             'bg-green-500'
                           }`}></div>
-                        </div>
-                      </div>
+                  </div>
+                </div>
                     )
                   })
                 ) : (
@@ -924,12 +924,12 @@ getBrandColor(themeColor)
                         themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
                       }`}>
                         No reminders due
-                      </div>
+                  </div>
                       <div className={`text-xs ${
                         themeMode === 'dark' ? 'text-gray-500' : 'text-gray-400'
                       }`}>
                         All items are up to date
-                      </div>
+                </div>
                     </div>
                   </div>
                 )}
