@@ -324,9 +324,9 @@ export default function GoogleFleetMap() {
             </defs>
             <g filter="url(#shadow)">
               <!-- Vehicle body -->
-              <rect x="4" y="9" width="18" height="9" rx="2" fill="#1F2937" stroke="#fff" stroke-width="1"/>
+              <rect x="4" y="9" width="18" height="9" rx="2" fill="#dc2626" stroke="#fff" stroke-width="1"/>
               <!-- Vehicle cab -->
-              <rect x="6" y="4" width="12" height="7" rx="1" fill="#1F2937" stroke="#fff" stroke-width="1"/>
+              <rect x="6" y="4" width="12" height="7" rx="1" fill="#dc2626" stroke="#fff" stroke-width="1"/>
               <!-- Windshield -->
               <rect x="7" y="5" width="10" height="5" rx="0.5" fill="#374151"/>
               <!-- Wheels -->
