@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { 
   TruckIcon,
   CheckCircleIcon,
@@ -64,6 +65,7 @@ interface Vehicle {
 
 export default function VehiclesPage() {
   const { themeMode } = useTheme()
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [entriesPerPage, setEntriesPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -135,6 +137,15 @@ export default function VehiclesPage() {
 
     fetchVehicles()
   }, [])
+
+  // Read status from URL parameters and set filter on page load
+  useEffect(() => {
+    const statusFromUrl = searchParams.get('status')
+    if (statusFromUrl) {
+      // Convert URL status to lowercase for filtering
+      setStatusFilter(statusFromUrl.toLowerCase())
+    }
+  }, [searchParams])
 
 
   // Calculate KPI values from vehicles data

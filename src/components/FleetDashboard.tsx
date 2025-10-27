@@ -551,7 +551,7 @@ export default function FleetDashboard() {
       title: 'Active Vehicles',
       value: loading ? '...' : onRoadCount.toString(),
       subtitle: 'All Active Vehicles',
-      subtitleLink: '/vehicles',
+      subtitleLink: '/vehicles?status=Active',
       icon: TruckIcon,
       color: 'blue'
     },
@@ -559,7 +559,7 @@ export default function FleetDashboard() {
       title: 'Inactive Vehicles',
       value: loading ? '...' : offRoadCount.toString(),
       subtitle: 'All Inactive Vehicles',
-      subtitleLink: '/vehicles',
+      subtitleLink: '/vehicles?status=Inactive',
       icon: TruckIcon,
       color: 'blue'
     },
