@@ -1260,7 +1260,7 @@ export default function VehiclesPage() {
                       } whitespace-nowrap`}
                       onClick={() => handleSort(field.key)}
                       style={{ 
-                        width: field.key === 'reg_number' ? '150px' : 
+                        width: field.key === 'reg_number' ? '200px' : 
                                field.key === 'vin_number' ? '180px' :
                                field.key === 'status' ? '100px' :
                                field.key === 'current_region' ? '120px' :
@@ -1269,10 +1269,10 @@ export default function VehiclesPage() {
                                field.key === 'current_mileage' ? '120px' :
                                field.key === 'year' ? '80px' :
                                field.key === 'color' ? '100px' :
-                               field.key === 'trim' ? '120px' :
+                               field.key === 'trim' ? '150px' :
                                field.key === 'company_name' ? '150px' :
                                field.key === 'spcode' ? '120px' : '150px',
-                        minWidth: field.key === 'reg_number' ? '150px' : 
+                        minWidth: field.key === 'reg_number' ? '200px' : 
                                  field.key === 'vin_number' ? '180px' :
                                  field.key === 'status' ? '100px' :
                                  field.key === 'current_region' ? '120px' :
@@ -1281,7 +1281,7 @@ export default function VehiclesPage() {
                                  field.key === 'current_mileage' ? '120px' :
                                  field.key === 'year' ? '80px' :
                                  field.key === 'color' ? '100px' :
-                                 field.key === 'trim' ? '120px' :
+                                 field.key === 'trim' ? '150px' :
                                  field.key === 'company_name' ? '150px' :
                                  field.key === 'spcode' ? '120px' : '150px'
                       }}
@@ -1335,7 +1335,7 @@ export default function VehiclesPage() {
                       <td key={field.key} className={`px-4 py-3 text-sm whitespace-nowrap ${
                         themeMode === 'dark' ? 'text-gray-300' : 'text-gray-900'
                       }`} style={{ 
-                        width: field.key === 'reg_number' ? '150px' : 
+                        width: field.key === 'reg_number' ? '200px' : 
                                field.key === 'vin_number' ? '180px' :
                                field.key === 'status' ? '100px' :
                                field.key === 'current_region' ? '120px' :
@@ -1344,9 +1344,9 @@ export default function VehiclesPage() {
                                field.key === 'current_mileage' ? '120px' :
                                field.key === 'year' ? '80px' :
                                field.key === 'color' ? '100px' :
-                               field.key === 'trim' ? '120px' :
+                               field.key === 'trim' ? '150px' :
                                field.key === 'company_name' ? '150px' : '150px',
-                        minWidth: field.key === 'reg_number' ? '150px' : 
+                        minWidth: field.key === 'reg_number' ? '200px' : 
                                  field.key === 'vin_number' ? '180px' :
                                  field.key === 'status' ? '100px' :
                                  field.key === 'current_region' ? '120px' :
@@ -1355,7 +1355,7 @@ export default function VehiclesPage() {
                                  field.key === 'current_mileage' ? '120px' :
                                  field.key === 'year' ? '80px' :
                                  field.key === 'color' ? '100px' :
-                                 field.key === 'trim' ? '120px' :
+                                 field.key === 'trim' ? '150px' :
                                  field.key === 'company_name' ? '150px' : '150px'
                       }}>
                         {formatFieldValue(field.key, vehicle[field.key as keyof typeof vehicle], field.type, vehicle)}
