@@ -673,18 +673,20 @@ export const recentTripsHandlers = {
       // Determine trip status from engine_status
       let tripStatus = 'Stop' // Default to completed/stopped
       if (trip.engine_status) {
-        const engineStatusLower = trip.engine_status.toLowerCase()
-        // Check for active statuses
-        if (engineStatusLower.includes('on') || 
-            engineStatusLower.includes('running') || 
-            engineStatusLower === 'in transit' ||
-            engineStatusLower === 'idling' ||
-            engineStatusLower.includes('active')) {
+        const engineStatus = trip.engine_status
+        const engineStatusLower = engineStatus.toLowerCase()
+        
+        // Only "in transit" is considered active (Start)
+        // "idling" means engine is on but vehicle is stopped
+        if (engineStatus === 'in transit') {
           tripStatus = 'Start' // Active trip
-        } else if (engineStatusLower.includes('off') || 
-                   engineStatusLower.includes('stopped') ||
-                   engineStatusLower.includes('parked')) {
-          tripStatus = 'Stop' // Completed trip
+        } else if (engineStatusLower.includes('on') || 
+                   engineStatusLower.includes('running') ||
+                   engineStatusLower.includes('active')) {
+          tripStatus = 'Start' // Active trip
+        } else {
+          // idling, off, stopped, parked all mean inactive
+          tripStatus = 'Stop' // Inactive/Completed trip
         }
       }
 
