@@ -1444,14 +1444,6 @@ getBrandColor(themeColor)
                         </button>
                       </div>
 
-                      {/* Alert Type */}
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className={`w-3 h-3 rounded-full ${getAlertTypeBgColor(alert.alert.alert_type)}`}></div>
-                        <span className={`text-xs font-medium ${getAlertTypeColor(alert.alert.alert_type)}`}>
-                          {alert.alert.alert_type || 'Alert'}
-                        </span>
-                  </div>
-
                   {/* Timestamp */}
                   <p className={`text-xs mb-2 ${
                     themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
