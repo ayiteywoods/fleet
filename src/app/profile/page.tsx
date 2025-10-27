@@ -152,7 +152,7 @@ export default function ProfilePage() {
                 <div className="relative">
                   <img
                     className="h-32 w-32 rounded-full object-cover ring-4 ring-blue-100 dark:ring-gray-700"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                    src="/profilemoi.png"
                     alt="Profile"
                   />
                   <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
