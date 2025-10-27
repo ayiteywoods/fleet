@@ -405,7 +405,8 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* First Column */}
             <div className="space-y-4">
@@ -940,29 +941,30 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
               </div>
             </div>
           </div>
+          
+          {/* Footer */}
+          <div className={`flex items-center justify-end gap-4 pt-6 border-t ${
+            themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
+          }`}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-3xl hover:bg-purple-700 transition-colors text-sm font-medium"
+            >
+              <X className="w-4 h-4" />
+              CANCEL
+            </button>
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              <Check className="w-4 h-4" />
+              UPDATE
+            </button>
+          </div>
+          </div>
         </form>
-
-        {/* Footer */}
-        <div className={`flex items-center justify-end gap-4 p-6 border-t ${
-          themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'
-        }`}>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-3xl hover:bg-purple-700 transition-colors text-sm font-medium"
-          >
-            <X className="w-4 h-4" />
-            CANCEL
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            <Check className="w-4 h-4" />
-            UPDATE
-          </button>
-        </div>
       </div>
     </div>
   )
