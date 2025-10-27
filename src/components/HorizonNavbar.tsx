@@ -326,7 +326,7 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
           >
             <img
               className="h-10 w-10 rounded-full"
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+              src="/profilemoi.png"
               alt="Profile"
             />
           </button>
@@ -339,7 +339,7 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
                 <div className="flex items-center space-x-3">
                   <img
                     className="h-10 w-10 rounded-full object-cover"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                    src="/profilemoi.png"
                     alt="Profile"
                   />
                   <div>
