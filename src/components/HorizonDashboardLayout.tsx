@@ -13,6 +13,7 @@ interface HorizonDashboardLayoutProps {
 
 const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [currentRoute, setCurrentRoute] = useState("Dashboard");
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +68,10 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
   useEffect(() => {
     // Set current route based on pathname
     const routeMap: { [key: string]: string } = {
@@ -104,17 +109,38 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
 
   return (
     <div className={`min-h-screen flex ${themeMode === 'dark' ? 'bg-navy-900' : 'bg-lightPrimary'}`}>
-      {/* Original Sidebar */}
-      <Sidebar 
-        isCollapsed={isSidebarCollapsed} 
-        onToggle={toggleSidebar}
-        user={user}
-      />
+      {/* Overlay for mobile sidebar */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={toggleMobileSidebar}
+        />
+      )}
+
+      {/* Desktop Sidebar - hidden on mobile */}
+      <div className="hidden lg:block">
+        <Sidebar 
+          isCollapsed={isSidebarCollapsed} 
+          onToggle={toggleSidebar}
+          user={user}
+        />
+      </div>
+      
+      {/* Mobile Sidebar */}
+      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ${
+        isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <Sidebar 
+          isCollapsed={false} 
+          onToggle={toggleMobileSidebar}
+          user={user}
+        />
+      </div>
       
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration overflow-hidden ${
-        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
-      } ml-0`} style={{
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+      }`} style={{
         width: '100%',
         maxWidth: '100%',
         overflowX: 'hidden',
@@ -125,7 +151,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
         {/* Horizon UI Navbar */}
         <div className="z-50">
           <HorizonNavbar
-            onOpenSidenav={() => setIsSidebarCollapsed(false)}
+            onOpenSidenav={toggleMobileSidebar}
             brandText={currentRoute}
             isSidebarCollapsed={isSidebarCollapsed}
             user={user}
@@ -133,7 +159,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
         </div>
         
         {/* Page Content */}
-        <main className={`flex-1 p-6 pt-28 overflow-hidden ${themeMode === 'dark' ? 'bg-navy-800' : 'bg-lightPrimary'}`} style={{
+        <main className={`flex-1 p-3 sm:p-6 pt-20 sm:pt-28 overflow-hidden ${themeMode === 'dark' ? 'bg-navy-800' : 'bg-lightPrimary'}`} style={{
           width: '100%',
           maxWidth: '100%',
           overflowX: 'hidden',
