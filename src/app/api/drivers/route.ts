@@ -19,8 +19,17 @@ function serializeBigInt(obj: any): any {
 
 export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    // Try to use the mock handler first
-    return await driverHandlers.getDrivers(request)
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      const { verifyToken } = await import('@/lib/auth')
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+    return await driverHandlers.getDrivers(request, user || undefined)
   } catch (error: any) {
     console.error('Error in drivers handler:', error)
     return NextResponse.json(

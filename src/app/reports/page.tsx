@@ -264,7 +264,7 @@ export default function ReportsPage() {
   const handleFieldToggle = (fieldKey: string) => {
     if (tempSelectedFields.includes(fieldKey)) {
       setTempSelectedFields(tempSelectedFields.filter(f => f !== fieldKey))
-    } else {
+      } else {
       setTempSelectedFields([...tempSelectedFields, fieldKey])
     }
   }
@@ -301,7 +301,7 @@ export default function ReportsPage() {
     })
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...data])
-    const workbook = XLSX.utils.book_new()
+      const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Report')
     
     XLSX.writeFile(workbook, `report-${new Date().toISOString().split('T')[0]}.xlsx`)

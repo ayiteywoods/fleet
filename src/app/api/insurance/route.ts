@@ -5,8 +5,17 @@ import { withDatabaseFallback, insuranceHandlers } from '@/lib/apiWrapper'
 // GET - Fetch all insurance records
 export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    // Try to use the mock handler first
-    return await insuranceHandlers.getInsurance(request)
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      const { verifyToken } = await import('@/lib/auth')
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+    return await insuranceHandlers.getInsurance(request, user || undefined)
   } catch (error: any) {
     console.error('Error in insurance handler:', error)
     return NextResponse.json(

@@ -17,6 +17,7 @@ interface NavbarProps {
     role: string;
     email?: string;
     phone?: string;
+    companyName?: string | null;
   };
 }
 
@@ -352,7 +353,13 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
                       {user?.name || 'Temple Jedi'}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user?.role || 'Admin'}
+                      {(() => {
+                        const roleLower = (user?.role || '').toLowerCase()
+                        const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+                        return !isAdmin && user?.companyName
+                          ? `${user.role} (${user.companyName})`
+                          : user?.role || 'Admin'
+                      })()}
                     </p>
                   </div>
                 </div>

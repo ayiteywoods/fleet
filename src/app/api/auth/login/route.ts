@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       id: user.id,
       email: user.email || '',
       name: user.name,
-      role: user.role
+      role: user.role,
+      spcode: (user as any).spcode || null
     })
     console.log('✅ Login successful!')
 
@@ -54,7 +55,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email || '',
         name: user.name,
-        role: user.role
+        role: user.role,
+        spcode: (user as any).spcode || null
       }
     })
   } catch (error) {

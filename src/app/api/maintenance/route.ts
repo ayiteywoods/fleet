@@ -5,8 +5,17 @@ import { withDatabaseFallback, maintenanceHandlers } from '@/lib/apiWrapper'
 // GET - Fetch all maintenance records
 export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
-    // Try to use the mock handler first
-    return await maintenanceHandlers.getMaintenance(request)
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      const { verifyToken } = await import('@/lib/auth')
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+    return await maintenanceHandlers.getMaintenance(request, user || undefined)
   } catch (error: any) {
     console.error('Error in maintenance handler:', error)
     return NextResponse.json(

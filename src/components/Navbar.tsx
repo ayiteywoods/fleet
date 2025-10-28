@@ -15,6 +15,7 @@ interface NavbarProps {
     firstName: string
     lastName: string
     role: string
+    companyName?: string | null
   }
 }
 
@@ -195,7 +196,15 @@ export default function Navbar({ onToggleSidebar, isSidebarCollapsed, user }: Na
                 </p>
                 <p className={`text-sm ${
                   themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>{user.role}</p>
+                }`}>
+                  {(() => {
+                    const roleLower = (user.role || '').toLowerCase()
+                    const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+                    return !isAdmin && user.companyName
+                      ? `${user.role} (${user.companyName})`
+                      : user.role
+                  })()}
+                </p>
               </div>
             )}
           </button>

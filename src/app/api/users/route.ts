@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword } from '@/lib/auth'
 
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'bigint') return obj.toString()
+  if (obj instanceof Date) return obj.toISOString()
+  if (Array.isArray(obj)) return obj.map(serializeBigInt)
+  if (typeof obj === 'object') {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+  return obj
+}
+
 // GET - Fetch all users
 export async function GET() {
   try {
@@ -18,8 +33,8 @@ export async function GET() {
       role: user.role,
       region: user.region,
       district: user.district,
-      spcode: user.spcode,
-      group: user.group,
+      spcode: user.spcode?.toString() || null,
+      group: user.group?.toString() || null,
       email_verified_at: user.email_verified_at,
       password: user.password,
       license_number: user.license_number,
@@ -52,7 +67,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, role = 'user', is_active = true, password } = body
+    const { name, email, phone, role = 'user', is_active = true, password, spcode } = body
 
     if (!name || !password) {
       return NextResponse.json(
@@ -93,6 +108,7 @@ export async function POST(request: NextRequest) {
         role: role || 'user',
         password: hashedPassword,
         is_active: is_active !== false,
+        ...(spcode !== undefined && spcode !== null ? { spcode: parseInt(spcode) } : {}),
         created_at: new Date(),
         updated_at: new Date(),
         created_by: '1', // Default user ID
@@ -101,10 +117,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Serialize BigInt values
-    const serializedUser = {
-      ...newUser,
-      id: newUser.id.toString()
-    }
+    const serializedUser = serializeBigInt(newUser)
 
     return NextResponse.json({
       success: true,
@@ -143,7 +156,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, email, phone, role, is_active } = body
+    const { name, email, phone, role, is_active, spcode } = body
 
     const updatedUser = await prisma.users.update({
       where: { id: BigInt(id) },
@@ -153,16 +166,14 @@ export async function PUT(request: NextRequest) {
         ...(phone !== undefined && { phone }),
         ...(role && { role }),
         ...(is_active !== undefined && { is_active }),
+        ...(spcode !== undefined && spcode !== null && spcode !== '' && { spcode: parseInt(spcode) }),
         updated_at: new Date(),
         updated_by: '1' // Default user ID
       }
     })
 
     // Serialize BigInt values
-    const serializedUser = {
-      ...updatedUser,
-      id: updatedUser.id.toString()
-    }
+    const serializedUser = serializeBigInt(updatedUser)
 
     return NextResponse.json({
       success: true,

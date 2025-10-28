@@ -225,18 +225,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
   // Filter companies when group changes
   useEffect(() => {
+    // If no group selected, show all subsidiaries
     if (!formData.group) {
       setFilteredCompanies(allCompanies)
       return
     }
 
-    const filtered = allCompanies.filter(company => 
-      company.group_id?.toString() === formData.group
-    )
+    // Filter by company.group_id
+    const filtered = allCompanies.filter((company: any) => {
+      return company.group_id != null && company.group_id.toString() === formData.group
+    })
     setFilteredCompanies(filtered)
     
     // Clear company selection if the selected company is not in the filtered list
-    if (formData.spcode && !filtered.some(c => c.id === formData.spcode)) {
+    if (formData.spcode && !filtered.some((c: any) => c.id?.toString?.() === formData.spcode?.toString())) {
       setFormData(prev => ({ ...prev, spcode: '' }))
     }
   }, [formData.group, allCompanies])

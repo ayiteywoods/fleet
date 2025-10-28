@@ -9,6 +9,7 @@ export interface UserPayload {
   email: string
   name: string
   role: string
+  spcode?: string | null
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -54,7 +55,8 @@ export async function authenticateUser(emailOrPhone: string, password: string) {
     id: user.id.toString(),
     email: user.email || '',
     name: user.name,
-    role: user.role
+    role: user.role,
+    spcode: user.spcode != null ? user.spcode.toString() : null
   }
 }
 

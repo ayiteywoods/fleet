@@ -1,14 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Fetch all repair records
 export async function GET(request: NextRequest) {
   try {
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+
     const { searchParams } = new URL(request.url)
     const vehicleId = searchParams.get('vehicle_id')
 
     // Build the query with optional vehicle filter
-    const whereClause = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+    let whereClause: any = vehicleId ? { vehicle_id: BigInt(vehicleId) } : {}
+    
+    // Apply company scoping for non-admin users
+    if (user) {
+      const roleLower = (user.role || '').toLowerCase()
+      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      
+      if (!isAdmin && user.spcode) {
+        console.log('🔒 Applying company filter for repairs for user:', user.name, 'spcode:', user.spcode)
+        // First, get the company name from companies table using spcode
+        const company = await prisma.companies.findUnique({
+          where: { id: BigInt(user.spcode) },
+          select: { name: true }
+        }).catch(() => null)
+        
+        if (company?.name) {
+          // Get vehicles for this company
+          const companyVehicles = await prisma.vehicles.findMany({
+            where: { company_name: company.name },
+            select: { id: true }
+          })
+          
+          if (companyVehicles.length > 0) {
+            // If vehicleId is specified, ensure it's in the company's vehicles
+            if (vehicleId) {
+              const vehicleExists = companyVehicles.some(v => v.id.toString() === vehicleId)
+              if (!vehicleExists) {
+                whereClause.vehicle_id = { in: [] } // Return empty result
+              }
+            } else {
+              whereClause.vehicle_id = {
+                in: companyVehicles.map(v => v.id)
+              }
+            }
+          } else {
+            whereClause.vehicle_id = { in: [] }
+          }
+        }
+      }
+    }
 
     const repairRecords = await prisma.repair_history.findMany({
       where: whereClause, // Apply the filter here

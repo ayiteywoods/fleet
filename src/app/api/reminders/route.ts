@@ -1,9 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Fetch all reminders (items expiring within 2 weeks)
 export async function GET(request: NextRequest) {
   try {
+    // Resolve user and company scope
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let scopedCompanyName: string | null = null
+    if (token) {
+      const user: any = verifyToken(token)
+      if (user) {
+        const roleLower = (user.role || '').toLowerCase()
+        const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+        if (!isAdmin && user.spcode) {
+          // Find company name by companies.id == spcode
+          const company = await prisma.companies.findUnique({
+            where: { id: BigInt(user.spcode) },
+            select: { name: true }
+          }).catch(() => null)
+          scopedCompanyName = company?.name || null
+        }
+      }
+    }
+
     const reminders: any[] = []
     const today = new Date()
     const twoWeeksFromNow = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
@@ -12,8 +32,24 @@ export async function GET(request: NextRequest) {
     today.setHours(0, 0, 0, 0)
     twoWeeksFromNow.setHours(23, 59, 59, 999)
 
+    // Build where clause for drivers based on company scoping
+    let driversWhere: any = {}
+    if (scopedCompanyName) {
+      // Get vehicles for this company, then find drivers assigned to those vehicles
+      const companyVehicles = await prisma.vehicles.findMany({
+        where: { company_name: scopedCompanyName },
+        select: { id: true }
+      })
+      if (companyVehicles.length > 0) {
+        driversWhere.vehicle_id = {
+          in: companyVehicles.map(v => v.id)
+        }
+      }
+    }
+
     // Get drivers with licenses expiring within 2 weeks
     const drivers = await prisma.driver_operators.findMany({
+      where: driversWhere,
       select: {
         id: true,
         name: true,
@@ -47,8 +83,24 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Build where clause for insurance based on company scoping
+    let insuranceWhere: any = {}
+    if (scopedCompanyName) {
+      // Get vehicles for this company, then find insurance for those vehicles
+      const companyVehicles = await prisma.vehicles.findMany({
+        where: { company_name: scopedCompanyName },
+        select: { id: true }
+      })
+      if (companyVehicles.length > 0) {
+        insuranceWhere.vehicle_id = {
+          in: companyVehicles.map(v => v.id)
+        }
+      }
+    }
+
     // Get insurance policies expiring within 2 weeks
     const insurancePolicies = await prisma.insurance.findMany({
+      where: insuranceWhere,
       select: {
         id: true,
         policy_number: true,
@@ -88,8 +140,15 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Build where clause for roadworthy based on company scoping
+    let roadworthyWhere: any = {}
+    if (scopedCompanyName) {
+      roadworthyWhere.company = scopedCompanyName
+    }
+
     // Get roadworthy certificates expiring within 2 weeks
     const roadworthyRecords = await prisma.roadworthy.findMany({
+      where: roadworthyWhere,
       select: {
         id: true,
         vehicle_number: true,

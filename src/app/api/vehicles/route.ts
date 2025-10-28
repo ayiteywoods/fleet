@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createDatabaseErrorResponse } from '@/lib/dbErrorHandler';
-import { withDatabaseFallback, vehicleHandlers } from '@/lib/apiWrapper';
+import { withDatabaseFallback, withAuthAndDatabaseFallback, vehicleHandlers } from '@/lib/apiWrapper';
+import { verifyToken } from '@/lib/auth';
 
 export const GET = withDatabaseFallback(async (request: NextRequest) => {
   try {
+    // Get user from token if available
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+    
     // Try to use the mock handler first
-    return await vehicleHandlers.getVehicles(request)
+    return await vehicleHandlers.getVehicles(request, user || undefined)
   } catch (error: any) {
     console.error('Error in vehicles handler:', error)
     return createDatabaseErrorResponse(error)
@@ -64,7 +75,7 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
-
+    
     if (!id) {
       return NextResponse.json(
         { error: 'Vehicle ID is required' },
@@ -86,8 +97,8 @@ export async function PUT(request: Request) {
       where: { id: BigInt(id) },
       data: processedData
     });
-
-    return NextResponse.json({
+      
+      return NextResponse.json({ 
       message: 'Vehicle updated successfully',
       vehicle: {
         ...vehicle,
@@ -107,7 +118,7 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-
+    
     if (!id) {
       return NextResponse.json(
         { error: 'Vehicle ID is required' },
@@ -119,7 +130,7 @@ export async function DELETE(request: Request) {
       where: { id: BigInt(id) }
     });
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       message: 'Vehicle deleted successfully'
     });
   } catch (error: any) {

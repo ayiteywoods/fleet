@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Fetch all roadworthy records
 export async function GET(request: NextRequest) {
   try {
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+
     const { searchParams } = new URL(request.url)
     const vehicleId = searchParams.get('vehicle_id')
     const companyFilter = searchParams.get('company')
@@ -12,6 +23,25 @@ export async function GET(request: NextRequest) {
 
     // Build the query with optional filters
     let whereClause: any = {}
+    
+    // Apply company scoping for non-admin users
+    if (user) {
+      const roleLower = (user.role || '').toLowerCase()
+      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      
+      if (!isAdmin && user.spcode) {
+        console.log('🔒 Applying company filter for roadworthy for user:', user.name, 'spcode:', user.spcode)
+        // First, get the company name from companies table using spcode
+        const company = await prisma.companies.findUnique({
+          where: { id: BigInt(user.spcode) },
+          select: { name: true }
+        }).catch(() => null)
+        
+        if (company?.name) {
+          whereClause.company = company.name
+        }
+      }
+    }
     
     if (vehicleId) {
       // First get the vehicle registration number

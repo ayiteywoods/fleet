@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) return obj
@@ -18,10 +19,25 @@ function serializeBigInt(obj: any): any {
 
 export async function GET(request: NextRequest) {
   try {
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+
     const { searchParams } = new URL(request.url)
     const clusterId = searchParams.get('cluster_id')
 
-    let whereClause = {}
+    let whereClause: any = {}
+    
+    // Note: Subsidiaries are shared organizational resources
+    // For now, we show all subsidiaries to authenticated users
+    // If needed, we can add company-based filtering here
+    
     if (clusterId) {
       whereClause = { cluster_id: BigInt(clusterId) }
     }

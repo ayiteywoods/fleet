@@ -121,7 +121,9 @@ function VehiclesPageContent() {
     const fetchVehicles = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`/api/vehicles?t=${Date.now()}`)
+        const token = localStorage.getItem('token')
+        const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+        const response = await fetch(`/api/vehicles?t=${Date.now()}`, { headers })
         if (response.ok) {
           const data = await response.json()
           setVehicles(data)

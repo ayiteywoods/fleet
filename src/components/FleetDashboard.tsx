@@ -303,8 +303,12 @@ export default function FleetDashboard() {
       try {
         setLoading(true)
         
+        // Get auth token for API calls
+        const token = localStorage.getItem('token')
+        const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+        
         // Fetch vehicles data
-        const vehiclesResponse = await fetch('/api/vehicles')
+        const vehiclesResponse = await fetch('/api/vehicles', { headers })
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json()
           
@@ -336,7 +340,7 @@ export default function FleetDashboard() {
         }
 
         // Fetch drivers data
-        const driversResponse = await fetch('/api/drivers')
+        const driversResponse = await fetch('/api/drivers', { headers })
         if (driversResponse.ok) {
           const driversData = await driversResponse.json()
           setDriversCount(driversData.length)
@@ -351,7 +355,7 @@ export default function FleetDashboard() {
         }
 
         // Fetch insurance data
-        const insuranceResponse = await fetch('/api/insurance')
+        const insuranceResponse = await fetch('/api/insurance', { headers })
         if (insuranceResponse.ok) {
           const insuranceData = await insuranceResponse.json()
           setInsuranceCount(insuranceData.length)
@@ -366,7 +370,7 @@ export default function FleetDashboard() {
         }
 
         // Fetch maintenance data
-        const maintenanceResponse = await fetch('/api/maintenance')
+        const maintenanceResponse = await fetch('/api/maintenance', { headers })
         if (maintenanceResponse.ok) {
           const maintenanceData = await maintenanceResponse.json()
           setMaintenanceCount(maintenanceData.length)
@@ -410,7 +414,7 @@ export default function FleetDashboard() {
         }
 
         // Fetch maintenance schedules data
-        const maintenanceScheduleResponse = await fetch('/api/maintenance')
+        const maintenanceScheduleResponse = await fetch('/api/maintenance', { headers })
         if (maintenanceScheduleResponse.ok) {
           const scheduleData = await maintenanceScheduleResponse.json()
           setMaintenanceSchedules(scheduleData)

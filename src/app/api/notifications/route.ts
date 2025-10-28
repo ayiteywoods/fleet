@@ -1,14 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Fetch all notifications
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+
+    // Resolve user and company scope
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let scopedVehicleUids: string[] | null = null
+    if (token) {
+      const user: any = verifyToken(token)
+      if (user) {
+        const roleLower = (user.role || '').toLowerCase()
+        const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+        if (!isAdmin && user.spcode) {
+          // Find company name by companies.id == spcode
+          const company = await prisma.companies.findUnique({
+            where: { id: BigInt(user.spcode) },
+            select: { name: true }
+          }).catch(() => null)
+          const companyName = company?.name || null
+          if (companyName) {
+            // Get vehicle UIDs for this company
+            const companyVehicles = await prisma.vehicles.findMany({
+              where: { company_name: companyName },
+              select: { uid: true }
+            })
+            scopedVehicleUids = companyVehicles.map(v => v.uid!).filter(Boolean) as string[]
+          }
+        }
+      }
+    }
     
     // Fetch recent alerts as notifications
     const alerts = await prisma.alerts_data.findMany({
+      where: scopedVehicleUids && scopedVehicleUids.length > 0 ? { unit_uid: { in: scopedVehicleUids } } : {},
       take: 50,
       orderBy: { gps_time_utc: 'desc' },
       include: {

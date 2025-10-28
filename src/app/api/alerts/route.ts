@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { alertsHandlers } from '@/lib/apiWrapper'
+import { verifyToken } from '@/lib/auth'
 
 // GET - Fetch all alert records
 export async function GET(request: NextRequest) {
   try {
-    return await alertsHandlers.getAlerts(request)
+    // Extract user from token for company-based filtering
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let user = null
+    if (token) {
+      user = verifyToken(token)
+      if (user) {
+        console.log('🔐 Authenticated request from:', user.name, 'Role:', user.role)
+      }
+    }
+    return await alertsHandlers.getAlerts(request, user || undefined)
   } catch (error: any) {
     console.error('Error in alerts handler:', error)
     return NextResponse.json(
