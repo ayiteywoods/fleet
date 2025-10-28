@@ -61,6 +61,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if user already exists by email or phone
+    if (email) {
+      const existingByEmail = await prisma.users.findFirst({ where: { email } })
+      if (existingByEmail) {
+        return NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 409 }
+        )
+      }
+    }
+
+    if (phone) {
+      const existingByPhone = await prisma.users.findFirst({ where: { phone } })
+      if (existingByPhone) {
+        return NextResponse.json(
+          { error: 'User with this phone number already exists' },
+          { status: 409 }
+        )
+      }
+    }
+
     // Hash the password before storing
     const hashedPassword = await hashPassword(password)
 
@@ -90,8 +111,17 @@ export async function POST(request: NextRequest) {
       message: 'User created successfully!',
       user: serializedUser
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating user:', error)
+    
+    // Handle Prisma unique constraint errors
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'A user with this information already exists' },
+        { status: 409 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create user' },
       { status: 500 }
