@@ -985,6 +985,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <button
+                                type="button"
                                 onClick={() => setViewingCompany(company)}
                                 className="p-1 text-green-600 hover:text-green-800 transition-colors"
                                 title="View"
@@ -992,6 +993,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                                 <Eye className="w-4 h-4" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleEdit(company)}
                                 className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
@@ -999,6 +1001,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleDelete(company.id)}
                                 className="p-1 text-red-600 hover:text-red-800 transition-colors"
                                 title="Delete"
