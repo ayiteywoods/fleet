@@ -127,12 +127,12 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
   return (
     <div className={`transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-screen fixed left-0 top-0 z-30 flex flex-col ${
-      themeMode === 'dark' ? 'bg-white' : 'bg-white'
+      themeMode === 'dark' ? 'bg-navy-900 text-white' : 'bg-white'
     }`}>
       {/* Logo/Brand */}
       <div className={`px-4 py-6 border-b flex items-center justify-between ${
         themeMode === 'dark' 
-          ? 'bg-white border-gray-200' 
+          ? 'bg-navy-800 border-navy-700' 
           : 'bg-white border-gray-200'
       }`}>
         <div className="flex items-center">
@@ -155,7 +155,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
           onClick={onToggle}
           className={`p-2 rounded-xl transition-colors ${
             themeMode === 'dark' 
-              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' 
+              ? 'bg-navy-700 hover:bg-navy-600 text-gray-100' 
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
           }`}
         >
@@ -172,7 +172,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
       {/* Admin Section */}
       <div className={`p-4 border-b ${
-        themeMode === 'dark' ? 'border-gray-100' : 'border-gray-100'
+        themeMode === 'dark' ? 'border-navy-700' : 'border-gray-100'
       }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -181,7 +181,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             </div>
             {!isCollapsed && (
               <span className={`ml-2 text-sm font-medium ${
-                themeMode === 'dark' ? 'text-gray-900' : 'text-gray-900'
+                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>{user?.name || 'Admin'}</span>
             )}
           </div>
@@ -189,7 +189,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             <button
               onClick={() => toggleSection('admin')}
               className={`hover:opacity-80 ${
-                themeMode === 'dark' ? 'text-gray-700' : 'text-gray-700'
+                themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}
             >
               {expandedSections.admin ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
@@ -231,21 +231,21 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                   className={`flex items-center px-3 py-2 rounded-3xl transition-colors ${
                     item.active
                       ? `${getBrandBgColor(themeColor)} text-white shadow-sm`
-                      : themeMode === 'dark' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+                      : themeMode === 'dark' ? 'text-gray-300 hover:bg-navy-800 hover:text-white' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <div className={`p-1 rounded-full transition-colors ${
                     item.active
                       ? themeMode === 'dark' ? 'bg-white/20' : 'bg-white/20'
-                      : themeMode === 'dark' ? 'bg-gray-100' : 'bg-gray-100'
+                      : themeMode === 'dark' ? 'bg-navy-800' : 'bg-gray-100'
                   }`}>
                     <IconComponent className={`w-5 h-5 ${
-                      item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-600' : 'text-gray-600'
+                      item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                     }`} />
                   </div>
                   {!isCollapsed && (
                     <span className={`ml-3 text-sm font-medium ${
-                      item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-700' : 'text-gray-700'
+                      item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-200' : 'text-gray-700'
                     }`}>{item.name}</span>
                   )}
                 </Link>
@@ -253,7 +253,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 {!isCollapsed && (item.name === 'Dashboard' || item.name === 'Drivers' || item.name === 'Roadworthy') && (
                   <div className={`my-2 border-t ${
                     themeMode === 'dark' 
-                      ? (item.name === 'Dashboard' ? 'border-blue-200/50' : 'border-gray-100')
+                      ? (item.name === 'Dashboard' ? 'border-blue-200/30' : 'border-navy-700')
                       : (item.name === 'Dashboard' ? 'border-blue-200/50' : 'border-gray-100')
                   }`}></div>
                 )}
@@ -278,22 +278,22 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                   className={`flex items-center justify-between px-3 py-1 rounded-3xl transition-colors ${
                     item.active
                       ? `${getBrandBgColor(themeColor)} text-white shadow-sm`
-                      : themeMode === 'dark' ? 'text-gray-700 hover:bg-gray-100' : 'text-gray-700 hover:bg-gray-100'
+                      : themeMode === 'dark' ? 'text-gray-300 hover:bg-navy-800 hover:text-white' : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <div className="flex items-center">
                     <div className={`p-2 rounded-full transition-colors ${
                       item.active
                         ? themeMode === 'dark' ? 'bg-white/20' : 'bg-white/20'
-                        : themeMode === 'dark' ? 'bg-gray-100' : 'bg-gray-100'
+                        : themeMode === 'dark' ? 'bg-navy-800' : 'bg-gray-100'
                     }`}>
                       <IconComponent className={`w-5 h-5 ${
-                        item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-600' : 'text-gray-600'
+                        item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-300' : 'text-gray-600'
                       }`} />
                     </div>
                     {!isCollapsed && (
                       <span className={`ml-3 text-sm font-medium ${
-                        item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-700' : 'text-gray-700'
+                        item.active ? 'text-white' : themeMode === 'dark' ? 'text-gray-200' : 'text-gray-700'
                       }`}>{item.name}</span>
                     )}
                   </div>
@@ -303,7 +303,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                       className={`hover:opacity-80 ${
                         item.active 
                           ? 'text-white' 
-                          : themeMode === 'dark' ? 'text-gray-700' : 'text-gray-700'
+                          : themeMode === 'dark' ? 'text-gray-300' : 'text-gray-700'
                       }`}
                     >
                       {item.expanded ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />}

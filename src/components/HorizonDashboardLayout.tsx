@@ -103,7 +103,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen flex bg-lightPrimary dark:bg-navy-900">
+    <div className={`min-h-screen flex ${themeMode === 'dark' ? 'bg-navy-900' : 'bg-lightPrimary'}`}>
       {/* Original Sidebar */}
       <Sidebar 
         isCollapsed={isSidebarCollapsed} 
@@ -131,7 +131,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
         </div>
         
         {/* Page Content */}
-        <main className="flex-1 p-6 pt-28 overflow-hidden bg-lightPrimary dark:bg-navy-900" style={{
+        <main className={`flex-1 p-6 pt-28 overflow-hidden ${themeMode === 'dark' ? 'bg-navy-900' : 'bg-lightPrimary'}`} style={{
           width: '100%',
           maxWidth: '100%',
           overflowX: 'hidden',
