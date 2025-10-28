@@ -95,6 +95,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
+  const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -186,6 +187,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       fetchUsers()
       fetchRoles()
       fetchCompanies()
+      fetchGroups()
     }
   }, [isOpen])
 
@@ -231,6 +233,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       }
     } catch (error) {
       console.error('Error fetching companies:', error)
+    }
+  }
+
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch('/api/groups')
+      if (response.ok) {
+        const data = await response.json()
+        setGroups(data)
+      } else {
+        console.error('Failed to fetch groups')
+      }
+    } catch (error) {
+      console.error('Error fetching groups:', error)
     }
   }
 
@@ -1086,6 +1102,23 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Group
+                      </label>
+                      <select
+                        value={formData.group}
+                        onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      >
+                        <option value="">Select Group</option>
+                        {groups.map(group => (
+                          <option key={group.id} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Company (SP Code)
                       </label>
                       <select
@@ -1100,18 +1133,6 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Group
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.group}
-                        onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter group"
-                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
