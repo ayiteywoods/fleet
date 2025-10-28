@@ -12,7 +12,9 @@ import {
   XMarkIcon,
   Cog6ToothIcon,
   TableCellsIcon,
-  PrinterIcon
+  PrinterIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -42,6 +44,8 @@ export default function ReportsPage() {
   const [showFieldSelector, setShowFieldSelector] = useState(false)
   const [selectedFields, setSelectedFields] = useState<string[]>([])
   const [tempSelectedFields, setTempSelectedFields] = useState<string[]>([])
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   
   const reportCategories = [
     { 
@@ -393,6 +397,81 @@ export default function ReportsPage() {
     if (expiryDate < today) return 'Expired'
     if (expiryDate >= today && expiryDate <= thirtyDaysFromNow) return 'Expiring Soon'
     return 'Valid'
+  }
+
+  // Derived rows: filtered + sorted for current query/category
+  const filteredRows = reportData.filter(row => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    if (selectedCategory === 'driver') {
+      return (
+        (row.driverName && row.driverName.toLowerCase().includes(query)) ||
+        (row.licenseNumber && row.licenseNumber.toLowerCase().includes(query)) ||
+        (row.licenseType && row.licenseType.toLowerCase().includes(query))
+      )
+    } else if (selectedCategory === 'accident') {
+      return (
+        (row.unitName && row.unitName.toLowerCase().includes(query)) ||
+        (row.alertType && row.alertType.toLowerCase().includes(query)) ||
+        (row.alertDescription && row.alertDescription.toLowerCase().includes(query)) ||
+        (row.address && row.address.toLowerCase().includes(query))
+      )
+    } else if (selectedCategory === 'roadworthy' || selectedCategory === 'insurance') {
+      return (row.vehicleNumber && row.vehicleNumber.toLowerCase().includes(query))
+    } else {
+      return (
+        (row.registrationNumber && row.registrationNumber.toLowerCase().includes(query)) ||
+        (row.vehicleNumber && row.vehicleNumber.toLowerCase().includes(query))
+      )
+    }
+  })
+
+  const sortedRows = (() => {
+    if (!sortField) return filteredRows
+    const dir = sortDirection === 'asc' ? 1 : -1
+    return [...filteredRows].sort((a, b) => {
+      const av = a?.[sortField]
+      const bv = b?.[sortField]
+      // numeric if both parse to numbers
+      const an = typeof av === 'number' ? av : Number(av)
+      const bn = typeof bv === 'number' ? bv : Number(bv)
+      if (!Number.isNaN(an) && !Number.isNaN(bn) && av !== '' && bv !== '') {
+        return (an - bn) * dir
+      }
+      // date if looks like date
+      const ad = new Date(av as any).getTime()
+      const bd = new Date(bv as any).getTime()
+      if (!Number.isNaN(ad) && !Number.isNaN(bd) && (String(av)?.includes('-') || String(bv)?.includes('-'))) {
+        return (ad - bd) * dir
+      }
+      const as = (av ?? '').toString().toLowerCase()
+      const bs = (bv ?? '').toString().toLowerCase()
+      if (as < bs) return -1 * dir
+      if (as > bs) return 1 * dir
+      return 0
+    })
+  })()
+
+  const getSortIcon = (key: string) => {
+    if (sortField !== key) {
+      return (
+        <div className="flex flex-col">
+          <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+        </div>
+      )
+    }
+    return sortDirection === 'asc' ? (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+      </div>
+    ) : (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
+      </div>
+    )
   }
 
   return (
@@ -1164,47 +1243,29 @@ export default function ReportsPage() {
                             {getSelectedFieldsData().map((field) => (
                               <th 
                                 key={field.key} 
-                                className={`px-4 py-3 text-left text-sm font-medium ${
+                                onClick={() => {
+                                  if (sortField === field.key) {
+                                    setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+                                  } else {
+                                    setSortField(field.key); setSortDirection('asc')
+                                  }
+                                }}
+                                className={`px-4 py-3 text-left text-sm font-medium cursor-pointer ${
                                   field.key === 'address' ? '' : 'whitespace-nowrap'
                                 }`}
                                 style={field.key === 'address' ? { maxWidth: '300px' } : {}}
                               >
-                                {field.label}
+                                <div className="flex items-center gap-1">
+                                  {field.label}
+                                  {getSortIcon(field.key)}
+                                </div>
                               </th>
                             ))}
                           </tr>
                         </thead>
                         {/* Table Body */}
                         <tbody className={`divide-y ${themeMode === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                          {reportData
-                            .filter(row => {
-                              if (!searchQuery) return true
-                              const query = searchQuery.toLowerCase()
-                              // Search in different fields based on report type
-                              if (selectedCategory === 'driver') {
-                                return (
-                                  (row.driverName && row.driverName.toLowerCase().includes(query)) ||
-                                  (row.licenseNumber && row.licenseNumber.toLowerCase().includes(query)) ||
-                                  (row.licenseType && row.licenseType.toLowerCase().includes(query))
-                                )
-                              } else if (selectedCategory === 'accident') {
-                                return (
-                                  (row.unitName && row.unitName.toLowerCase().includes(query)) ||
-                                  (row.alertType && row.alertType.toLowerCase().includes(query)) ||
-                                  (row.alertDescription && row.alertDescription.toLowerCase().includes(query)) ||
-                                  (row.address && row.address.toLowerCase().includes(query))
-                                )
-                              } else if (selectedCategory === 'roadworthy' || selectedCategory === 'insurance') {
-                                return (
-                                  (row.vehicleNumber && row.vehicleNumber.toLowerCase().includes(query))
-                                )
-                              } else {
-                                return (
-                                  (row.registrationNumber && row.registrationNumber.toLowerCase().includes(query)) ||
-                                  (row.vehicleNumber && row.vehicleNumber.toLowerCase().includes(query))
-                                )
-                              }
-                            })
+                          {sortedRows
                             .slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage)
                             .map((row, index) => (
                             <tr key={row.id} className={`hover:bg-gray-50 ${
