@@ -32,6 +32,20 @@ export default function AddRepairModal({ isOpen, onClose, onSubmit, vehicleId }:
     }
   }, [vehicleId])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        service_date: '',
+        cost: '',
+        status: 'completed',
+        vehicle_id: vehicleId || '',
+        details: '',
+        part_replaced: ''
+      })
+    }
+  }, [isOpen, vehicleId])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))

@@ -123,6 +123,32 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
     }
   }, [isOpen])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        registrationNumber: '',
+        vehicleType: '',
+        currentMileage: '',
+        location: '',
+        vin: '',
+        make: '',
+        model: '',
+        year: '',
+        color: '',
+        purchaseDate: '',
+        nextServiceKm: '',
+        additionalNotes: '',
+        companyName: '',
+        insuranceDocument: null,
+        cluster: '',
+        subsidiary: '',
+        assignedTo: ''
+      })
+      setErrors({})
+    }
+  }, [isOpen])
+
   const fetchClusters = async () => {
     try {
       const response = await fetch('/api/clusters')

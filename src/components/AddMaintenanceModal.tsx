@@ -76,6 +76,25 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
     }
   }, [vehicleId, vehicles])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        service_date: '',
+        cost: '',
+        status: 'completed',
+        service_details: '',
+        service_type: '',
+        mileage_at_service: '',
+        parts_replaced: '',
+        vehicle_id: vehicleId || '',
+        mechanic_id: '',
+        workshop_id: ''
+      })
+      setSelectedVehicle(null)
+    }
+  }, [isOpen, vehicleId])
+
   // Fetch data when modal opens
   useEffect(() => {
     if (isOpen) {

@@ -193,6 +193,36 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     }
   }, [isOpen])
 
+  // Reset form and close forms when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAddForm(false)
+      setEditingUser(null)
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        role: '',
+        password: '',
+        is_active: true,
+        region: '',
+        district: '',
+        spcode: '',
+        group: '',
+        license_number: '',
+        license_category: '',
+        license_expiry: '',
+        specialization: '',
+        user_code: '',
+        user_type: '',
+        user_level: '',
+        type: '',
+        full_name: '',
+        district_id: ''
+      })
+    }
+  }, [isOpen])
+
   // Filter companies when group changes
   useEffect(() => {
     if (!formData.group) {

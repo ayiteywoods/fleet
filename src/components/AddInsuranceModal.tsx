@@ -49,6 +49,22 @@ export default function AddInsuranceModal({ isOpen, onClose, onAdd, vehicleId }:
     }
   }, [isOpen])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        policy_number: '',
+        insurance_company: '',
+        start_date: '',
+        end_date: '',
+        premium_amount: '',
+        coverage_type: 'comprehensive',
+        notes: '',
+        vehicle_id: vehicleId || ''
+      })
+    }
+  }, [isOpen, vehicleId])
+
   const fetchVehicles = async () => {
     try {
       const response = await fetch('/api/vehicles')

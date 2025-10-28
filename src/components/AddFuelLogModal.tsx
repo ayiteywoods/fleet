@@ -45,6 +45,25 @@ export default function AddFuelLogModal({ isOpen, onClose, onSubmit, vehicleId }
     }
   }, [isOpen])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        refuel_date: '',
+        quantity: '',
+        unit_cost: '',
+        total_cost: '',
+        mileage_before: '',
+        mileage_after: '',
+        fuel_type: 'petrol',
+        vendor: '',
+        receipt_number: '',
+        notes: '',
+        driver_id: '1'
+      })
+    }
+  }, [isOpen])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))

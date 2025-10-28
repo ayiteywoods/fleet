@@ -63,6 +63,27 @@ export default function AddDriverModal({ isOpen, onClose, onAdd }: AddDriverModa
     }
   }, [isOpen])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: '',
+        phone: '',
+        license_number: '',
+        license_category: '',
+        license_expire: '',
+        date_issued: '',
+        dob: '',
+        region: '',
+        district: '',
+        status: 'Active',
+        vehicle_id: '',
+        cluster: '',
+        subsidiary: ''
+      })
+    }
+  }, [isOpen])
+
   const fetchClusters = async () => {
     try {
       const response = await fetch('/api/clusters')
