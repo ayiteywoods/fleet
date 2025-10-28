@@ -416,7 +416,7 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
       )}
 
       {/* Main Modal */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
         <div 
           className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl shadow-xl ${
             themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'

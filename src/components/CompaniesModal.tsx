@@ -1193,7 +1193,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
 
       {/* Column Selector Modal */}
       {showColumnSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[10000]">
           <div className={`rounded-lg p-6 w-96 max-h-96 overflow-y-auto ${
             themeMode === 'dark' ? 'bg-gray-800' : 'bg-white'
           }`}>
