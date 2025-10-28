@@ -90,7 +90,6 @@ function VehiclesPageContent() {
   const [selectedFields, setSelectedFields] = useState([
     'reg_number', 'trim', 'vehicle_type_name', 'year', 'status'
   ])
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({})
 
   // All available fields from the vehicles table
   const availableFields = [
@@ -178,11 +177,6 @@ function VehiclesPageContent() {
       setSortColumn(column)
       setSortDirection('asc')
     }
-  }
-
-  const handleColumnFilterChange = (fieldKey: string, value: string) => {
-    setColumnFilters(prev => ({ ...prev, [fieldKey]: value }))
-    setCurrentPage(1)
   }
 
   const toggleField = (fieldKey: string) => {
@@ -875,43 +869,52 @@ function VehiclesPageContent() {
     if (priorityMatch) return true
     
     // If no priority match, search all fields with regex pattern matching
-    const genericMatch = Object.values(vehicle).some(value => 
+    return Object.values(vehicle).some(value => 
       value && regex.test(String(value).toLowerCase())
     )
+  })
 
-    if (!genericMatch) return false
+  // Apply sorting before pagination
+  const sortedVehicles = (() => {
+    if (!sortColumn) return filteredVehicles
+    const fieldDef = availableFields.find(f => f.key === sortColumn)
+    const type = fieldDef?.type || 'text'
+    const dir = sortDirection === 'asc' ? 1 : -1
 
-    // Apply per-column header filters (AND logic across active filters)
-    for (const [fieldKey, filterValue] of Object.entries(columnFilters)) {
-      if (!filterValue) continue
-      const fieldDef = availableFields.find(f => f.key === fieldKey)
-      const raw = (vehicle as any)[fieldKey]
-      if (raw === undefined || raw === null) return false
-
-      const valStr = String(raw).toLowerCase()
-      const filtStr = String(filterValue).toLowerCase()
-
-      if (fieldDef?.type === 'status') {
-        if (valStr !== filtStr) return false
-      } else if (fieldDef?.type === 'date') {
-        // compare by date-only string if possible
-        const dateOnly = (() => {
-          try { return new Date(raw).toISOString().slice(0, 10) } catch { return valStr }
-        })()
-        if (!dateOnly.includes(filtStr)) return false
-      } else {
-        if (!valStr.includes(filtStr)) return false
-      }
+    const toComparable = (val: any) => {
+      if (val === null || val === undefined) return ''
+      return val
     }
 
-    return true
-  })
+    const compare = (a: any, b: any) => {
+      const av = toComparable(a?.[sortColumn as keyof typeof a])
+      const bv = toComparable(b?.[sortColumn as keyof typeof b])
+      if (type === 'number') {
+        const an = Number(av) || 0
+        const bn = Number(bv) || 0
+        return (an - bn) * dir
+      }
+      if (type === 'date') {
+        const ad = new Date(av as any).getTime() || 0
+        const bd = new Date(bv as any).getTime() || 0
+        return (ad - bd) * dir
+      }
+      // status/text fallback to case-insensitive string compare
+      const as = String(av).toLowerCase()
+      const bs = String(bv).toLowerCase()
+      if (as < bs) return -1 * dir
+      if (as > bs) return 1 * dir
+      return 0
+    }
+
+    return [...filteredVehicles].sort(compare)
+  })()
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredVehicles.length / entriesPerPage)
   const startIndex = (currentPage - 1) * entriesPerPage
   const endIndex = startIndex + entriesPerPage
-  const paginatedVehicles = filteredVehicles.slice(startIndex, endIndex)
+  const paginatedVehicles = sortedVehicles.slice(startIndex, endIndex)
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -1325,84 +1328,6 @@ function VehiclesPageContent() {
                       </div>
                     </th>
                   ))}
-                </tr>
-                {/* Column filters row */}
-                <tr className={`${themeMode === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                  <th className="px-4 py-2"></th>
-                  <th className="px-4 py-2"></th>
-                  {getSelectedFieldsData().map((field) => {
-                    const widthStyle = {
-                      width: field.key === 'reg_number' ? '200px' : 
-                             field.key === 'vin_number' ? '180px' :
-                             field.key === 'status' ? '100px' :
-                             field.key === 'current_region' ? '120px' :
-                             field.key === 'current_district' ? '120px' :
-                             field.key === 'last_service_date' ? '130px' :
-                             field.key === 'current_mileage' ? '120px' :
-                             field.key === 'year' ? '80px' :
-                             field.key === 'color' ? '100px' :
-                             field.key === 'trim' ? '150px' :
-                             field.key === 'company_name' ? '150px' :
-                             field.key === 'spcode' ? '120px' : '150px',
-                      minWidth: field.key === 'reg_number' ? '200px' : 
-                               field.key === 'vin_number' ? '180px' :
-                               field.key === 'status' ? '100px' :
-                               field.key === 'current_region' ? '120px' :
-                               field.key === 'current_district' ? '120px' :
-                               field.key === 'last_service_date' ? '130px' :
-                               field.key === 'current_mileage' ? '120px' :
-                               field.key === 'year' ? '80px' :
-                               field.key === 'color' ? '100px' :
-                               field.key === 'trim' ? '150px' :
-                               field.key === 'company_name' ? '150px' :
-                               field.key === 'spcode' ? '120px' : '150px'
-                    } as React.CSSProperties
-
-                    if (field.type === 'status') {
-                      const statusValues = Array.from(new Set(
-                        vehicles.map(v => (v?.status || '').toString().toLowerCase()).filter(Boolean)
-                      )).sort()
-                      return (
-                        <th key={field.key} className="px-3 py-2" style={widthStyle}>
-                          <select
-                            value={columnFilters[field.key] || ''}
-                            onChange={(e) => handleColumnFilterChange(field.key, e.target.value)}
-                            className={`${themeMode === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} w-full px-2 py-1 border rounded text-xs`}
-                          >
-                            <option value="">All</option>
-                            {statusValues.map(s => (
-                              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                            ))}
-                          </select>
-                        </th>
-                      )
-                    }
-
-                    if (field.type === 'date') {
-                      return (
-                        <th key={field.key} className="px-3 py-2" style={widthStyle}>
-                          <input
-                            type="date"
-                            value={columnFilters[field.key] || ''}
-                            onChange={(e) => handleColumnFilterChange(field.key, e.target.value)}
-                            className={`${themeMode === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} w-full px-2 py-1 border rounded text-xs`}
-                          />
-                        </th>
-                      )
-                    }
-
-                    return (
-                      <th key={field.key} className="px-3 py-2" style={widthStyle}>
-                        <input
-                          type="text"
-                          placeholder="Filter..."
-                          value={columnFilters[field.key] || ''}
-                          onChange={(e) => handleColumnFilterChange(field.key, e.target.value)}
-                          className={`${themeMode === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} w-full px-2 py-1 border rounded text-xs`}
-                        />
-                      </th>
-                    )
-                  })}
                 </tr>
               </thead>
               <tbody className={`divide-y ${
