@@ -135,8 +135,9 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       {/* Overlay for mobile sidebar */}
       {isMobileSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 lg:hidden bg-black/20 backdrop-blur-sm"
           onClick={toggleMobileSidebar}
+          aria-hidden="true"
         />
       )}
 
@@ -152,7 +153,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       {/* Mobile Sidebar */}
       <div className={`lg:hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 w-64 ${
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      }`} aria-modal="true" role="dialog">
         <Sidebar 
           isCollapsed={false} 
           onToggle={toggleMobileSidebar}
