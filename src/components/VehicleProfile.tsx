@@ -125,10 +125,14 @@ export default function VehicleProfile() {
   const [sensorSearchQuery, setSensorSearchQuery] = useState('')
   const [sensorCurrentPage, setSensorCurrentPage] = useState(1)
   const [sensorEntriesPerPage, setSensorEntriesPerPage] = useState(10)
+  const [sensorSortField, setSensorSortField] = useState<string>('')
+  const [sensorSortDirection, setSensorSortDirection] = useState<'asc' | 'desc'>('asc')
   const [trackingData, setTrackingData] = useState<any[]>([])
   const [trackingSearchQuery, setTrackingSearchQuery] = useState('')
   const [trackingCurrentPage, setTrackingCurrentPage] = useState(1)
   const [trackingEntriesPerPage, setTrackingEntriesPerPage] = useState(10)
+  const [trackingSortField, setTrackingSortField] = useState<string>('')
+  const [trackingSortDirection, setTrackingSortDirection] = useState<'asc' | 'desc'>('asc')
   
   // Google Maps Modal state
   const [isMapsModalOpen, setIsMapsModalOpen] = useState(false)
@@ -337,16 +341,47 @@ export default function VehicleProfile() {
   })
 
   // Calculate pagination for sensor data
-  const sensorTotalPages = Math.ceil(filteredSensorData.length / sensorEntriesPerPage)
+  // Apply sorting for sensor data
+  const sortedSensorData = (() => {
+    if (!sensorSortField) return filteredSensorData
+    const dir = sensorSortDirection === 'asc' ? 1 : -1
+    return [...filteredSensorData].sort((a, b) => {
+      const av = a?.[sensorSortField]
+      const bv = b?.[sensorSortField]
+      const as = (av ?? '').toString().toLowerCase()
+      const bs = (bv ?? '').toString().toLowerCase()
+      if (as < bs) return -1 * dir
+      if (as > bs) return 1 * dir
+      return 0
+    })
+  })()
+
+  const sensorTotalPages = Math.ceil(sortedSensorData.length / sensorEntriesPerPage)
   const sensorStartIndex = (sensorCurrentPage - 1) * sensorEntriesPerPage
   const sensorEndIndex = sensorStartIndex + sensorEntriesPerPage
-  const paginatedSensorData = filteredSensorData.slice(sensorStartIndex, sensorEndIndex)
+  const paginatedSensorData = sortedSensorData.slice(sensorStartIndex, sensorEndIndex)
 
   // Calculate pagination for tracking data
-  const trackingTotalPages = Math.ceil(filteredTrackingData.length / trackingEntriesPerPage)
+  // Apply sorting for tracking data
+  const sortedTrackingData = (() => {
+    if (!trackingSortField) return filteredTrackingData
+    const dir = trackingSortDirection === 'asc' ? 1 : -1
+    return [...filteredTrackingData].sort((a, b) => {
+      const av = a?.[trackingSortField]
+      const bv = b?.[trackingSortField]
+      // special mapping for nested or derived
+      const as = (av ?? '').toString().toLowerCase()
+      const bs = (bv ?? '').toString().toLowerCase()
+      if (as < bs) return -1 * dir
+      if (as > bs) return 1 * dir
+      return 0
+    })
+  })()
+
+  const trackingTotalPages = Math.ceil(sortedTrackingData.length / trackingEntriesPerPage)
   const trackingStartIndex = (trackingCurrentPage - 1) * trackingEntriesPerPage
   const trackingEndIndex = trackingStartIndex + trackingEntriesPerPage
-  const paginatedTrackingData = filteredTrackingData.slice(trackingStartIndex, trackingEndIndex)
+  const paginatedTrackingData = sortedTrackingData.slice(trackingStartIndex, trackingEndIndex)
 
   // Reset sensor page when search changes
   useEffect(() => {
@@ -4907,17 +4942,125 @@ export default function VehicleProfile() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
                   No
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                  Sensor Type
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                  onClick={() => {
+                    if (sensorSortField === 'sensor_type') {
+                      setSensorSortDirection(sensorSortDirection === 'asc' ? 'desc' : 'asc')
+                    } else {
+                      setSensorSortField('sensor_type'); setSensorSortDirection('asc')
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    Sensor Type
+                    {sensorSortField !== 'sensor_type' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : sensorSortDirection === 'asc' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-white" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                  Name
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                  onClick={() => {
+                    if (sensorSortField === 'name') {
+                      setSensorSortDirection(sensorSortDirection === 'asc' ? 'desc' : 'asc')
+                    } else {
+                      setSensorSortField('name'); setSensorSortDirection('asc')
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    Name
+                    {sensorSortField !== 'name' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : sensorSortDirection === 'asc' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-white" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                  Value
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                  onClick={() => {
+                    if (sensorSortField === 'value') {
+                      setSensorSortDirection(sensorSortDirection === 'asc' ? 'desc' : 'asc')
+                    } else {
+                      setSensorSortField('value'); setSensorSortDirection('asc')
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    Value
+                    {sensorSortField !== 'value' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : sensorSortDirection === 'asc' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-white" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                  Reading Time
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                  onClick={() => {
+                    if (sensorSortField === 'reading_time_local') {
+                      setSensorSortDirection(sensorSortDirection === 'asc' ? 'desc' : 'asc')
+                    } else {
+                      setSensorSortField('reading_time_local'); setSensorSortDirection('asc')
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    Reading Time
+                    {sensorSortField !== 'reading_time_local' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : sensorSortDirection === 'asc' ? (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-white" />
+                        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                        <ChevronDownIcon className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -5100,20 +5243,155 @@ export default function VehicleProfile() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
                       No
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                      Address
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                      onClick={() => {
+                        if (trackingSortField === 'address') {
+                          setTrackingSortDirection(trackingSortDirection === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setTrackingSortField('address'); setTrackingSortDirection('asc')
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Address
+                        {trackingSortField !== 'address' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : trackingSortDirection === 'asc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-white" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                      Speed
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                      onClick={() => {
+                        if (trackingSortField === 'speed') {
+                          setTrackingSortDirection(trackingSortDirection === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setTrackingSortField('speed'); setTrackingSortDirection('asc')
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Speed
+                        {trackingSortField !== 'speed' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : trackingSortDirection === 'asc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-white" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                      Odometer
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                      onClick={() => {
+                        if (trackingSortField === 'odometer') {
+                          setTrackingSortDirection(trackingSortDirection === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setTrackingSortField('odometer'); setTrackingSortDirection('asc')
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Odometer
+                        {trackingSortField !== 'odometer' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : trackingSortDirection === 'asc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-white" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                      Engine Status
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                      onClick={() => {
+                        if (trackingSortField === 'engine_status') {
+                          setTrackingSortDirection(trackingSortDirection === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setTrackingSortField('engine_status'); setTrackingSortDirection('asc')
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Engine Status
+                        {trackingSortField !== 'engine_status' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : trackingSortDirection === 'asc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-white" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500">
-                      GPS Time
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-gray-500 cursor-pointer"
+                      onClick={() => {
+                        if (trackingSortField === 'gps_time_utc') {
+                          setTrackingSortDirection(trackingSortDirection === 'asc' ? 'desc' : 'asc')
+                        } else {
+                          setTrackingSortField('gps_time_utc'); setTrackingSortDirection('asc')
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        GPS Time
+                        {trackingSortField !== 'gps_time_utc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : trackingSortDirection === 'asc' ? (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-white" />
+                            <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+                            <ChevronDownIcon className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </th>
                   </tr>
                 </thead>
