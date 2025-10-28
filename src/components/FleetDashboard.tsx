@@ -785,7 +785,7 @@ getBrandColor(themeColor)
                         key={schedule.id}
                         className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
                           themeMode === 'dark' 
-                            ? 'bg-gray-700 hover:bg-gray-600' 
+                            ? 'bg-navy-700 hover:bg-navy-600' 
                             : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                       >
@@ -875,7 +875,7 @@ getBrandColor(themeColor)
                         key={reminder.id}
                         className={`flex items-center justify-between p-3 rounded-2xl transition-colors ${
                           themeMode === 'dark' 
-                            ? 'bg-gray-700 hover:bg-gray-600' 
+                            ? 'bg-navy-700 hover:bg-navy-600' 
                             : 'bg-gray-50 hover:bg-gray-100'
                         }`}
                       >
@@ -1139,7 +1139,7 @@ getBrandColor(themeColor)
                   }
                   
                   return (
-                    <div key={item.type} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div key={item.type} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-navy-700">
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-2.5 h-2.5 rounded-full shadow-sm" 
