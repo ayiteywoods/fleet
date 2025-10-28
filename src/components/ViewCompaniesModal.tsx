@@ -15,6 +15,7 @@ interface Company {
   phone: string
   description: string | null
   group_id: number | null
+  group_name?: string | null
   email: string
   address: string
   contact_person: string
@@ -48,7 +49,7 @@ export default function ViewCompaniesModal({ isOpen, onClose, company }: ViewCom
       ['Contact Phone', company.contact_phone],
       ['Status', company.status],
       ['Description', company.description || 'N/A'],
-      ['Group ID', company.group_id || 'N/A'],
+      ['Group', company.group_name || company.group_id || 'N/A'],
       ['Created At', company.created_at ? new Date(company.created_at).toLocaleString() : 'N/A'],
       ['Updated At', company.updated_at ? new Date(company.updated_at).toLocaleString() : 'N/A']
     ]
@@ -72,7 +73,7 @@ export default function ViewCompaniesModal({ isOpen, onClose, company }: ViewCom
       ['Contact Phone', company.contact_phone],
       ['Status', company.status],
       ['Description', company.description || 'N/A'],
-      ['Group ID', company.group_id || 'N/A'],
+      ['Group', company.group_name || company.group_id || 'N/A'],
       ['Created At', company.created_at ? new Date(company.created_at).toLocaleString() : 'N/A'],
       ['Updated At', company.updated_at ? new Date(company.updated_at).toLocaleString() : 'N/A']
     ]
@@ -128,7 +129,7 @@ export default function ViewCompaniesModal({ isOpen, onClose, company }: ViewCom
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.text(`Description: ${company.description || 'N/A'}`, 20, 190)
-    doc.text(`Group ID: ${company.group_id || 'N/A'}`, 20, 200)
+    doc.text(`Group: ${company.group_name || company.group_id || 'N/A'}`, 20, 200)
     
     // Timestamps
     doc.setFontSize(14)
@@ -360,8 +361,8 @@ export default function ViewCompaniesModal({ isOpen, onClose, company }: ViewCom
                 <p className="text-gray-900">{company.description || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">Group ID</p>
-                <p className="text-gray-900">{company.group_id || 'N/A'}</p>
+                <p className="text-sm font-medium text-gray-700">Group</p>
+                <p className="text-gray-900">{company.group_name || company.group_id || 'N/A'}</p>
               </div>
             </div>
           </div>

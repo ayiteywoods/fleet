@@ -54,6 +54,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const { themeMode } = useTheme()
   const [companies, setCompanies] = useState<Company[]>([])
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([])
+  const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof Company>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -102,7 +103,25 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
 
   useEffect(() => {
     fetchCompanies()
+    fetchGroups()
   }, [])
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch('/api/groups')
+      if (res.ok) {
+        const data = await res.json()
+        setGroups(data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch groups', e)
+    }
+  }
+
+  const getGroupName = (groupId: number | null) => {
+    if (!groupId) return '—'
+    const g = groups.find(grp => grp.id?.toString() === groupId.toString())
+    return g?.name || groupId.toString()
+  }
 
   useEffect(() => {
     let filtered = companies.filter(company =>
@@ -1012,7 +1031,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                             )}
                             {selectedFields.includes('group_id') && (
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {company.group_id ?? '—'}
+                                {getGroupName(company.group_id)}
                               </td>
                             )}
                             {selectedFields.includes('contact_person') && (
