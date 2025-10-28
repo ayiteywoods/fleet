@@ -67,7 +67,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [showColumnSelector, setShowColumnSelector] = useState(false)
   const [selectedFields, setSelectedFields] = useState([
-    'name', 'location', 'loc_code', 'phone', 'email', 'address', 'contact_person', 'contact_phone', 'status', 'description', 'created_at', 'updated_at'
+    'name', 'location', 'loc_code', 'phone', 'email', 'group_id', 'address', 'contact_person', 'contact_phone', 'status', 'description', 'created_at', 'updated_at'
   ])
 
   // Available fields configuration
