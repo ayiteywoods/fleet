@@ -298,6 +298,28 @@ export default function FuelPage() {
     }
   }
 
+  const getSortIcon = (fieldKey: string) => {
+    if (sortField !== fieldKey) {
+      return (
+        <div className="flex flex-col">
+          <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+        </div>
+      )
+    }
+    return sortDirection === 'asc' ? (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+      </div>
+    ) : (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
+      </div>
+    )
+  }
+
   // Handle field selection
   const handleFieldToggle = (fieldKey: string) => {
     setSelectedFields(prev => 
@@ -993,11 +1015,7 @@ export default function FuelPage() {
                     >
                       <div className="flex items-center gap-1">
                         {field?.label || fieldKey}
-                        {sortField === fieldKey && (
-                          sortDirection === 'asc' ? 
-                            <ChevronUpIcon className="w-4 h-4" /> : 
-                            <ChevronDownIcon className="w-4 h-4" />
-                        )}
+                        {getSortIcon(fieldKey)}
                       </div>
                     </th>
                   )

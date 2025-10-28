@@ -225,6 +225,28 @@ export default function RepairsPage() {
     }
   }
 
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return (
+        <div className="flex flex-col">
+          <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+          <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+        </div>
+      )
+    }
+    return sortDirection === 'asc' ? (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-white" />
+        <ChevronDownIcon className="w-3 h-3 text-blue-200" />
+      </div>
+    ) : (
+      <div className="flex flex-col">
+        <ChevronUpIcon className="w-3 h-3 text-blue-200" />
+        <ChevronDownIcon className="w-3 h-3 text-white" />
+      </div>
+    )
+  }
+
   // Search functionality
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -968,13 +990,7 @@ export default function RepairsPage() {
                       >
                         <div className="flex items-center gap-1">
                           {field.label}
-                          {sortColumn === field.key && (
-                            sortDirection === 'asc' ? (
-                              <ChevronUpIcon className="w-4 h-4 text-blue-200" />
-                            ) : (
-                              <ChevronDownIcon className="w-4 h-4 text-blue-200" />
-                            )
-                          )}
+                          {getSortIcon(field.key)}
                         </div>
                       </th>
                     ))}
