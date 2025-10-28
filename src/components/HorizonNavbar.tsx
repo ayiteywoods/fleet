@@ -175,7 +175,7 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
     <nav className={`fixed top-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl p-2 backdrop-blur-xl ${
       themeMode === 'dark' ? 'bg-navy-800/80' : 'bg-white/60'
     }`} style={{
-      left: isSidebarCollapsed ? '64px' : '256px',
+      left: '0px',
       right: '0'
     }}>
       <div className="ml-6">

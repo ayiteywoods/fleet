@@ -112,7 +112,9 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       />
       
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`} style={{
+      <div className={`flex-1 flex flex-col transition-all duration overflow-hidden ${
+        isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
+      } ml-0`} style={{
         width: '100%',
         maxWidth: '100%',
         overflowX: 'hidden',

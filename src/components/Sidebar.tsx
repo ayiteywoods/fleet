@@ -126,9 +126,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   ]
 
   return (
-    <div className={`transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-screen fixed left-0 top-0 z-30 flex flex-col ${
+    <div className={`transition-all duration-300 ${
+      isCollapsed 
+        ? 'w-16' 
+        : 'w-64' 
+    } h-screen fixed left-0 top-0 z-30 flex flex-col ${
       themeMode === 'dark' ? 'bg-navy-900 text-white' : 'bg-white'
-    }`}>
+    } hidden md:flex`}>
       {/* Logo/Brand */}
       <div className={`px-4 py-6 border-b flex items-center justify-between ${
         themeMode === 'dark' 
