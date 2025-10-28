@@ -52,17 +52,42 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, guard_name } = body
 
+    if (!name || !guard_name) {
+      return NextResponse.json(
+        { error: 'name and guard_name are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check for existing role on the unique composite index
+    const existing = await prisma.roles.findUnique({
+      where: { name_guard_name: { name, guard_name } }
+    })
+    if (existing) {
+      return NextResponse.json(serializeBigInt(existing), { status: 200 })
+    }
+
     const role = await prisma.roles.create({
       data: {
-        name: name || '',
-        guard_name: guard_name || '',
+        name,
+        guard_name,
         created_at: new Date(),
         updated_at: new Date()
       }
     })
     return NextResponse.json(serializeBigInt(role), { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating role:', error)
+    // Handle unique constraint violations
+    if (error?.code === 'P2002') {
+      const target = error?.meta?.target
+      if (Array.isArray(target) && target.includes('roles_name_guard_name_unique')) {
+        return NextResponse.json({ error: 'Role already exists' }, { status: 409 })
+      }
+      if (Array.isArray(target) && target.includes('id')) {
+        return NextResponse.json({ error: 'Role ID conflict' }, { status: 500 })
+      }
+    }
     return NextResponse.json(
       { error: 'Failed to create role' },
       { status: 500 }
