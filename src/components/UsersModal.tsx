@@ -135,7 +135,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
-  
+
   // Column selection state
   const [showFieldSelector, setShowFieldSelector] = useState(false)
   const [selectedFields, setSelectedFields] = useState([
@@ -606,7 +606,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     doc.text('Users Report', 14, 22)
     doc.setFontSize(10)
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30)
-
+    
     // Add table
     autoTable(doc, {
       head: [headers],
@@ -646,43 +646,43 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
     const printContent = `
       <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Users Report</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
+        <html>
+          <head>
+            <title>Users Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
           h1 { color: #333; margin-bottom: 10px; }
           .date { color: #666; margin-bottom: 20px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #3b82f6; color: white; font-weight: bold; }
           tr:nth-child(even) { background-color: #f9fafb; }
           tr:hover { background-color: #f3f4f6; }
-        </style>
-      </head>
-      <body>
-        <h1>Users Report</h1>
+            </style>
+          </head>
+          <body>
+            <h1>Users Report</h1>
         <div class="date">Generated on: ${new Date().toLocaleDateString()}</div>
-        <table>
-          <thead>
-            <tr>
+            <table>
+              <thead>
+                <tr>
               ${headers.map(header => `<th>${header}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
+                </tr>
+              </thead>
+              <tbody>
             ${data.map(row => 
               `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
             ).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
+              </tbody>
+            </table>
+          </body>
+        </html>
     `
 
     printWindow.document.write(printContent)
-    printWindow.document.close()
+      printWindow.document.close()
     printWindow.focus()
-    printWindow.print()
+      printWindow.print()
     printWindow.close()
     
     setNotification({
@@ -735,6 +735,28 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value)
     setCurrentPage(1)
+  }
+
+  const getSortIcon = (key: keyof User) => {
+    if (sortField !== key) {
+      return (
+        <span className="inline-flex flex-col">
+          <ChevronUp className="w-3 h-3 text-blue-200" />
+          <ChevronDown className="w-3 h-3 text-blue-200" />
+        </span>
+      )
+    }
+    return sortDirection === 'asc' ? (
+      <span className="inline-flex flex-col">
+        <ChevronUp className="w-3 h-3 text-white" />
+        <ChevronDown className="w-3 h-3 text-blue-200" />
+      </span>
+    ) : (
+      <span className="inline-flex flex-col">
+        <ChevronUp className="w-3 h-3 text-blue-200" />
+        <ChevronDown className="w-3 h-3 text-white" />
+      </span>
+    )
   }
 
   if (!isOpen) return null
@@ -1245,18 +1267,16 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                       Actions
                     </th>
                     {getSelectedFieldsData().map((field) => (
-                      <th 
+                    <th 
                         key={field.key}
-                        className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                      className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
                         onClick={() => handleSort(field.key)}
-                      >
-                        <div className="flex items-center gap-1">
+                    >
+                      <div className="flex items-center gap-1">
                           {field.label}
-                          {sortField === field.key && (
-                            sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                          )}
-                        </div>
-                      </th>
+                          {getSortIcon(field.key)}
+                      </div>
+                    </th>
                     ))}
                   </tr>
                 </thead>
@@ -1306,7 +1326,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                         {getSelectedFieldsData().map((field) => (
                           <td key={field.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {formatFieldValue(field, user[field.key])}
-                          </td>
+                        </td>
                         ))}
                       </tr>
                     ))
