@@ -96,6 +96,8 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const [roles, setRoles] = useState<Role[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
   const [groups, setGroups] = useState<Array<{ id: string; name: string }>>([])
+  const [allCompanies, setAllCompanies] = useState<Company[]>([])
+  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -191,6 +193,24 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     }
   }, [isOpen])
 
+  // Filter companies when group changes
+  useEffect(() => {
+    if (!formData.group) {
+      setFilteredCompanies(allCompanies)
+      return
+    }
+
+    const filtered = allCompanies.filter(company => 
+      company.group_id?.toString() === formData.group
+    )
+    setFilteredCompanies(filtered)
+    
+    // Clear company selection if the selected company is not in the filtered list
+    if (formData.spcode && !filtered.some(c => c.id === formData.spcode)) {
+      setFormData(prev => ({ ...prev, spcode: '' }))
+    }
+  }, [formData.group, allCompanies])
+
   const fetchUsers = async () => {
     try {
       setLoading(true)
@@ -228,6 +248,8 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       if (response.ok) {
         const data = await response.json()
         setCompanies(data)
+        setAllCompanies(data)
+        setFilteredCompanies(data)
       } else {
         console.error('Failed to fetch companies')
       }
@@ -1124,10 +1146,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                       <select
                         value={formData.spcode}
                         onChange={(e) => setFormData({ ...formData, spcode: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          formData.group === '' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                        }`}
+                        disabled={formData.group === ''}
                       >
-                        <option value="">Select Company</option>
-                        {companies.map(company => (
+                        <option value="">
+                          {formData.group === '' 
+                            ? 'Select a Group first' 
+                            : filteredCompanies.length === 0 
+                              ? 'No companies in this group' 
+                              : 'Select Company'
+                          }
+                        </option>
+                        {filteredCompanies.map(company => (
                           <option key={company.id} value={company.id}>
                             {company.name}
                           </option>
