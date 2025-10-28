@@ -593,7 +593,7 @@ export default function FleetDashboard() {
           return (
             <div key={index} className={`p-6 rounded-2xl ${
               themeMode === 'dark' 
-                ? 'bg-navy-800' 
+                ? 'bg-navy-900' 
                 : 'bg-white'
             }`}>
               <div className="flex items-center">
@@ -641,7 +641,7 @@ getBrandColor(themeColor)
           {/* Monthly Fuel Expenses Chart */}
           <div className={`p-6 rounded-2xl mb-6 h-96 ${
             themeMode === 'dark' 
-              ? 'bg-navy-800' 
+              ? 'bg-navy-900' 
               : 'bg-white'
           }`}>
             <div className="flex items-center justify-between mb-6">
@@ -745,7 +745,7 @@ getBrandColor(themeColor)
             {/* Maintenance Due */}
           <div className={`p-6 rounded-2xl ${
               themeMode === 'dark' 
-              ? 'bg-navy-800 border-navy-700' 
+              ? 'bg-navy-900 border-navy-800' 
                 : 'bg-white border-gray-200'
           }`}>
               <div className="flex items-center justify-between mb-3">
@@ -836,7 +836,7 @@ getBrandColor(themeColor)
             {/* Reminders Due */}
           <div className={`p-6 rounded-2xl  ${
               themeMode === 'dark' 
-              ? 'bg-navy-800 border-navy-700' 
+              ? 'bg-navy-900 border-navy-800' 
                 : 'bg-white border-gray-200'
           }`}>
               <div className="flex items-center justify-between mb-3">
@@ -943,7 +943,7 @@ getBrandColor(themeColor)
         <div className="lg:col-span-1 space-y-6">
           {/* Pie Chart Section */}
           <div className={`p-6 rounded-2xl ${
-            themeMode === 'dark' ? 'bg-navy-800' : 'bg-white'
+            themeMode === 'dark' ? 'bg-navy-900' : 'bg-white'
           }`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-semibold ${themeMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -1167,7 +1167,7 @@ getBrandColor(themeColor)
           {/* Recent Trips Section */}
           <div className={`p-6 rounded-2xl h-[500px] flex flex-col ${
             themeMode === 'dark' 
-              ? 'bg-navy-800' 
+              ? 'bg-navy-900' 
               : 'bg-white'
           }`}>
             {/* Header */}
@@ -1300,7 +1300,7 @@ getBrandColor(themeColor)
           {/* Recent Alerts Section */}
           <div className={`p-6 rounded-2xl ${
             themeMode === 'dark' 
-              ? 'bg-navy-800' 
+              ? 'bg-navy-900' 
               : 'bg-white'
           }`}>
             {/* Header */}
