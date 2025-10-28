@@ -172,7 +172,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
   };
 
   return (
-    <nav className="fixed top-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]" style={{
+    <nav className={`fixed top-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl p-2 backdrop-blur-xl ${
+      themeMode === 'dark' ? 'bg-navy-800/80' : 'bg-white/60'
+    }`} style={{
       left: isSidebarCollapsed ? '64px' : '256px',
       right: '0'
     }}>
@@ -180,8 +182,12 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
         {/* Header text removed - now only on pages */}
       </div>
 
-      <div className="relative mt-[3px] flex h-[61px] w-[550px] flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none md:w-[570px] md:flex-grow-0 md:gap-1 xl:w-[570px] xl:gap-2">
-        <form onSubmit={handleSearch} className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[300px]">
+      <div className={`relative mt-[3px] flex h-[61px] w-[550px] flex-grow items-center justify-around gap-2 rounded-full px-2 py-2 shadow-xl shadow-shadow-500 md:w-[570px] md:flex-grow-0 md:gap-1 xl:w-[570px] xl:gap-2 ${
+        themeMode === 'dark' ? 'bg-navy-700' : 'bg-white'
+      }`}>
+        <form onSubmit={handleSearch} className={`flex h-full items-center rounded-full xl:w-[300px] ${
+          themeMode === 'dark' ? 'bg-navy-800 text-white' : 'bg-lightPrimary text-navy-700'
+        }`}>
           <p className="pl-3 pr-2 text-xl">
             <FiSearch className="h-4 w-4 text-gray-400 dark:text-white" />
           </p>
@@ -190,7 +196,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
             placeholder="Vehicle or Driver (Reg No, License No)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit xl:w-[290px]"
+            className={`block h-full w-full rounded-full text-sm font-medium outline-none placeholder:!text-gray-400 sm:w-fit xl:w-[290px] ${
+              themeMode === 'dark' ? 'bg-navy-800 text-white placeholder:!text-white' : 'bg-lightPrimary text-navy-700'
+            }`}
           />
         </form>
         <span
@@ -206,7 +214,7 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
             onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
             className="cursor-pointer relative"
           >
-            <IoMdNotificationsOutline className="h-4 w-4 text-gray-600 dark:text-white" />
+            <IoMdNotificationsOutline className={`h-4 w-4 ${themeMode === 'dark' ? 'text-white' : 'text-gray-600'}`} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 text-xs font-semibold text-white bg-red-600 rounded-full">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -302,19 +310,19 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
         {/* Info */}
         <div className="relative">
           <button className="cursor-pointer">
-            <IoMdInformationCircleOutline className="h-4 w-4 text-gray-600 dark:text-white" />
+            <IoMdInformationCircleOutline className={`h-4 w-4 ${themeMode === 'dark' ? 'text-white' : 'text-gray-600'}`} />
           </button>
         </div>
 
         {/* Dark mode toggle */}
         <div
-          className="cursor-pointer text-gray-600"
+          className={`cursor-pointer ${themeMode === 'dark' ? 'text-white' : 'text-gray-600'}`}
           onClick={toggleThemeMode}
         >
           {themeMode === 'dark' ? (
-            <RiSunFill className="h-4 w-4 text-gray-600 dark:text-white" />
+            <RiSunFill className="h-4 w-4" />
           ) : (
-            <RiMoonFill className="h-4 w-4 text-gray-600 dark:text-white" />
+            <RiMoonFill className="h-4 w-4" />
           )}
         </div>
 

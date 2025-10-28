@@ -131,7 +131,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
         </div>
         
         {/* Page Content */}
-        <main className={`flex-1 p-6 pt-28 overflow-hidden ${themeMode === 'dark' ? 'bg-navy-900' : 'bg-lightPrimary'}`} style={{
+        <main className={`flex-1 p-6 pt-28 overflow-hidden ${themeMode === 'dark' ? 'bg-navy-800' : 'bg-lightPrimary'}`} style={{
           width: '100%',
           maxWidth: '100%',
           overflowX: 'hidden',
