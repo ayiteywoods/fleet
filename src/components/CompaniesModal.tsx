@@ -458,13 +458,16 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Group
                     </label>
-                    <input
-                      type="number"
+                    <select
                       value={formData.group_id || ''}
                       onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter group id"
-                    />
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select Group</option>
+                      {groups.map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
                   </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
