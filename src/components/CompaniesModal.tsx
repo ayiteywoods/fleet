@@ -102,9 +102,33 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   })
 
   useEffect(() => {
-    fetchCompanies()
-    fetchGroups()
-  }, [])
+    if (isOpen) {
+      fetchCompanies()
+      fetchGroups()
+    }
+  }, [isOpen])
+
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAddForm(false)
+      setEditingCompany(null)
+      setViewingCompany(null)
+      setFormData({
+        name: '',
+        location: '',
+        loc_code: '',
+        phone: '',
+        description: '',
+        group_id: '',
+        email: '',
+        address: '',
+        contact_person: '',
+        contact_phone: '',
+        status: ''
+      })
+    }
+  }, [isOpen])
   const fetchGroups = async () => {
     try {
       const res = await fetch('/api/groups')

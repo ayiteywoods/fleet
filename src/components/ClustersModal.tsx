@@ -57,6 +57,19 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
     }
   }, [isOpen])
 
+  // Reset form data when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowAddForm(false)
+      setEditingCluster(null)
+      setFormData({
+        name: '',
+        description: '',
+        notes: ''
+      })
+    }
+  }, [isOpen])
+
   const fetchClusters = async () => {
     try {
       setLoading(true)
