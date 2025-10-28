@@ -72,6 +72,21 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  // Close mobile sidebar on route change or when viewport becomes desktop
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     // Set current route based on pathname
     const routeMap: { [key: string]: string } = {
@@ -140,7 +155,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${
         isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
-      }`} style={{
+      } ${isMobileSidebarOpen ? 'overflow-hidden' : ''}`} style={{
         width: '100%',
         maxWidth: '100%',
         overflowX: 'hidden',
