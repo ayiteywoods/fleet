@@ -136,14 +136,15 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
           : 'bg-white border-gray-200'
       }`}>
         <div className="flex items-center">
-          {!isCollapsed && (
+          {/* Always keep logo visible on mobile and when expanded on desktop */}
+          {(!isCollapsed || typeof window !== 'undefined' && window.innerWidth < 1024) && (
             <img 
               src="/nerafleet_logo.png" 
               alt="neraFleet Logo" 
               className="h-8 w-auto"
             />
           )}
-          {isCollapsed && (
+          {isCollapsed && !(typeof window !== 'undefined' && window.innerWidth < 1024) && (
             <div className={`w-8 h-7 rounded-lg flex items-center justify-center ${getBrandBgColor(themeColor)}`}>
               <span className="text-white font-bold text-sm">NF</span>
             </div>

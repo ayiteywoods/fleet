@@ -150,7 +150,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       </div>
       
       {/* Mobile Sidebar */}
-      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ${
+      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 w-64 ${
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <Sidebar 

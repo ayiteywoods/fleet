@@ -172,12 +172,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
   };
 
   return (
-    <nav className={`fixed top-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl p-2 backdrop-blur-xl ${
+    <nav className={`fixed top-0 left-0 right-0 z-50 flex flex-row flex-wrap items-center justify-between rounded-xl p-2 backdrop-blur-xl ${
       themeMode === 'dark' ? 'bg-navy-800/80' : 'bg-white/60'
-    }`} style={{
-      left: typeof window !== 'undefined' && window.innerWidth < 1024 ? '0' : (isSidebarCollapsed ? '64px' : '256px'),
-      right: '0'
-    }}>
+    } ${isSidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
       <div className="ml-6">
         {/* Header text removed - now only on pages */}
       </div>
