@@ -52,6 +52,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, desc, status } = body
 
+    if (!name) {
+      return NextResponse.json({ error: 'name is required' }, { status: 400 })
+    }
+
+    // If a group with the same name exists, return it instead of failing
+    const existing = await prisma.groups.findFirst({ where: { name } })
+    if (existing) {
+      return NextResponse.json(serializeBigInt(existing), { status: 200 })
+    }
+
     const group = await prisma.groups.create({
       data: {
         name: name || '',
@@ -62,12 +72,13 @@ export async function POST(request: NextRequest) {
       }
     })
     return NextResponse.json(serializeBigInt(group), { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating group:', error)
-    return NextResponse.json(
-      { error: 'Failed to create group' },
-      { status: 500 }
-    )
+    if (error?.code === 'P2002') {
+      // Unique constraint violation on id or other fields
+      return NextResponse.json({ error: 'Group already exists' }, { status: 409 })
+    }
+    return NextResponse.json({ error: 'Failed to create group' }, { status: 500 })
   }
 }
 
