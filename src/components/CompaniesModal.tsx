@@ -79,6 +79,7 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
     { key: 'address', label: 'Address' },
     { key: 'contact_person', label: 'Contact Person' },
     { key: 'contact_phone', label: 'Contact Phone' },
+    { key: 'group_id', label: 'Group' },
     { key: 'status', label: 'Status' },
     { key: 'description', label: 'Description' },
     { key: 'created_at', label: 'Created At' },
@@ -434,6 +435,18 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                 </h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Group
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.group_id || ''}
+                      onChange={(e) => setFormData({ ...formData, group_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter group id"
+                    />
+                  </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Company Name *
@@ -834,6 +847,19 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                             </div>
                           </th>
                         )}
+                        {selectedFields.includes('group_id') && (
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
+                            onClick={() => handleSort('group_id')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Group
+                              {sortField === 'group_id' && (
+                                sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </th>
+                        )}
                         {selectedFields.includes('contact_person') && (
                           <th 
                             className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b cursor-pointer hover:bg-gray-500 dark:hover:bg-gray-500"
@@ -982,6 +1008,11 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
                             {selectedFields.includes('email') && (
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {company.email}
+                              </td>
+                            )}
+                            {selectedFields.includes('group_id') && (
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {company.group_id ?? '—'}
                               </td>
                             )}
                             {selectedFields.includes('contact_person') && (
