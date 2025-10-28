@@ -556,7 +556,7 @@ export default function UserGroupIconPage() {
         {/* Header */}
         <div className="flex items-center mb-6">
           <div className="flex-shrink-0">
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-300">User Management</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-white">User Management</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">User accounts and permissions management</p>
           </div>
           <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
