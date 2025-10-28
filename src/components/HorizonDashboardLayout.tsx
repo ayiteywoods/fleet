@@ -72,6 +72,14 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
+  const handleHamburger = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsMobileSidebarOpen(prev => !prev);
+    } else {
+      setIsSidebarCollapsed(prev => !prev);
+    }
+  };
+
   // Close mobile sidebar on route change or when viewport becomes desktop
   useEffect(() => {
     setIsMobileSidebarOpen(false);
@@ -166,7 +174,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
         {/* Horizon UI Navbar */}
         <div className="z-50">
           <HorizonNavbar
-            onOpenSidenav={toggleMobileSidebar}
+            onOpenSidenav={handleHamburger}
             brandText={currentRoute}
             isSidebarCollapsed={isSidebarCollapsed}
             user={user}
