@@ -135,7 +135,7 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
       {/* Overlay for mobile sidebar */}
       {isMobileSidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 lg:hidden bg-black/20 backdrop-blur-sm"
+          className="fixed inset-0 z-40 lg:hidden bg-black/30"
           onClick={toggleMobileSidebar}
           aria-hidden="true"
         />
