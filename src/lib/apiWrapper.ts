@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 import { createDatabaseErrorResponse } from './dbErrorHandler'
 import { verifyToken } from './auth'
+import { getUserCompany, shouldReturnEmpty, isAdmin } from './companyFilter'
 
 // Mock data generators for fallback
 const mockVehicles = [
@@ -313,23 +314,24 @@ export const vehicleHandlers = {
     
     // Apply company filtering for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Filter by company name (most vehicles have this field populated)
-          whereClause.company_name = company.name
-        } else {
+          whereClause.company_name = companyInfo.companyName
+        } else if (companyInfo.spcode) {
           // Fallback to spcode if company name not found
-          whereClause.spcode = BigInt(user.spcode)
+          whereClause.spcode = companyInfo.spcode
         }
       }
     }
@@ -443,21 +445,22 @@ export const driverHandlers = {
     
     // Apply company scoping for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for maintenance for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Get vehicles for this company
           const companyVehicles = await prisma.vehicles.findMany({
-            where: { company_name: company.name },
+            where: { company_name: companyInfo.companyName },
             select: { id: true }
           })
           
@@ -584,22 +587,21 @@ export const fleetPositionHandlers = {
     // Get user's company filter
     let whereClause: any = {}
     
-    // Check if user is admin
-    const roleLower = (user.role || '').toLowerCase()
-    const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+    // If user has no company assigned, return empty results
+    if (shouldReturnEmpty(user)) {
+      console.log('🔒 User has no company assigned - returning empty results')
+      return NextResponse.json([])
+    }
+    
+    // Get user's company info
+    const companyInfo = await getUserCompany(user)
     
     // Apply company scoping for non-admin users
-    if (!isAdmin && user.spcode) {
-      // Get company name from companies table
-      const company = await prisma.companies.findUnique({
-        where: { id: BigInt(user.spcode) },
-        select: { name: true }
-      }).catch(() => null)
-      
-      if (company?.name) {
+    if (companyInfo && !isAdmin(user)) {
+      if (companyInfo.companyName) {
         // Get vehicles by company name
         const companyVehicles = await prisma.vehicles.findMany({
-          where: { company_name: company.name },
+          where: { company_name: companyInfo.companyName },
           select: { uid: true }
         })
         whereClause.unit_uid = {
@@ -700,21 +702,21 @@ export const recentTripsHandlers = {
     // Get user's company filter
     let whereClause: any = {}
     
-    // Check if user is admin
-    const roleLower = (user.role || '').toLowerCase()
-    const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+    // If user has no company assigned, return empty results
+    if (shouldReturnEmpty(user)) {
+      console.log('🔒 User has no company assigned - returning empty results')
+      return NextResponse.json([])
+    }
     
-    if (!isAdmin && user.spcode) {
-      // Get company name from companies table
-      const company = await prisma.companies.findUnique({
-        where: { id: BigInt(user.spcode) },
-        select: { name: true }
-      }).catch(() => null)
-      
-      if (company?.name) {
+    // Get user's company info
+    const companyInfo = await getUserCompany(user)
+    
+    // Apply company scoping for non-admin users
+    if (companyInfo && !isAdmin(user)) {
+      if (companyInfo.companyName) {
         // Get vehicles by company name
         const companyVehicles = await prisma.vehicles.findMany({
-          where: { company_name: company.name },
+          where: { company_name: companyInfo.companyName },
           select: { uid: true }
         })
         whereClause.unit_uid = {
@@ -925,21 +927,22 @@ export const insuranceHandlers = {
     
     // Apply company scoping for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for insurance for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for insurance for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Get vehicles for this company
           const companyVehicles = await prisma.vehicles.findMany({
-            where: { company_name: company.name },
+            where: { company_name: companyInfo.companyName },
             select: { id: true }
           })
           
@@ -1123,21 +1126,22 @@ export const alertsHandlers = {
     
     // Apply company scoping for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for alerts for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for alerts for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Get vehicles for this company
           const companyVehicles = await prisma.vehicles.findMany({
-            where: { company_name: company.name },
+            where: { company_name: companyInfo.companyName },
             select: { uid: true }
           })
           
@@ -1307,21 +1311,22 @@ export const fuelLogsHandlers = {
     
     // Apply company scoping for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for fuel logs for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for fuel logs for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Get vehicles for this company
           const companyVehicles = await prisma.vehicles.findMany({
-            where: { company_name: company.name },
+            where: { company_name: companyInfo.companyName },
             select: { id: true }
           })
           

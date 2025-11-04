@@ -110,20 +110,8 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     role: '',
     password: '',
     is_active: true,
-    region: '',
-    district: '',
     spcode: '',
-    group: '',
-    license_number: '',
-    license_category: '',
-    license_expiry: '',
-    specialization: '',
-    user_code: '',
-    user_type: '',
-    user_level: '',
-    type: '',
-    full_name: '',
-    district_id: ''
+    group: ''
   })
   const [notification, setNotification] = useState({
     isOpen: false,
@@ -205,20 +193,8 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
         role: '',
         password: '',
         is_active: true,
-        region: '',
-        district: '',
         spcode: '',
-        group: '',
-        license_number: '',
-        license_category: '',
-        license_expiry: '',
-        specialization: '',
-        user_code: '',
-        user_type: '',
-        user_level: '',
-        type: '',
-        full_name: '',
-        district_id: ''
+        group: ''
       })
     }
   }, [isOpen])
@@ -400,20 +376,8 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       role: user.role,
       password: '', // Don't populate password for security
       is_active: user.is_active,
-      region: user.region || '',
-      district: user.district || '',
       spcode: user.spcode?.toString() || '',
-      group: user.group?.toString() || '',
-      license_number: user.license_number || '',
-      license_category: user.license_category || '',
-      license_expiry: user.license_expiry || '',
-      specialization: user.specialization || '',
-      user_code: user.user_code || '',
-      user_type: user.user_type || '',
-      user_level: user.user_level || '',
-      type: user.type || '',
-      full_name: user.full_name || '',
-      district_id: user.district_id?.toString() || ''
+      group: user.group?.toString() || ''
     })
     setShowAddForm(true)
   }
@@ -1132,30 +1096,6 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Region
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.region}
-                        onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter region"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        District
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.district}
-                        onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter district"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Group
                       </label>
                       <select
@@ -1197,125 +1137,6 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        License Number
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.license_number}
-                        onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter license number"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        License Category
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.license_category}
-                        onChange={(e) => setFormData({ ...formData, license_category: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter license category"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        License Expiry
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.license_expiry}
-                        onChange={(e) => setFormData({ ...formData, license_expiry: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Specialization
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.specialization}
-                        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter specialization"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        User Code
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.user_code}
-                        onChange={(e) => setFormData({ ...formData, user_code: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter user code"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        User Type
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.user_type}
-                        onChange={(e) => setFormData({ ...formData, user_type: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter user type"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        User Level
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.user_level}
-                        onChange={(e) => setFormData({ ...formData, user_level: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter user level"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Type
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter type"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.full_name}
-                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter full name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        District ID
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.district_id}
-                        onChange={(e) => setFormData({ ...formData, district_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter district ID"
-                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-3">

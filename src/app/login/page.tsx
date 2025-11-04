@@ -21,11 +21,8 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // Determine if input is email or phone
-      const isEmail = formData.emailOrPhone.includes('@')
-      const requestData = isEmail 
-        ? { email: formData.emailOrPhone, password: formData.password }
-        : { phone: formData.emailOrPhone, password: formData.password }
+      // Send a single identifier that can be email/phone/username
+      const requestData = { identifier: formData.emailOrPhone, password: formData.password }
 
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -40,6 +37,10 @@ export default function LoginPage() {
       if (response.ok) {
         // Store token in localStorage
         localStorage.setItem('token', data.token)
+        // Store password only in session storage for background tracking checks
+        try {
+          sessionStorage.setItem('lastLoginPassword', formData.password)
+        } catch {}
         router.push('/')
       } else {
         setError(data.error || 'Login failed')

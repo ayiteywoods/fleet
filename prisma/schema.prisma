@@ -713,6 +713,7 @@ model users {
   picture           String?   @db.VarChar(255)
   wc_id             BigInt?
   district_id       Int?
+  has_external_access Boolean? @default(false)
 }
 
 model vehicle_dispatch {

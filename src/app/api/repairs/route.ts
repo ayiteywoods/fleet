@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
+import { getUserCompany, shouldReturnEmpty, isAdmin } from '@/lib/companyFilter'
 
 // GET - Fetch all repair records
 export async function GET(request: NextRequest) {
@@ -23,21 +24,22 @@ export async function GET(request: NextRequest) {
     
     // Apply company scoping for non-admin users
     if (user) {
-      const roleLower = (user.role || '').toLowerCase()
-      const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
+      // If user has no company assigned, return empty results
+      if (shouldReturnEmpty(user)) {
+        console.log('🔒 User has no company assigned - returning empty results')
+        return NextResponse.json([])
+      }
       
-      if (!isAdmin && user.spcode) {
-        console.log('🔒 Applying company filter for repairs for user:', user.name, 'spcode:', user.spcode)
-        // First, get the company name from companies table using spcode
-        const company = await prisma.companies.findUnique({
-          where: { id: BigInt(user.spcode) },
-          select: { name: true }
-        }).catch(() => null)
+      // Get user's company info
+      const companyInfo = await getUserCompany(user)
+      
+      if (companyInfo && !isAdmin(user)) {
+        console.log('🔒 Applying company filter for repairs for user:', user.name, 'spcode:', companyInfo.spcode)
         
-        if (company?.name) {
+        if (companyInfo.companyName) {
           // Get vehicles for this company
           const companyVehicles = await prisma.vehicles.findMany({
-            where: { company_name: company.name },
+            where: { company_name: companyInfo.companyName },
             select: { id: true }
           })
           

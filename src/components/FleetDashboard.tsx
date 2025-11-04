@@ -307,8 +307,8 @@ export default function FleetDashboard() {
         const token = localStorage.getItem('token')
         const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
         
-        // Fetch vehicles data
-        const vehiclesResponse = await fetch('/api/vehicles', { headers })
+        // Fetch vehicles data (add cache-buster)
+        const vehiclesResponse = await fetch(`/api/vehicles?t=${Date.now()}`, { headers })
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json()
           
@@ -330,11 +330,17 @@ export default function FleetDashboard() {
           setOnRoadCount(onRoad)
           setOffRoadCount(offRoad)
         } else {
-          const errorData = await vehiclesResponse.json()
+          let errorPayload: any = null
+          try {
+            const text = await vehiclesResponse.text()
+            errorPayload = text ? JSON.parse(text) : null
+          } catch {
+            errorPayload = null
+          }
           console.error('Vehicles API Error:', {
             status: vehiclesResponse.status,
             statusText: vehiclesResponse.statusText,
-            error: errorData,
+            error: errorPayload,
             url: '/api/vehicles'
           })
         }

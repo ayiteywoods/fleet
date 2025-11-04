@@ -10,6 +10,7 @@ export interface UserPayload {
   name: string
   role: string
   spcode?: string | null
+  hasLiveTracking?: boolean
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -32,15 +33,23 @@ export function verifyToken(token: string): UserPayload | null {
   }
 }
 
-export async function authenticateUser(emailOrPhone: string, password: string) {
-  // Check if input is email or phone number
-  const isEmail = emailOrPhone.includes('@')
-  
-  const user = await prisma.users.findFirst({
-    where: isEmail 
-      ? { email: emailOrPhone, is_active: true }
-      : { phone: emailOrPhone, is_active: true }
-  })
+export async function authenticateUser(identifier: string, password: string) {
+  // Accept email, phone, or username (stored as full_name or name)
+  const isEmail = identifier.includes('@')
+  const isLikelyPhone = /^[+]?\d[\d\s-]{3,}$/.test(identifier)
+
+  const where = isEmail
+    ? { email: identifier, is_active: true }
+    : isLikelyPhone
+      ? { phone: identifier, is_active: true }
+      : { OR: [
+            { full_name: identifier },
+            { name: identifier },
+            { email: identifier },
+            { phone: identifier },
+          ], is_active: true }
+
+  const user = await prisma.users.findFirst({ where })
 
   if (!user) {
     return null

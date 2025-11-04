@@ -47,7 +47,17 @@ const HorizonDashboardLayout = ({ children }: HorizonDashboardLayoutProps) => {
     .then(data => {
       console.log('Auth success:', data);
       if (data.user) {
-        setUser(data.user);
+        // Ensure hasLiveTracking is explicitly set (not undefined/null)
+        const userData = {
+          ...data.user,
+          hasLiveTracking: data.user.hasLiveTracking === true  // Explicitly boolean
+        }
+        setUser(userData);
+        console.log('[HorizonDashboardLayout] User loaded:', { 
+          name: userData.name, 
+          role: userData.role, 
+          hasLiveTracking: userData.hasLiveTracking 
+        });
       } else {
         console.log('No user in response:', data);
         localStorage.removeItem('token');

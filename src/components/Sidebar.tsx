@@ -28,6 +28,7 @@ interface SidebarProps {
   user?: {
     name: string
     role: string
+    hasLiveTracking?: boolean
   }
 }
 
@@ -98,13 +99,60 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     }
   ]
 
-  const additionalItems = [
-    {
+  // If no user, definitely don't show Live Tracking
+  if (!user) {
+    console.log('[Sidebar] No user object - hiding Live Tracking')
+  }
+
+  // Check if user is super admin
+  const isSuperAdmin = user?.role ? (
+    user.role.toLowerCase() === 'super admin' ||
+    user.role.toLowerCase() === 'superadmin' ||
+    user.role.toLowerCase() === 'super_user' ||
+    user.role.toLowerCase() === 'superuser'
+  ) : false
+
+  // Only show Live Tracking if user explicitly has access OR is super admin
+  // hasLiveTracking must be strictly true (not just truthy)
+  // Treat undefined, null, string 'true', or any non-boolean value as false
+  const hasLiveTrackingValue = user?.hasLiveTracking
+  const hasExplicitAccess = user && hasLiveTrackingValue === true && typeof hasLiveTrackingValue === 'boolean'
+  const shouldShowLiveTracking = isSuperAdmin || hasExplicitAccess
+  
+  // Debug logging - ALWAYS log to help debug
+  console.log('[Sidebar] Live Tracking visibility check:', {
+    isSuperAdmin,
+    hasExplicitAccess,
+    hasLiveTrackingValue: hasLiveTrackingValue,
+    hasLiveTrackingType: typeof hasLiveTrackingValue,
+    shouldShow: shouldShowLiveTracking,
+    role: user?.role,
+    userHasLiveTracking: user?.hasLiveTracking
+  })
+  
+  // Extra safeguard: if shouldShowLiveTracking is false, ensure it's really false
+  if (!shouldShowLiveTracking && !isSuperAdmin) {
+    console.log('[Sidebar] ❌ HIDING Live Tracking - user does not have access')
+  }
+
+  // Build additional items array - explicitly exclude Live Tracking if user doesn't have access
+  const additionalItems = []
+  
+  // Only add Live Tracking if user explicitly has access OR is super admin
+  if (shouldShowLiveTracking) {
+    console.log('[Sidebar] ✅ SHOWING Live Tracking - user has access')
+    additionalItems.push({
       name: 'Live Tracking',
       href: '/tracking',
       icon: MapPinIcon,
       active: pathname === '/tracking'
-    },
+    })
+  } else {
+    console.log('[Sidebar] ❌ NOT showing Live Tracking - user does not have access')
+  }
+  
+  // Add other items
+  additionalItems.push(
     {
       name: 'Reports',
       href: '/reports',
@@ -123,7 +171,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       expanded: expandedSections.settings,
       onToggle: () => toggleSection('settings')
     }
-  ]
+  )
 
   return (
     <div className={`transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-screen fixed left-0 top-0 z-50 flex flex-col ${

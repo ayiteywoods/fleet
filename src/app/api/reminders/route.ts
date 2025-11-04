@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
+import { getUserCompany, shouldReturnEmpty, isAdmin } from '@/lib/companyFilter'
 
 // GET - Fetch all reminders (items expiring within 2 weeks)
 export async function GET(request: NextRequest) {
@@ -8,18 +9,22 @@ export async function GET(request: NextRequest) {
     // Resolve user and company scope
     const token = request.headers.get('authorization')?.replace('Bearer ', '')
     let scopedCompanyName: string | null = null
+    let user: any = null
+    
     if (token) {
-      const user: any = verifyToken(token)
+      user = verifyToken(token)
       if (user) {
-        const roleLower = (user.role || '').toLowerCase()
-        const isAdmin = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'superadmin' || roleLower === 'super_user' || roleLower === 'superuser'
-        if (!isAdmin && user.spcode) {
-          // Find company name by companies.id == spcode
-          const company = await prisma.companies.findUnique({
-            where: { id: BigInt(user.spcode) },
-            select: { name: true }
-          }).catch(() => null)
-          scopedCompanyName = company?.name || null
+        // If user has no company assigned, return empty results
+        if (shouldReturnEmpty(user)) {
+          console.log('🔒 User has no company assigned - returning empty results')
+          return NextResponse.json([])
+        }
+        
+        // Get user's company info
+        const companyInfo = await getUserCompany(user)
+        
+        if (companyInfo && !isAdmin(user)) {
+          scopedCompanyName = companyInfo.companyName || null
         }
       }
     }

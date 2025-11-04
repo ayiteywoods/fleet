@@ -40,7 +40,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     })
     .then(data => {
       if (data.user) {
-        setUser(data.user)
+        // Ensure hasLiveTracking is explicitly set (not undefined/null)
+        const userData = {
+          ...data.user,
+          hasLiveTracking: data.user.hasLiveTracking === true  // Explicitly boolean
+        }
+        setUser(userData)
+        console.log('[DashboardLayout] User loaded:', { 
+          name: userData.name, 
+          role: userData.role, 
+          hasLiveTracking: userData.hasLiveTracking 
+        })
       } else {
         localStorage.removeItem('token')
         router.push('/login')
@@ -55,6 +65,43 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       setIsLoading(false)
     })
   }, [router])
+
+  // Periodically re-verify external tracking access using session-stored password
+  useEffect(() => {
+    if (!user) return
+
+    let cancelled = false
+    const checkNow = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const password = typeof window !== 'undefined' ? sessionStorage.getItem('lastLoginPassword') : null
+        if (!token || !password) return
+        const res = await fetch('/api/auth/check-tracking', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ password })
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && typeof data.hasLiveTracking === 'boolean') {
+          // Always update with the explicit boolean value from the API
+          // This ensures we use the fresh check result, not stale token data
+          setUser((prev: any) => prev ? { ...prev, hasLiveTracking: data.hasLiveTracking } : prev)
+        } else if (!cancelled) {
+          // If the response doesn't have hasLiveTracking, set it to false
+          setUser((prev: any) => prev ? { ...prev, hasLiveTracking: false } : prev)
+        }
+      } catch {}
+    }
+
+    // Run immediately and then every 5 minutes
+    checkNow()
+    const interval = setInterval(checkNow, 5 * 60 * 1000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [user])
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
