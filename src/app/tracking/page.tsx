@@ -11,6 +11,11 @@ export default function TrackingRedirectPage() {
   const [error, setError] = useState<string>('')
   const [manualPw, setManualPw] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const actionUrl = useMemo(() => 'https://neragpstracking.com/Account/LogOn?ReturnUrl=/Config', [])
 
@@ -31,15 +36,16 @@ export default function TrackingRedirectPage() {
             return
           }
         }
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const headers = getAuthHeaders()
+        const token = headers.Authorization?.replace('Bearer ', '') || null
         const lastPw = typeof window !== 'undefined' ? sessionStorage.getItem('lastLoginPassword') : null
-        if (!token) {
+        if (!headers.Authorization || !token) {
           setIsLoading(false)
           setError('Not authenticated. Please log in again.')
           return
         }
         // Get username from token via /api/auth/me
-        const me = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+        const me = await fetch('/api/auth/me', { headers }).then(r => r.json())
         const externalUser = me?.user?.name || ''
         if (!externalUser) {
           setIsLoading(false)

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Printer, ChevronUp, ChevronDown, Eye, User, Mail, Phone, Shield, Search, Settings } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import Notification from './Notification'
 import ViewUserModal from './ViewUserModal'
+import { usePermissions } from '@/hooks/usePermissions'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -92,6 +93,7 @@ interface UsersModalProps {
 
 export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const { themeMode } = useTheme()
+  const { user: currentUser } = usePermissions()
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
@@ -133,6 +135,18 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     'name', 'email', 'phone', 'role', 'is_active', 'created_at'
   ])
 
+  const normalizedRole = currentUser?.role?.toLowerCase() || ''
+  const isCompanyAdmin =
+    normalizedRole.includes('company') && normalizedRole.includes('admin')
+  const [defaultGroup, setDefaultGroup] = useState<string>('')
+  const [defaultCompany, setDefaultCompany] = useState<string>('')
+
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // Available fields for the table
   const availableFields = [
     { key: 'name', label: 'Full Name', type: 'text' },
@@ -173,6 +187,12 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
   // Fetch users, roles, and companies
   useEffect(() => {
+    if (currentUser?.group !== undefined && currentUser?.group !== null) {
+      setDefaultGroup(String(currentUser.group))
+    }
+  }, [currentUser?.group])
+
+  useEffect(() => {
     if (isOpen) {
       fetchUsers()
       fetchRoles()
@@ -199,6 +219,59 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (!isCompanyAdmin || !showAddForm || editingUser) return
+
+    let resolvedGroup = defaultGroup
+    if (!resolvedGroup) {
+      if (currentUser?.group !== undefined && currentUser?.group !== null) {
+        resolvedGroup = String(currentUser.group)
+      } else if (currentUser?.spcode) {
+        const match = allCompanies.find(
+          (company: any) =>
+            company.id?.toString() === currentUser.spcode?.toString()
+        )
+        if (match?.group_id !== undefined && match?.group_id !== null) {
+          resolvedGroup = String(match.group_id)
+        }
+      }
+    }
+
+    let resolvedCompany = defaultCompany
+    if (!resolvedCompany && resolvedGroup) {
+      const preferred = allCompanies.find(
+        (company: any) =>
+          currentUser?.spcode &&
+          company.id?.toString() === currentUser.spcode?.toString() &&
+          company.group_id !== null &&
+          company.group_id?.toString() === resolvedGroup
+      )
+      const fallback = allCompanies.find(
+        (company: any) =>
+          company.group_id !== null &&
+          company.group_id?.toString() === resolvedGroup
+      )
+      resolvedCompany =
+        preferred?.id?.toString() ||
+        fallback?.id?.toString() ||
+        ''
+    }
+
+    if (resolvedGroup) {
+      setDefaultGroup(resolvedGroup)
+    }
+    if (resolvedCompany) {
+      setDefaultCompany(resolvedCompany)
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      role: 'company user',
+      group: resolvedGroup,
+      spcode: resolvedCompany
+    }))
+  }, [isCompanyAdmin, showAddForm, editingUser, currentUser, allCompanies, defaultGroup, defaultCompany])
+
   // Filter companies when group changes
   useEffect(() => {
     // If no group selected, show all subsidiaries
@@ -222,7 +295,9 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/users')
+      const response = await fetch('/api/users', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setUsers(data)
@@ -238,7 +313,9 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/api/roles')
+      const response = await fetch('/api/roles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRoles(data)
@@ -252,12 +329,26 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch('/api/companies')
+      const response = await fetch('/api/companies', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setCompanies(data)
         setAllCompanies(data)
         setFilteredCompanies(data)
+        if (isCompanyAdmin && defaultGroup) {
+          const companyIdsForGroup = data
+            .filter((company: any) => company.group_id != null && company.group_id.toString() === defaultGroup)
+            .map((company: any) => company.id?.toString())
+          if (companyIdsForGroup.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              spcode: companyIdsForGroup[0] || ''
+            }))
+            setDefaultCompany(companyIdsForGroup[0] || '')
+          }
+        }
       } else {
         console.error('Failed to fetch companies')
       }
@@ -268,7 +359,9 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
 
   const fetchGroups = async () => {
     try {
-      const response = await fetch('/api/groups')
+      const response = await fetch('/api/groups', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setGroups(data)
@@ -286,6 +379,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -330,6 +424,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -387,6 +482,7 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
       try {
         const response = await fetch(`/api/users?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()
@@ -738,7 +834,19 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
   }
 
   // Filter and sort users
-  const filteredUsers = users.filter(user =>
+  const scopedUsers = useMemo(() => {
+    if (!currentUser) return users
+    const roleLower = currentUser.role?.toLowerCase() || ''
+    const isCompanyAdmin = roleLower.includes('company') && roleLower.includes('admin')
+    if (isCompanyAdmin) {
+      const creatorId = currentUser.id?.toString()
+      if (!creatorId) return users
+      return users.filter((user) => user.created_by === creatorId)
+    }
+    return users
+  }, [users, currentUser])
+
+  const filteredUsers = scopedUsers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (user.phone && user.phone.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -1052,13 +1160,20 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                           onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                           required
+                          disabled={isCompanyAdmin && !editingUser}
                         >
-                          <option value="">Select Role</option>
-                          {roles.map(role => (
-                            <option key={role.id} value={role.name}>
-                              {role.name}
-                            </option>
-                          ))}
+                          {isCompanyAdmin && !editingUser ? (
+                            <option value="company user">Company User</option>
+                          ) : (
+                            <>
+                              <option value="">Select Role</option>
+                              {roles.map(role => (
+                                <option key={role.id} value={role.name}>
+                                  {role.name}
+                                </option>
+                              ))}
+                            </>
+                          )}
                         </select>
                       </div>
                     </div>
@@ -1096,20 +1211,32 @@ export default function UsersModal({ isOpen, onClose }: UsersModalProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Group
+                        Group {isCompanyAdmin && !editingUser ? '(auto-assigned)' : ''}
                       </label>
-                      <select
-                        value={formData.group}
-                        onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                      >
-                        <option value="">Select Group</option>
-                        {groups.map(group => (
-                          <option key={group.id} value={group.id}>
-                            {group.name}
-                          </option>
-                        ))}
-                      </select>
+                      {isCompanyAdmin && !editingUser ? (
+                        <div className="flex items-center px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+                          {(() => {
+                            const displayGroupId = formData.group || defaultGroup
+                            const groupName = groups.find(
+                              (group) => group.id.toString() === displayGroupId
+                            )?.name
+                            return groupName || 'No group assigned'
+                          })()}
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.group}
+                          onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100"
+                        >
+                          <option value="">Select Group</option>
+                          {groups.map(group => (
+                            <option key={group.id} value={group.id}>
+                              {group.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">

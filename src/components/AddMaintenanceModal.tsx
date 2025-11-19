@@ -58,6 +58,11 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
   })
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [loading, setLoading] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Update vehicle_id when vehicleId prop changes
   useEffect(() => {
@@ -105,10 +110,11 @@ export default function AddMaintenanceModal({ isOpen, onClose, onSubmit, vehicle
   const fetchData = async () => {
     setFetchLoading(true)
     try {
+      const headers = getAuthHeaders()
       const [vehiclesResponse, mechanicsResponse, workshopsResponse] = await Promise.all([
-        fetch('/api/vehicles?simple=true'),
-        fetch('/api/mechanics'),
-        fetch('/api/workshops')
+        fetch('/api/vehicles?simple=true', { headers }),
+        fetch('/api/mechanics', { headers }),
+        fetch('/api/workshops', { headers })
       ])
 
       if (vehiclesResponse.ok) {

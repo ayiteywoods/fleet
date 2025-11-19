@@ -99,6 +99,11 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
   })
   const [showViewModal, setShowViewModal] = useState(false)
   const [selectedDispatch, setSelectedDispatch] = useState<SparePartDispatch | null>(null)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -110,7 +115,9 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
   const fetchDispatches = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/spare-part-dispatch')
+      const response = await fetch('/api/spare-part-dispatch', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setDispatches(data)
@@ -126,7 +133,9 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
 
   const fetchSparePartRequests = async () => {
     try {
-      const response = await fetch('/api/spare-part-request')
+      const response = await fetch('/api/spare-part-request', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSparePartRequests(data)
@@ -153,6 +162,7 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -203,6 +213,7 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ id: editingDispatch?.id, ...formData }),
       })
@@ -295,6 +306,7 @@ export default function SparePartDispatchModal({ isOpen, onClose }: SparePartDis
       try {
         const response = await fetch(`/api/spare-part-dispatch?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

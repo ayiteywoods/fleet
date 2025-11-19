@@ -33,6 +33,11 @@ export default function AddInsuranceModal({ isOpen, onClose, onAdd, vehicleId }:
   })
   const [loading, setLoading] = useState(false)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (vehicleId) {
@@ -67,7 +72,9 @@ export default function AddInsuranceModal({ isOpen, onClose, onAdd, vehicleId }:
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)

@@ -193,6 +193,12 @@ export default function VehicleProfile() {
     title: '',
     message: ''
   })
+
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   const [formData, setFormData] = useState({
     name: '',
     reg_number: '',
@@ -216,7 +222,9 @@ export default function VehicleProfile() {
 
   const fetchMaintenanceData = async () => {
     try {
-      const response = await fetch(`/api/maintenance?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/maintenance?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setMaintenanceData(data)
@@ -228,7 +236,9 @@ export default function VehicleProfile() {
 
   const fetchRepairData = async () => {
     try {
-      const response = await fetch(`/api/repairs?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/repairs?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRepairData(data)
@@ -240,7 +250,9 @@ export default function VehicleProfile() {
 
   const fetchInsuranceData = async () => {
     try {
-      const response = await fetch(`/api/insurance?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/insurance?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setInsuranceData(data)
@@ -252,7 +264,9 @@ export default function VehicleProfile() {
 
   const fetchRoadworthyData = async () => {
     try {
-      const response = await fetch(`/api/roadworthy?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/roadworthy?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRoadworthyData(data)
@@ -264,7 +278,9 @@ export default function VehicleProfile() {
 
   const fetchFuelLogsData = async () => {
     try {
-      const response = await fetch(`/api/fuel-logs?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/fuel-logs?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setFuelLogsData(data)
@@ -276,7 +292,9 @@ export default function VehicleProfile() {
 
   const fetchSensorData = async () => {
     try {
-      const response = await fetch(`/api/sensor-data?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/sensor-data?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSensorData(data)
@@ -298,7 +316,9 @@ export default function VehicleProfile() {
 
   const fetchTrackingData = async () => {
     try {
-      const response = await fetch(`/api/positions-data?vehicle_id=${params.id}`)
+      const response = await fetch(`/api/positions-data?vehicle_id=${params.id}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setTrackingData(data)
@@ -555,7 +575,9 @@ export default function VehicleProfile() {
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
-        const response = await fetch(`/api/vehicles/${params.id}`)
+        const response = await fetch(`/api/vehicles/${params.id}`, {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setVehicle(data)
@@ -573,28 +595,36 @@ export default function VehicleProfile() {
     const fetchDropdownData = async () => {
       try {
         // Fetch vehicle types
-        const typesResponse = await fetch('/api/vehicle-types')
+        const typesResponse = await fetch('/api/vehicle-types', {
+          headers: getAuthHeaders()
+        })
         if (typesResponse.ok) {
           const typesData = await typesResponse.json()
           setVehicleTypes(typesData)
         }
 
         // Fetch vehicle makes
-        const makesResponse = await fetch('/api/vehicle-makes')
+        const makesResponse = await fetch('/api/vehicle-makes', {
+          headers: getAuthHeaders()
+        })
         if (makesResponse.ok) {
           const makesData = await makesResponse.json()
           setVehicleMakes(makesData)
         }
 
         // Fetch subsidiaries
-        const subsidiariesResponse = await fetch('/api/subsidiary')
+        const subsidiariesResponse = await fetch('/api/subsidiary', {
+          headers: getAuthHeaders()
+        })
         if (subsidiariesResponse.ok) {
           const subsidiariesData = await subsidiariesResponse.json()
           setSubsidiaries(subsidiariesData)
         }
 
         // Fetch drivers
-        const driversResponse = await fetch('/api/drivers')
+        const driversResponse = await fetch('/api/drivers', {
+          headers: getAuthHeaders()
+        })
         if (driversResponse.ok) {
           const driversData = await driversResponse.json()
           setDrivers(driversData)
@@ -663,6 +693,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -733,6 +764,7 @@ export default function VehicleProfile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           ...maintenanceData,
@@ -786,6 +818,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updatedData),
       })
@@ -826,6 +859,7 @@ export default function VehicleProfile() {
       try {
         const response = await fetch(`/api/maintenance?id=${maintenanceId}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -869,6 +903,7 @@ export default function VehicleProfile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           ...repairData,
@@ -922,6 +957,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updatedData),
       })
@@ -962,6 +998,7 @@ export default function VehicleProfile() {
       try {
         const response = await fetch(`/api/repairs?id=${repairId}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -1005,6 +1042,7 @@ export default function VehicleProfile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           ...insuranceData,
@@ -1058,6 +1096,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updatedData),
       })
@@ -1098,6 +1137,7 @@ export default function VehicleProfile() {
       try {
         const response = await fetch(`/api/insurance?id=${insuranceId}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -1141,6 +1181,7 @@ export default function VehicleProfile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           ...roadworthyData,
@@ -1195,6 +1236,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updatedData),
       })
@@ -1235,6 +1277,7 @@ export default function VehicleProfile() {
       try {
         const response = await fetch(`/api/roadworthy?id=${roadworthyId}&vehicle_number=${vehicleNumber}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -1278,6 +1321,7 @@ export default function VehicleProfile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           ...fuelLogData,
@@ -1332,6 +1376,7 @@ export default function VehicleProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updatedData),
       })
@@ -1372,6 +1417,7 @@ export default function VehicleProfile() {
       try {
         const response = await fetch(`/api/fuel-logs?id=${fuelLogId}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -1854,6 +1900,7 @@ export default function VehicleProfile() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            ...getAuthHeaders()
           },
           body: JSON.stringify({ status: 'Inactive' }),
         })

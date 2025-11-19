@@ -42,6 +42,11 @@ export default function GroupsModal({ isOpen, onClose }: GroupsModalProps) {
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Group>('name')
@@ -60,7 +65,9 @@ export default function GroupsModal({ isOpen, onClose }: GroupsModalProps) {
   const fetchGroups = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/groups')
+      const response = await fetch('/api/groups', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setGroups(data)
@@ -80,6 +87,7 @@ export default function GroupsModal({ isOpen, onClose }: GroupsModalProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -124,6 +132,7 @@ export default function GroupsModal({ isOpen, onClose }: GroupsModalProps) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingGroup.id,
@@ -188,6 +197,7 @@ export default function GroupsModal({ isOpen, onClose }: GroupsModalProps) {
       try {
         const response = await fetch(`/api/groups?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

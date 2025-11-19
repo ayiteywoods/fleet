@@ -46,6 +46,11 @@ export default function ReportsPage() {
   const [tempSelectedFields, setTempSelectedFields] = useState<string[]>([])
   const [sortField, setSortField] = useState<string>('')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   const reportCategories = [
     { 
@@ -91,11 +96,8 @@ export default function ReportsPage() {
     const fetchFilters = async () => {
       try {
         // Fetch vehicles to get unique company names
-        const token = localStorage.getItem('token')
         const vehiclesResponse = await fetch('/api/vehicles', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: getAuthHeaders()
         })
         
         if (vehiclesResponse.ok) {
@@ -114,7 +116,9 @@ export default function ReportsPage() {
           setCompanies(uniqueCompanies)
           
           // Also fetch subsidiaries
-          const subsidiariesResponse = await fetch('/api/subsidiaries')
+          const subsidiariesResponse = await fetch('/api/subsidiaries', {
+            headers: getAuthHeaders()
+          })
           if (subsidiariesResponse.ok) {
             const subsidiariesData = await subsidiariesResponse.json()
             setSubsidiaries(subsidiariesData)
@@ -133,11 +137,8 @@ export default function ReportsPage() {
     if (selectedCategory === 'accident') {
       const fetchAlertData = async () => {
         try {
-          const token = localStorage.getItem('token')
           const response = await fetch('/api/alerts', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+            headers: getAuthHeaders()
           })
           
           if (response.ok) {
@@ -819,7 +820,7 @@ export default function ReportsPage() {
                       try {
                         setLoading(true)
                         
-                        const token = localStorage.getItem('token')
+                        const headers = getAuthHeaders()
                         let response
                         
                         if (selectedCategory === 'roadworthy') {
@@ -830,9 +831,7 @@ export default function ReportsPage() {
                           if (registrationFilter) params.append('vehicle_number', registrationFilter)
                           
                           response = await fetch(`/api/roadworthy${params.toString() ? '?' + params.toString() : ''}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {
@@ -862,9 +861,7 @@ export default function ReportsPage() {
                           if (registrationFilter) params.append('vehicle_number', registrationFilter)
                           
                           response = await fetch(`/api/insurance${params.toString() ? '?' + params.toString() : ''}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {
@@ -895,9 +892,7 @@ export default function ReportsPage() {
                           if (statusFilter) params.append('status', statusFilter)
                           
                           response = await fetch(`/api/drivers${params.toString() ? '?' + params.toString() : ''}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {
@@ -928,9 +923,7 @@ export default function ReportsPage() {
                           if (alertStatusFilter) params.append('status', alertStatusFilter)
                           
                           response = await fetch(`/api/alerts${params.toString() ? '?' + params.toString() : ''}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {
@@ -964,9 +957,7 @@ export default function ReportsPage() {
                           if (statusFilter) params.append('status', statusFilter)
                           
                           response = await fetch(`/api/fuel-request${params.toString() ? '?' + params.toString() : ''}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {
@@ -998,9 +989,7 @@ export default function ReportsPage() {
                           if (registrationFilter) params.append('registration', registrationFilter)
                           
                           response = await fetch(`/api/vehicles?${params.toString()}`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                            headers
                           })
                           
                           if (response.ok) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, verifyToken } from '@/lib/auth'
 
 function serializeBigInt(obj: any): any {
   if (obj === null || obj === undefined) return obj
@@ -18,10 +18,30 @@ function serializeBigInt(obj: any): any {
 }
 
 // GET - Fetch all users
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     console.log('Users API called')
-    const users = await prisma.users.findMany()
+
+    let whereClause: any = {}
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    if (token) {
+      try {
+        const requester = verifyToken(token)
+        if (requester?.role && requester?.id) {
+          const roleLower = requester.role.toLowerCase()
+          const isCompanyAdmin = roleLower.includes('company') && roleLower.includes('admin')
+          if (isCompanyAdmin) {
+            whereClause.created_by = requester.id.toString()
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to verify token for users GET:', error)
+      }
+    }
+
+    const users = await prisma.users.findMany({
+      where: whereClause
+    })
     console.log('Users found:', users.length)
 
     // Serialize BigInt values
@@ -67,7 +87,34 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, role = 'user', is_active = true, password, spcode } = body
+    const { name, email, phone, role = 'user', is_active = true, password, spcode, group } = body
+
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    let requester: any = null
+    if (token) {
+      try {
+        requester = verifyToken(token)
+      } catch (error) {
+        console.warn('Failed to verify token for user creation:', error)
+      }
+    }
+
+    const requesterRole = requester?.role?.toLowerCase() || ''
+    const requesterIsCompanyAdmin = requesterRole.includes('company') && requesterRole.includes('admin')
+    const requesterId = requester?.id ? requester.id.toString() : '1'
+    let requesterGroup: number | null = null
+
+    if (requester?.id) {
+      try {
+        const dbRequester = await prisma.users.findUnique({
+          where: { id: BigInt(requester.id) },
+          select: { group: true }
+        })
+        requesterGroup = dbRequester?.group ?? null
+      } catch (error) {
+        console.warn('Failed to fetch requester group:', error)
+      }
+    }
 
     if (!name || !password) {
       return NextResponse.json(
@@ -105,14 +152,19 @@ export async function POST(request: NextRequest) {
         name,
         email: email || null,
         phone: phone || null,
-        role: role || 'user',
+        role: requesterIsCompanyAdmin ? 'company user' : role || 'user',
         password: hashedPassword,
         is_active: is_active !== false,
         ...(spcode !== undefined && spcode !== null ? { spcode: parseInt(spcode) } : {}),
+        ...(requesterIsCompanyAdmin && requesterGroup !== null
+          ? { group: requesterGroup }
+          : group !== undefined && group !== null && group !== ''
+            ? { group: parseInt(group) }
+            : {}),
         created_at: new Date(),
         updated_at: new Date(),
-        created_by: '1', // Default user ID
-        updated_by: '1'  // Default user ID
+        created_by: requesterId,
+        updated_by: requesterId
       }
     })
 

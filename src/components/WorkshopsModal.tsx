@@ -51,6 +51,11 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Workshop>('name')
@@ -70,7 +75,9 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
   const fetchWorkshops = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/workshops')
+      const response = await fetch('/api/workshops', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setWorkshops(data)
@@ -86,7 +93,9 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
 
   const fetchSupervisors = async () => {
     try {
-      const response = await fetch('/api/supervisors')
+      const response = await fetch('/api/supervisors', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSupervisors(data)
@@ -104,6 +113,7 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -148,6 +158,7 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingWorkshop.id,
@@ -213,6 +224,7 @@ export default function WorkshopsModal({ isOpen, onClose }: WorkshopsModalProps)
       try {
         const response = await fetch(`/api/workshops?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
 import { 
@@ -30,9 +30,12 @@ import ViewUserModal from '@/components/ViewUserModal'
 import RolesModal from '@/components/RolesModal'
 import PermissionsModal from '@/components/PermissionsModal'
 import Notification from '@/components/Notification'
+import PermissionGuard from '@/components/PermissionGuard'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function UserGroupIconPage() {
   const { themeMode } = useTheme()
+  const { user: currentUser } = usePermissions()
   const [users, setUserGroupIcon] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -56,6 +59,14 @@ export default function UserGroupIconPage() {
   const [showRolesModal, setShowRolesModal] = useState(false)
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') {
+      return {}
+    }
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Available fields for the table
   const availableFields = [
@@ -81,7 +92,10 @@ export default function UserGroupIconPage() {
     const fetchUserGroupIcon = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/users')
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const response = await fetch('/api/users', {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setUserGroupIcon(data)
@@ -96,13 +110,25 @@ export default function UserGroupIconPage() {
     fetchUserGroupIcon()
   }, [])
 
-  // Calculate KPI values from users data
-  const totalUsers = users.length
-  const activeUsers = users.filter(u => u.is_active).length
-  const inactiveUsers = users.filter(u => !u.is_active).length
-  const adminUsers = users.filter(u => u.role === 'admin').length
-  const regularUsers = users.filter(u => u.role === 'user').length
-  const usersWithLicense = users.filter(u => u.license_number).length
+  const scopedUsers = useMemo(() => {
+    if (!currentUser) return users
+    const roleLower = currentUser.role?.toLowerCase() || ''
+    const isCompanyAdmin = roleLower.includes('company') && roleLower.includes('admin')
+    if (isCompanyAdmin) {
+      const creatorId = currentUser.id?.toString()
+      if (!creatorId) return users
+      return users.filter((user: any) => user.created_by === creatorId)
+    }
+    return users
+  }, [users, currentUser])
+
+  // Calculate KPI values from scoped data
+  const totalUsers = scopedUsers.length
+  const activeUsers = scopedUsers.filter(u => u.is_active).length
+  const inactiveUsers = scopedUsers.filter(u => !u.is_active).length
+  const adminUsers = scopedUsers.filter(u => u.role === 'admin').length
+  const regularUsers = scopedUsers.filter(u => u.role === 'user').length
+  const usersWithLicense = scopedUsers.filter(u => u.license_number).length
 
   const kpiCards = [
     { title: 'Total Users', value: totalUsers.toString(), icon: UserGroupIcon, color: 'blue' },
@@ -412,7 +438,9 @@ export default function UserGroupIconPage() {
       // Refresh the users data after a short delay
       setTimeout(async () => {
         try {
-          const response = await fetch('/api/users')
+          const response = await fetch('/api/users', {
+            headers: getAuthHeaders()
+          })
           if (response.ok) {
             const data = await response.json()
             setUserGroupIcon(data)
@@ -457,7 +485,9 @@ export default function UserGroupIconPage() {
       // Refresh the users data after a short delay
       setTimeout(async () => {
         try {
-          const response = await fetch('/api/users')
+          const response = await fetch('/api/users', {
+            headers: getAuthHeaders()
+          })
           if (response.ok) {
             const data = await response.json()
             setUserGroupIcon(data)
@@ -484,7 +514,8 @@ export default function UserGroupIconPage() {
 
     try {
       const response = await fetch(`/api/users?id=${userId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {
@@ -498,7 +529,9 @@ export default function UserGroupIconPage() {
         // Refresh the users data after a short delay
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/users')
+            const response = await fetch('/api/users', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setUserGroupIcon(data)
@@ -528,7 +561,7 @@ export default function UserGroupIconPage() {
   }
 
   // Filter users based on search query
-  const filteredUserGroupIcon = users.filter(user => {
+  const filteredUserGroupIcon = scopedUsers.filter(user => {
     if (!searchQuery) return true
     
     const searchLower = searchQuery.toLowerCase()
@@ -632,13 +665,15 @@ export default function UserGroupIconPage() {
               </div>
 
               {/* Right Side - Add User Button */}
-              <button 
-                onClick={() => setShowAddUserModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD USER</span>
-              </button>
+              <PermissionGuard permission="add user">
+                <button 
+                  onClick={() => setShowAddUserModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD USER</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -937,27 +972,33 @@ export default function UserGroupIconPage() {
                     <tr key={user.id || index} className="hover:bg-gray-50">
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleViewUser(user)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors"
-                            title="View"
-                          >
-                            <EyeIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handlePencilIconUser(user)}
-                            className="text-green-600 hover:text-green-900 transition-colors"
-                            title="PencilIcon"
-                          >
-                            <PencilIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.name)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                            title="Delete"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
+                          <PermissionGuard permission="view user" fallback={null}>
+                            <button
+                              onClick={() => handleViewUser(user)}
+                              className="text-blue-600 hover:text-blue-900 transition-colors"
+                              title="View"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="edit user" fallback={null}>
+                            <button
+                              onClick={() => handlePencilIconUser(user)}
+                              className="text-green-600 hover:text-green-900 transition-colors"
+                              title="PencilIcon"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="delete user" fallback={null}>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              className="text-red-600 hover:text-red-900 transition-colors"
+                              title="Delete"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">

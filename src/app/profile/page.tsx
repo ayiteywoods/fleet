@@ -25,20 +25,23 @@ export default function ProfilePage() {
     company_name: ''
   })
   const [saving, setSaving] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
+        const headers = getAuthHeaders()
+        if (!headers.Authorization) {
           window.location.href = '/login'
           return
         }
 
         const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers
         })
 
         if (response.ok) {

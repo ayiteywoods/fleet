@@ -54,6 +54,11 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch permissions and roles
   useEffect(() => {
@@ -66,7 +71,9 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
   const fetchPermissions = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/permissions')
+      const response = await fetch('/api/permissions', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setPermissions(data)
@@ -82,7 +89,9 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/api/roles')
+      const response = await fetch('/api/roles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRoles(data)
@@ -100,6 +109,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -144,6 +154,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingPermission.id,
@@ -207,6 +218,7 @@ export default function PermissionsModal({ isOpen, onClose }: PermissionsModalPr
       try {
         const response = await fetch(`/api/permissions?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

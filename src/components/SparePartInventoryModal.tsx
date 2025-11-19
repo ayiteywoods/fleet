@@ -59,6 +59,11 @@ export default function SparePartInventoryModal({ isOpen, onClose }: SparePartIn
     reorder_threshold: '',
     supplier_name: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +74,9 @@ export default function SparePartInventoryModal({ isOpen, onClose }: SparePartIn
   const fetchInventories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/spare-part-inventory')
+      const response = await fetch('/api/spare-part-inventory', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setInventories(data)
@@ -89,6 +96,7 @@ export default function SparePartInventoryModal({ isOpen, onClose }: SparePartIn
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -137,6 +145,7 @@ export default function SparePartInventoryModal({ isOpen, onClose }: SparePartIn
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -186,6 +195,7 @@ export default function SparePartInventoryModal({ isOpen, onClose }: SparePartIn
     try {
       const response = await fetch(`/api/spare-part-inventory?id=${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {

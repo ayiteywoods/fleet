@@ -5,6 +5,7 @@ import { X, Plus, Edit, Trash2, Download, FileText, FileSpreadsheet, File, Print
 import { useTheme } from '@/contexts/ThemeContext'
 import Notification from './Notification'
 import ViewRoleModal from './ViewRoleModal'
+import RolePermissionsModal from './RolePermissionsModal'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -30,6 +31,8 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false)
+  const [roleForPermissions, setRoleForPermissions] = useState<Role | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     guard_name: ''
@@ -47,6 +50,11 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch roles
   useEffect(() => {
@@ -58,7 +66,9 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
   const fetchRoles = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/roles')
+      const response = await fetch('/api/roles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRoles(data)
@@ -78,6 +88,7 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -122,6 +133,7 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingRole.id,
@@ -185,6 +197,7 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
       try {
         const response = await fetch(`/api/roles?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -218,6 +231,11 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
   const handleView = (role: Role) => {
     setSelectedRole(role)
     setShowViewModal(true)
+  }
+
+  const handleManagePermissions = (role: Role) => {
+    setRoleForPermissions(role)
+    setShowPermissionsModal(true)
   }
 
   const handleCancel = () => {
@@ -682,6 +700,13 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
                                 <Eye className="w-4 h-4" />
                               </button>
                               <button
+                                onClick={() => handleManagePermissions(role)}
+                                className="p-1 text-purple-600 hover:text-purple-800 transition-colors"
+                                title="Manage permissions"
+                              >
+                                <Shield className="w-4 h-4" />
+                              </button>
+                              <button
                                 onClick={() => handleEdit(role)}
                                 className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
                                 title="Edit"
@@ -822,6 +847,14 @@ export default function RolesModal({ isOpen, onClose }: RolesModalProps) {
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
         role={selectedRole}
+      />
+      <RolePermissionsModal
+        isOpen={showPermissionsModal}
+        onClose={() => {
+          setShowPermissionsModal(false)
+          setRoleForPermissions(null)
+        }}
+        role={roleForPermissions}
       />
     </>
   )

@@ -59,11 +59,19 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
   })
   const [vehicles, setVehicles] = useState<any[]>([])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // Fetch fuel requests
   const fetchFuelRequests = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/fuel-request')
+      const response = await fetch('/api/fuel-request', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setFuelRequests(data)
@@ -78,7 +86,9 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
   // Fetch vehicles
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)
@@ -169,7 +179,8 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
     if (confirm('Are you sure you want to delete this fuel request?')) {
       try {
         const response = await fetch(`/api/fuel-request?id=${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: getAuthHeaders()
         })
         if (response.ok) {
           fetchFuelRequests()
@@ -212,7 +223,8 @@ export default function FuelRequestModal({ isOpen, onClose }: FuelRequestModalPr
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData)
       })

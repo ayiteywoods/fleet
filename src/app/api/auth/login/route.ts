@@ -3,6 +3,7 @@ import { authenticateUser, generateToken, hashPassword } from '@/lib/auth'
 import { authHandlers } from '@/lib/apiWrapper'
 import { prisma } from '@/lib/prisma'
 import { checkExternalAccess } from '@/lib/externalAuth'
+import { getUserPermissions } from '@/lib/permissions'
 
 export async function POST(request: NextRequest) {
   try {
@@ -174,6 +175,21 @@ export async function POST(request: NextRequest) {
     // Explicitly set to boolean - true only if super admin OR has external access
     const finalHasLiveTracking = isSuperAdmin || dbHasExternalAccess === true
 
+    // Fetch user permissions based on role_id
+    let permissions: string[] = []
+    try {
+      permissions = await getUserPermissions(resolvedUser.id)
+      console.log('[login] ✅ Fetched user permissions:', permissions.length, 'permissions')
+      if (permissions.length > 0) {
+        console.log('[login] Sample permissions:', permissions.slice(0, 5).join(', '))
+      } else {
+        console.warn('[login] ⚠️ User has 0 permissions! Check if role has permissions assigned.')
+      }
+    } catch (error) {
+      console.error('[login] ❌ Failed to fetch user permissions:', error)
+      // Continue without permissions - user can still log in
+    }
+
     console.log('🔍 Generating token...')
     console.log('hasLiveTracking:', hasLiveTracking, 'dbHasExternalAccess:', dbHasExternalAccess, 'isSuperAdmin:', isSuperAdmin, 'finalHasLiveTracking:', finalHasLiveTracking)
     const token = generateToken({
@@ -194,7 +210,8 @@ export async function POST(request: NextRequest) {
         name: resolvedUser.name,
         role: resolvedUser.role,
         spcode: (resolvedUser as any).spcode || null,
-        hasLiveTracking: finalHasLiveTracking ? true : false  // Explicitly set to boolean
+        hasLiveTracking: finalHasLiveTracking ? true : false,  // Explicitly set to boolean
+        permissions  // Include permissions in response
       }
     })
   } catch (error) {

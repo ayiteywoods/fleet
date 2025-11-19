@@ -69,6 +69,11 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const [selectedFields, setSelectedFields] = useState([
     'name', 'location', 'loc_code', 'phone', 'email', 'group_id', 'address', 'contact_person', 'contact_phone', 'status', 'description', 'created_at', 'updated_at'
   ])
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Available fields configuration
   const availableFields = [
@@ -131,7 +136,9 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   }, [isOpen])
   const fetchGroups = async () => {
     try {
-      const res = await fetch('/api/groups')
+      const res = await fetch('/api/groups', {
+        headers: getAuthHeaders()
+      })
       if (res.ok) {
         const data = await res.json()
         setGroups(data)
@@ -202,7 +209,9 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const fetchCompanies = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/companies')
+      const response = await fetch('/api/companies', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setCompanies(data)
@@ -230,7 +239,10 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
       
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({
           ...formData,
           group_id: formData.group_id ? parseInt(formData.group_id) : null
@@ -272,7 +284,10 @@ export default function CompaniesModal({ isOpen, onClose }: CompaniesModalProps)
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this company?')) {
       try {
-        const response = await fetch(`/api/companies?id=${id}`, { method: 'DELETE' })
+        const response = await fetch(`/api/companies?id=${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           showNotification('success', 'Company deleted successfully')
           fetchCompanies()

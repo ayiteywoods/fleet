@@ -34,6 +34,7 @@ import EditVehicleModal from '@/components/EditVehicleModal'
 import VehicleMakesModal from '@/components/VehicleMakesModal'
 import VehicleTypesModal from '@/components/VehicleTypesModal'
 import Notification from '@/components/Notification'
+import PermissionGuard from '@/components/PermissionGuard'
 
 // Define Vehicle type
 interface Vehicle {
@@ -91,6 +92,12 @@ function VehiclesPageContent() {
     'reg_number', 'trim', 'vehicle_type_name', 'year', 'status'
   ])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // All available fields from the vehicles table
   const availableFields = [
     { key: 'reg_number', label: 'Vehicle Number', type: 'text' },
@@ -121,9 +128,9 @@ function VehiclesPageContent() {
     const fetchVehicles = async () => {
       try {
         setLoading(true)
-        const token = localStorage.getItem('token')
-        const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
-        const response = await fetch(`/api/vehicles?t=${Date.now()}`, { headers })
+        const response = await fetch(`/api/vehicles?t=${Date.now()}`, {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setVehicles(data)
@@ -443,6 +450,7 @@ function VehiclesPageContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(apiData),
       })
@@ -463,7 +471,9 @@ function VehiclesPageContent() {
         // Refresh the vehicles data after a short delay
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/vehicles')
+            const response = await fetch('/api/vehicles', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setVehicles(data)
@@ -563,7 +573,9 @@ function VehiclesPageContent() {
         
         // Immediately refresh the vehicles data
         try {
-          const refreshResponse = await fetch(`/api/vehicles?t=${Date.now()}`)
+          const refreshResponse = await fetch(`/api/vehicles?t=${Date.now()}`, {
+            headers: getAuthHeaders()
+          })
           if (refreshResponse.ok) {
             const data = await refreshResponse.json()
             setVehicles(data)
@@ -597,6 +609,7 @@ function VehiclesPageContent() {
       try {
         const response = await fetch(`/api/vehicles?id=${vehicle.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()
@@ -1036,13 +1049,15 @@ function VehiclesPageContent() {
               </div>
 
               {/* Right Side - Add Vehicle Button */}
-              <button 
-                onClick={() => setShowAddVehicleModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD VEHICLE</span>
-              </button>
+              <PermissionGuard permission="add vehicles">
+                <button 
+                  onClick={() => setShowAddVehicleModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD VEHICLE</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -1341,27 +1356,33 @@ function VehiclesPageContent() {
                   }`}>
                     <td className="px-4 py-3 whitespace-nowrap" style={{ width: '120px', minWidth: '120px' }}>
                       <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleViewVehicle(vehicle)}
-                          className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
-                          title="View Vehicle Details"
-                        >
-                          <EyeIcon className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleEditVehicle(vehicle)}
-                          className="p-1 text-green-600 hover:text-green-800 transition-colors"
-                          title="Edit Vehicle"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteVehicle(vehicle)}
-                          className="p-1 text-red-600 hover:text-red-800 transition-colors"
-                          title="Delete Vehicle"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <PermissionGuard permission="view vehicles" fallback={null}>
+                          <button 
+                            onClick={() => handleViewVehicle(vehicle)}
+                            className="p-1 text-blue-600 hover:text-blue-800 transition-colors"
+                            title="View Vehicle Details"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="edit vehicles" fallback={null}>
+                          <button 
+                            onClick={() => handleEditVehicle(vehicle)}
+                            className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                            title="Edit Vehicle"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="delete vehicles" fallback={null}>
+                          <button 
+                            onClick={() => handleDeleteVehicle(vehicle)}
+                            className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                            title="Delete Vehicle"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                     <td className={`px-4 py-3 text-sm whitespace-nowrap ${

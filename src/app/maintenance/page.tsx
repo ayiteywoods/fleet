@@ -31,6 +31,7 @@ import ViewMaintenanceModal from '@/components/ViewMaintenanceModal'
 import EditMaintenanceModal from '@/components/EditMaintenanceModal'
 import MaintenanceScheduleModal from '@/components/MaintenanceScheduleModal'
 import Notification from '@/components/Notification'
+import PermissionGuard from '@/components/PermissionGuard'
 
 // Define Maintenance type
 interface Maintenance {
@@ -83,6 +84,12 @@ export default function MaintenancePage() {
     'service_date', 'vehicle_name', 'service_type', 'cost', 'status', 'mileage_at_service', 'mechanic_name', 'workshop_name'
   ])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // All available fields from the maintenance_history table
   const availableFields = [
     { key: 'service_date', label: 'Service Date', type: 'date' },
@@ -105,7 +112,9 @@ export default function MaintenancePage() {
       try {
         setLoading(true)
         console.log('Fetching maintenance records...')
-        const response = await fetch('/api/maintenance')
+        const response = await fetch('/api/maintenance', {
+          headers: getAuthHeaders()
+        })
         console.log('Maintenance API response status:', response.status)
         
         if (response.ok) {
@@ -352,6 +361,7 @@ export default function MaintenancePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(maintenanceData),
       })
@@ -369,7 +379,9 @@ export default function MaintenancePage() {
         // Refresh the maintenance data
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/maintenance')
+            const response = await fetch('/api/maintenance', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setMaintenanceRecords(data)
@@ -425,6 +437,7 @@ export default function MaintenancePage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(maintenanceData),
       })
@@ -442,7 +455,9 @@ export default function MaintenancePage() {
         // Refresh the maintenance data
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/maintenance')
+            const response = await fetch('/api/maintenance', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setMaintenanceRecords(data)
@@ -476,6 +491,7 @@ export default function MaintenancePage() {
       try {
         const response = await fetch(`/api/maintenance?id=${maintenance.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -489,7 +505,9 @@ export default function MaintenancePage() {
           // Refresh the maintenance data
           setTimeout(async () => {
             try {
-              const response = await fetch('/api/maintenance')
+              const response = await fetch('/api/maintenance', {
+                headers: getAuthHeaders()
+              })
               if (response.ok) {
                 const data = await response.json()
                 setMaintenanceRecords(data)
@@ -799,13 +817,15 @@ export default function MaintenancePage() {
               </div>
 
               {/* Right Side - Add Maintenance Button */}
-              <button 
-                onClick={() => setShowAddMaintenanceModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD MAINTENANCE</span>
-              </button>
+              <PermissionGuard permission="add maintenance">
+                <button 
+                  onClick={() => setShowAddMaintenanceModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD MAINTENANCE</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -1068,27 +1088,33 @@ export default function MaintenancePage() {
                   <tr key={maintenance.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewMaintenance(maintenance)}
-                          className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
-                          title="View"
-                        >
-                          <EyeIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handlePencilIconMaintenance(maintenance)}
-                          className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
-                          title="PencilIcon"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMaintenance(maintenance)}
-                          className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <PermissionGuard permission="view maintenance" fallback={null}>
+                          <button
+                            onClick={() => handleViewMaintenance(maintenance)}
+                            className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                            title="View"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="edit maintenance" fallback={null}>
+                          <button
+                            onClick={() => handlePencilIconMaintenance(maintenance)}
+                            className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
+                            title="PencilIcon"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="delete maintenance" fallback={null}>
+                          <button
+                            onClick={() => handleDeleteMaintenance(maintenance)}
+                            className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">

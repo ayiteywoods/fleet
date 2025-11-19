@@ -55,6 +55,11 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Mechanic>('name')
@@ -74,7 +79,9 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
   const fetchMechanics = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/mechanics')
+      const response = await fetch('/api/mechanics', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setMechanics(data)
@@ -90,7 +97,9 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
 
   const fetchWorkshops = async () => {
     try {
-      const response = await fetch('/api/workshops')
+      const response = await fetch('/api/workshops', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setWorkshops(data)
@@ -108,6 +117,7 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -152,6 +162,7 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingMechanic.id,
@@ -219,6 +230,7 @@ export default function MechanicsModal({ isOpen, onClose }: MechanicsModalProps)
       try {
         const response = await fetch(`/api/mechanics?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

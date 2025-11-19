@@ -17,6 +17,11 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
     licenseExpiry: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,6 +32,7 @@ export default function DriverForm({ onClose, onSuccess }: DriverFormProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })

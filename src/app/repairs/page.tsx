@@ -32,6 +32,7 @@ import EditRepairModal from '@/components/EditRepairModal'
 import RepairRequestModal from '@/components/RepairRequestModal'
 import RepairScheduleModal from '@/components/RepairScheduleModal'
 import Notification from '@/components/Notification'
+import PermissionGuard from '@/components/PermissionGuard'
 
 // Define Repair type
 interface Repair {
@@ -76,6 +77,12 @@ export default function RepairsPage() {
   const [showRepairScheduleModal, setShowRepairScheduleModal] = useState(false)
   const [selectedRepair, setSelectedRepair] = useState<Repair | null>(null)
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // All available fields from the repair_history table
   const availableFields = [
     { key: 'service_date', label: 'Service Date', type: 'date' },
@@ -103,7 +110,9 @@ export default function RepairsPage() {
   const fetchRepairs = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/repairs')
+      const response = await fetch('/api/repairs', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRepairRecords(data)
@@ -291,6 +300,7 @@ export default function RepairsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(repairData),
       })
@@ -305,7 +315,9 @@ export default function RepairsPage() {
         
         // Refresh the repair data
         setTimeout(async () => {
-          const response = await fetch('/api/repairs')
+        const response = await fetch('/api/repairs', {
+          headers: getAuthHeaders()
+        })
           if (response.ok) {
             const data = await response.json()
             setRepairRecords(data)
@@ -358,6 +370,7 @@ export default function RepairsPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(repairData),
       })
@@ -375,7 +388,9 @@ export default function RepairsPage() {
         // Refresh the repair data
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/repairs')
+            const response = await fetch('/api/repairs', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setRepairRecords(data)
@@ -409,6 +424,7 @@ export default function RepairsPage() {
       try {
         const response = await fetch(`/api/repairs?id=${repair.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -422,7 +438,9 @@ export default function RepairsPage() {
           // Refresh the repair data
           setTimeout(async () => {
             try {
-              const response = await fetch('/api/repairs')
+              const response = await fetch('/api/repairs', {
+                headers: getAuthHeaders()
+              })
               if (response.ok) {
                 const data = await response.json()
                 setRepairRecords(data)
@@ -739,13 +757,15 @@ export default function RepairsPage() {
               </div>
 
               {/* Right Side - Add Repair Button */}
-              <button 
-                onClick={() => setShowAddRepairModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD REPAIR</span>
-              </button>
+              <PermissionGuard permission="add repair">
+                <button 
+                  onClick={() => setShowAddRepairModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD REPAIR</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -1001,27 +1021,33 @@ export default function RepairsPage() {
                     <tr key={repair.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleViewRepair(repair)}
-                            className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
-                            title="View"
-                          >
-                            <EyeIcon className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handlePencilIconRepair(repair)}
-                            className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
-                            title="PencilIcon"
-                          >
-                            <PencilIcon className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteRepair(repair)}
-                            className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <XMarkIcon className="w-4 h-4" />
-                          </button>
+                          <PermissionGuard permission="view repair" fallback={null}>
+                            <button 
+                              onClick={() => handleViewRepair(repair)}
+                              className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                              title="View"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="edit repair" fallback={null}>
+                            <button 
+                              onClick={() => handlePencilIconRepair(repair)}
+                              className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
+                              title="PencilIcon"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
+                          <PermissionGuard permission="delete repair" fallback={null}>
+                            <button 
+                              onClick={() => handleDeleteRepair(repair)}
+                              className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                              title="Delete"
+                            >
+                              <XMarkIcon className="w-4 h-4" />
+                            </button>
+                          </PermissionGuard>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">

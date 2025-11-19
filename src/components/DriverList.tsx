@@ -22,6 +22,11 @@ interface DriverListProps {
 
 export default function DriverList({ drivers, onUpdate }: DriverListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this driver?')) {
@@ -32,6 +37,7 @@ export default function DriverList({ drivers, onUpdate }: DriverListProps) {
     try {
       const response = await fetch(`/api/drivers/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {

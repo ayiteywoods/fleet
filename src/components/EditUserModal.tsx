@@ -45,6 +45,11 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Update form data when user prop changes
   useEffect(() => {
@@ -134,6 +139,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(updateData),
       })

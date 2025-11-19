@@ -88,11 +88,18 @@ export default function DriverProfile() {
     vehicle: '',
     subsidiary_id: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     const fetchDriver = async () => {
       try {
-        const response = await fetch(`/api/drivers/${params.id}`)
+        const response = await fetch(`/api/drivers/${params.id}`, {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setDriver(data)
@@ -109,7 +116,9 @@ export default function DriverProfile() {
 
     const fetchSubsidiaries = async () => {
       try {
-        const subsidiariesResponse = await fetch('/api/subsidiary')
+        const subsidiariesResponse = await fetch('/api/subsidiary', {
+          headers: getAuthHeaders()
+        })
         if (subsidiariesResponse.ok) {
           const subsidiariesData = await subsidiariesResponse.json()
           setSubsidiaries(subsidiariesData)
@@ -150,6 +159,7 @@ export default function DriverProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -473,7 +483,8 @@ export default function DriverProfile() {
         const response = await fetch(`/api/drivers/${params.id}`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
           },
           body: JSON.stringify({ status: 'Inactive' }),
         })

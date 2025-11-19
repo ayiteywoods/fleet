@@ -20,6 +20,11 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     fetchNotifications()
@@ -43,11 +48,8 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
       const response = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {
@@ -69,12 +71,11 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem('token')
       await fetch('/api/notifications', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ notificationIds: [notificationId] })
       })
@@ -94,7 +95,6 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('token')
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id)
       
       if (unreadIds.length === 0) return
@@ -102,8 +102,8 @@ export default function NotificationsPage() {
       await fetch('/api/notifications', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ notificationIds: unreadIds })
       })

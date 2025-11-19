@@ -56,6 +56,11 @@ export default function RepairRequestModal({ isOpen, onClose }: RepairRequestMod
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch repair requests
   useEffect(() => {
@@ -67,7 +72,9 @@ export default function RepairRequestModal({ isOpen, onClose }: RepairRequestMod
   const fetchRepairRequests = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/repair-request')
+      const response = await fetch('/api/repair-request', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRepairRequests(data)
@@ -87,6 +94,7 @@ export default function RepairRequestModal({ isOpen, onClose }: RepairRequestMod
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -153,6 +161,7 @@ export default function RepairRequestModal({ isOpen, onClose }: RepairRequestMod
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -203,6 +212,7 @@ export default function RepairRequestModal({ isOpen, onClose }: RepairRequestMod
       try {
         const response = await fetch(`/api/repair-request?id=${request.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

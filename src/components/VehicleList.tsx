@@ -23,6 +23,11 @@ interface VehicleListProps {
 
 export default function VehicleList({ vehicles, onUpdate }: VehicleListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this vehicle?')) {
@@ -33,6 +38,7 @@ export default function VehicleList({ vehicles, onUpdate }: VehicleListProps) {
     try {
       const response = await fetch(`/api/vehicles/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {

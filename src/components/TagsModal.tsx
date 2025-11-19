@@ -40,6 +40,11 @@ export default function TagsModal({ isOpen, onClose }: TagsModalProps) {
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Tag>('name')
@@ -58,7 +63,9 @@ export default function TagsModal({ isOpen, onClose }: TagsModalProps) {
   const fetchTags = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/tags')
+      const response = await fetch('/api/tags', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setTags(data)
@@ -78,6 +85,7 @@ export default function TagsModal({ isOpen, onClose }: TagsModalProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -122,6 +130,7 @@ export default function TagsModal({ isOpen, onClose }: TagsModalProps) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingTag.id,
@@ -185,6 +194,7 @@ export default function TagsModal({ isOpen, onClose }: TagsModalProps) {
       try {
         const response = await fetch(`/api/tags?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

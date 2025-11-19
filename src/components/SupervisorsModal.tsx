@@ -48,6 +48,11 @@ export default function SupervisorsModal({ isOpen, onClose }: SupervisorsModalPr
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Supervisor>('name')
@@ -66,7 +71,9 @@ export default function SupervisorsModal({ isOpen, onClose }: SupervisorsModalPr
   const fetchSupervisors = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/supervisors')
+      const response = await fetch('/api/supervisors', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSupervisors(data)
@@ -86,6 +93,7 @@ export default function SupervisorsModal({ isOpen, onClose }: SupervisorsModalPr
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -130,6 +138,7 @@ export default function SupervisorsModal({ isOpen, onClose }: SupervisorsModalPr
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingSupervisor.id,
@@ -197,6 +206,7 @@ export default function SupervisorsModal({ isOpen, onClose }: SupervisorsModalPr
       try {
         const response = await fetch(`/api/supervisors?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

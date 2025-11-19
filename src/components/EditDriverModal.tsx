@@ -55,6 +55,11 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [subsidiaries, setSubsidiaries] = useState<Subsidiary[]>([])
   const [fetchLoading, setFetchLoading] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch clusters on component mount
   useEffect(() => {
@@ -65,7 +70,9 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
 
   const fetchClusters = async () => {
     try {
-      const response = await fetch('/api/clusters')
+      const response = await fetch('/api/clusters', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setClusters(data)
@@ -85,7 +92,9 @@ export default function EditDriverModal({ isOpen, onClose, driver, onSave }: Edi
 
     try {
       setFetchLoading(true)
-      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`)
+      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSubsidiaries(data)

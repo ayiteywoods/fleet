@@ -30,9 +30,12 @@ import Notification from '@/components/Notification'
 import AddDriverModal from '@/components/AddDriverModal'
 import ViewDriverModal from '@/components/ViewDriverModal'
 import EditDriverModal from '@/components/EditDriverModal'
+import PermissionGuard from '@/components/PermissionGuard'
+import { usePermissions } from '@/hooks/usePermissions'
 
 export default function DriversPage() {
   const { themeMode } = useTheme()
+  const { can, hasPermission } = usePermissions()
   const [searchQuery, setSearchQuery] = useState('')
   const [entriesPerPage, setEntriesPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -55,6 +58,12 @@ export default function DriversPage() {
   const [selectedFields, setSelectedFields] = useState([
     'name', 'phone', 'license_number', 'license_category', 'status', 'region', 'subsidiary_name', 'vehicle_reg_number'
   ])
+
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // All available fields from the driver_operators table
   const availableFields = [
@@ -81,7 +90,9 @@ export default function DriversPage() {
     const fetchDrivers = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/drivers')
+        const response = await fetch('/api/drivers', {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setDrivers(data)
@@ -421,6 +432,7 @@ export default function DriversPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(driverData),
       })
@@ -438,7 +450,9 @@ export default function DriversPage() {
         // Refresh the drivers data after a short delay
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/drivers')
+            const response = await fetch('/api/drivers', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setDrivers(data)
@@ -482,6 +496,7 @@ export default function DriversPage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(driverData),
       })
@@ -499,7 +514,9 @@ export default function DriversPage() {
         // Refresh the drivers data
         setTimeout(async () => {
           try {
-            const response = await fetch('/api/drivers')
+            const response = await fetch('/api/drivers', {
+              headers: getAuthHeaders()
+            })
             if (response.ok) {
               const data = await response.json()
               setDrivers(data)
@@ -532,6 +549,7 @@ export default function DriversPage() {
       try {
         const response = await fetch(`/api/drivers?id=${driver.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -545,7 +563,9 @@ export default function DriversPage() {
           // Refresh the drivers data
           setTimeout(async () => {
             try {
-              const response = await fetch('/api/drivers')
+              const response = await fetch('/api/drivers', {
+                headers: getAuthHeaders()
+              })
               if (response.ok) {
                 const data = await response.json()
                 setDrivers(data)
@@ -741,13 +761,15 @@ export default function DriversPage() {
               </div>
 
               {/* Right Side - Add Driver Button */}
-              <button 
-                onClick={() => setShowAddDriverModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD DRIVER</span>
-              </button>
+              <PermissionGuard permission="add driver">
+                <button 
+                  onClick={() => setShowAddDriverModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD DRIVER</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -974,27 +996,33 @@ export default function DriversPage() {
                   }`}>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewDriver(driver)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="View Driver"
-                        >
-                          <EyeIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEditDriver(driver)}
-                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          title="Edit Driver"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDriver(driver)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Delete Driver"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <PermissionGuard permission="view driver" fallback={null}>
+                          <button
+                            onClick={() => handleViewDriver(driver)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="View Driver"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="edit driver" fallback={null}>
+                          <button
+                            onClick={() => handleEditDriver(driver)}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            title="Edit Driver"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="delete driver" fallback={null}>
+                          <button
+                            onClick={() => handleDeleteDriver(driver)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete Driver"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">

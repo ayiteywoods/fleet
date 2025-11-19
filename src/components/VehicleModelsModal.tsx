@@ -19,7 +19,7 @@ interface VehicleModel {
   vehicle_make: {
     id: string
     name: string
-  }
+  } | null
 }
 
 interface VehicleModelsModalProps {
@@ -54,6 +54,11 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch vehicle models and makes
   useEffect(() => {
@@ -66,10 +71,17 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
   const fetchVehicleModels = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/model')
+      const response = await fetch('/api/model', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
-        setVehicleModels(data)
+        // Map vehicle_makes to vehicle_make for consistency
+        const mappedData = data.map((item: any) => ({
+          ...item,
+          vehicle_make: item.vehicle_makes || item.vehicle_make || null
+        }))
+        setVehicleModels(mappedData)
       } else {
         console.error('Failed to fetch vehicle models')
       }
@@ -82,7 +94,9 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
 
   const fetchVehicleMakes = async () => {
     try {
-      const response = await fetch('/api/vehicle-makes')
+      const response = await fetch('/api/vehicle-makes', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleMakes(data)
@@ -98,6 +112,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -157,6 +172,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingVehicleModel.id,
@@ -202,6 +218,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
       try {
         const response = await fetch(`/api/model?id=${vehicleModel.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()
@@ -255,7 +272,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
     const data = filteredAndSortedVehicleModels.map(vehicleModel => ({
       'ID': vehicleModel.id,
       'Model': vehicleModel.name,
-      'Make': vehicleModel.vehicle_make.name,
+      'Make': vehicleModel.vehicle_make?.name || 'N/A',
       'Description': vehicleModel.description || 'N/A',
       'Created At': vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleDateString() : 'N/A',
       'Updated At': vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleDateString() : 'N/A'
@@ -271,7 +288,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
     const data = filteredAndSortedVehicleModels.map(vehicleModel => ({
       'ID': vehicleModel.id,
       'Model': vehicleModel.name,
-      'Make': vehicleModel.vehicle_make.name,
+      'Make': vehicleModel.vehicle_make?.name || 'N/A',
       'Description': vehicleModel.description || 'N/A',
       'Created At': vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleDateString() : 'N/A',
       'Updated At': vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleDateString() : 'N/A'
@@ -303,7 +320,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
     const tableData = filteredAndSortedVehicleModels.map(vehicleModel => [
       vehicleModel.id,
       vehicleModel.name,
-      vehicleModel.vehicle_make.name,
+      vehicleModel.vehicle_make?.name || 'N/A',
       vehicleModel.description || 'N/A',
       vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleDateString() : 'N/A',
       vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleDateString() : 'N/A'
@@ -328,7 +345,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
         <tr>
           <td>${vehicleModel.id}</td>
           <td>${vehicleModel.name}</td>
-          <td>${vehicleModel.vehicle_make.name}</td>
+          <td>${vehicleModel.vehicle_make?.name || 'N/A'}</td>
           <td>${vehicleModel.description || 'N/A'}</td>
           <td>${vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleDateString() : 'N/A'}</td>
           <td>${vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleDateString() : 'N/A'}</td>
@@ -377,7 +394,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
   const filteredAndSortedVehicleModels = vehicleModels
     .filter(vehicleModel => 
       vehicleModel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicleModel.vehicle_make.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (vehicleModel.vehicle_make?.name && vehicleModel.vehicle_make.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (vehicleModel.description && vehicleModel.description.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     .sort((a, b) => {
@@ -763,7 +780,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
                             {vehicleModel.name}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {vehicleModel.vehicle_make.name}
+                            {vehicleModel.vehicle_make?.name || 'N/A'}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                             {vehicleModel.description || 'N/A'}

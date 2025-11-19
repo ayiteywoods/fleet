@@ -24,6 +24,11 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (vehicleId) {
@@ -37,7 +42,9 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
   useEffect(() => {
     const fetchVehicleTypes = async () => {
       try {
-        const response = await fetch('/api/vehicle-types')
+        const response = await fetch('/api/vehicle-types', {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setVehicleTypes(data)
@@ -49,7 +56,9 @@ export default function AddRoadworthyModal({ isOpen, onClose, onSubmit, vehicleI
 
     const fetchVehicles = async () => {
       try {
-        const response = await fetch('/api/vehicles?simple=true')
+        const response = await fetch('/api/vehicles?simple=true', {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setVehicles(data)

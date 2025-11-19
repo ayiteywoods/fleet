@@ -114,6 +114,11 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
   const [vehicleMakes, setVehicleMakes] = useState<VehicleMake[]>([])
   const [vehicleModels, setVehicleModels] = useState<VehicleModel[]>([])
   const [loading, setLoading] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Update form data when vehicle prop changes
   useEffect(() => {
@@ -160,7 +165,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
   const fetchClusters = async () => {
     try {
-      const response = await fetch('/api/clusters')
+      const response = await fetch('/api/clusters', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setClusters(data)
@@ -170,7 +177,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
           // We need to find which cluster this subsidiary belongs to
           // For now, we'll fetch subsidiaries for all clusters to find the right one
           for (const cluster of data) {
-            const subsResponse = await fetch(`/api/subsidiaries?cluster_id=${cluster.id}`)
+            const subsResponse = await fetch(`/api/subsidiaries?cluster_id=${cluster.id}`, {
+              headers: getAuthHeaders()
+            })
             if (subsResponse.ok) {
               const subsData = await subsResponse.json()
               const matchingSub = subsData.find((sub: any) => sub.id === vehicle.spcode?.toString())
@@ -201,7 +210,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`)
+      const response = await fetch(`/api/subsidiaries?cluster_id=${clusterId}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSubsidiaries(data)
@@ -225,7 +236,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/drivers?subsidiary_id=${subsidiaryId}`)
+      const response = await fetch(`/api/drivers?subsidiary_id=${subsidiaryId}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setDrivers(data)
@@ -242,7 +255,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
   const fetchVehicleTypes = async () => {
     try {
-      const response = await fetch('/api/vehicle-types')
+      const response = await fetch('/api/vehicle-types', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleTypes(data)
@@ -256,7 +271,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
 
   const fetchVehicleMakes = async () => {
     try {
-      const response = await fetch('/api/vehicle-makes')
+      const response = await fetch('/api/vehicle-makes', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleMakes(data)
@@ -277,7 +294,9 @@ export default function EditVehicleModal({ isOpen, onClose, onSubmit, vehicle }:
     try {
       setLoading(true)
       console.log('Fetching vehicle models for make_id:', makeId) // Debug log
-      const response = await fetch(`/api/vehicle-models?vehicle_make_id=${makeId}`)
+      const response = await fetch(`/api/vehicle-models?vehicle_make_id=${makeId}`, {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         console.log('Vehicle models received:', data) // Debug log

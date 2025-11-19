@@ -391,7 +391,7 @@ export default function FleetDashboard() {
         }
 
           // Fetch fuel logs data for monthly chart and fuel type distribution
-          const fuelResponse = await fetch('/api/fuel-logs')
+          const fuelResponse = await fetch('/api/fuel-logs', { headers })
           if (fuelResponse.ok) {
             const fuelData = await fuelResponse.json()
             const monthlyData = processMonthlyFuelData(fuelData)

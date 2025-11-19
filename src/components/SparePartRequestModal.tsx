@@ -95,6 +95,11 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
     spare_part_inventory_id: '',
     vehicle_id: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -107,7 +112,9 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
   const fetchRequests = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/spare-part-request')
+      const response = await fetch('/api/spare-part-request', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRequests(data)
@@ -123,7 +130,9 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
 
   const fetchInventories = async () => {
     try {
-      const response = await fetch('/api/spare-part-inventory')
+      const response = await fetch('/api/spare-part-inventory', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setInventories(data)
@@ -135,7 +144,9 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)
@@ -151,6 +162,7 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -201,6 +213,7 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -252,6 +265,7 @@ export default function SparePartRequestModal({ isOpen, onClose }: SparePartRequ
     try {
       const response = await fetch(`/api/spare-part-request?id=${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {

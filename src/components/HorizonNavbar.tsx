@@ -31,6 +31,11 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {};
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
 
   // Load read notifications from localStorage
   const getReadNotifications = (): Set<string> => {
@@ -74,7 +79,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
 
     try {
       // Search for vehicle or driver
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`, {
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.type === 'vehicle') {
@@ -98,13 +105,8 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
         const response = await fetch('/api/notifications', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: getAuthHeaders()
         });
 
         if (response.ok) {
@@ -148,12 +150,11 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem('token');
       await fetch('/api/notifications', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ notificationIds: [notificationId] })
       });

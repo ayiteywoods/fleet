@@ -28,10 +28,18 @@ export default function AddFuelLogModal({ isOpen, onClose, onSubmit, vehicleId }
   })
   const [drivers, setDrivers] = useState<any[]>([])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await fetch('/api/drivers')
+        const response = await fetch('/api/drivers', {
+          headers: getAuthHeaders()
+        })
         if (response.ok) {
           const data = await response.json()
           setDrivers(data)

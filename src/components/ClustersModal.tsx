@@ -49,6 +49,11 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
     message: ''
   })
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch clusters
   useEffect(() => {
@@ -73,7 +78,9 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
   const fetchClusters = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/clusters')
+      const response = await fetch('/api/clusters', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setClusters(data)
@@ -93,6 +100,7 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -152,6 +160,7 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingCluster.id,
@@ -197,6 +206,7 @@ export default function ClustersModal({ isOpen, onClose }: ClustersModalProps) {
       try {
         const response = await fetch(`/api/clusters?id=${cluster.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

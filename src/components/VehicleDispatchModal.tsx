@@ -84,6 +84,11 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch data
   useEffect(() => {
@@ -97,7 +102,9 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
   const fetchVehicleDispatches = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/vehicle-dispatch')
+      const response = await fetch('/api/vehicle-dispatch', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleDispatches(data)
@@ -113,7 +120,9 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)
@@ -127,7 +136,9 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
 
   const fetchDrivers = async () => {
     try {
-      const response = await fetch('/api/drivers')
+      const response = await fetch('/api/drivers', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setDrivers(data)
@@ -145,6 +156,7 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -200,6 +212,7 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingDispatch.id,
@@ -282,6 +295,7 @@ export default function VehicleDispatchModal({ isOpen, onClose }: VehicleDispatc
       try {
         const response = await fetch(`/api/vehicle-dispatch?id=${id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {

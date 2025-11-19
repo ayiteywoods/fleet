@@ -79,6 +79,11 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
     message: ''
   })
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch subsidiaries and clusters
   useEffect(() => {
@@ -91,7 +96,9 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
   const fetchSubsidiaries = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/subsidiary')
+      const response = await fetch('/api/subsidiary', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setSubsidiaries(data)
@@ -107,7 +114,9 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
 
   const fetchClusters = async () => {
     try {
-      const response = await fetch('/api/clusters')
+      const response = await fetch('/api/clusters', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setClusters(data)
@@ -123,6 +132,7 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -198,6 +208,7 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingSubsidiary.id,
@@ -253,6 +264,7 @@ export default function SubsidiaryModal({ isOpen, onClose }: SubsidiaryModalProp
       try {
         const response = await fetch(`/api/subsidiary?id=${subsidiary.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

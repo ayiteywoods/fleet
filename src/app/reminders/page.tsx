@@ -23,6 +23,12 @@ export default function RemindersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   useEffect(() => {
     fetchReminders()
   }, [])
@@ -30,13 +36,14 @@ export default function RemindersPage() {
   const fetchReminders = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('token')
-      if (!token) return
+      const headers = getAuthHeaders()
+      if (!headers.Authorization) {
+        console.warn('[Reminders] No auth token found; skipping fetch.')
+        return
+      }
 
       const response = await fetch('/api/reminders', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       })
 
       if (response.ok) {

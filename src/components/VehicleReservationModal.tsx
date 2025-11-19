@@ -60,6 +60,11 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof VehicleReservation>('created_at')
@@ -79,7 +84,9 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
   const fetchVehicleReservations = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/vehicle-reservation')
+      const response = await fetch('/api/vehicle-reservation', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleReservations(data)
@@ -95,7 +102,9 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)
@@ -113,6 +122,7 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -157,6 +167,7 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingReservation.id,
@@ -203,6 +214,7 @@ export default function VehicleReservationModal({ isOpen, onClose }: VehicleRese
     try {
       const response = await fetch(`/api/vehicle-reservation?id=${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       const result = await response.json()

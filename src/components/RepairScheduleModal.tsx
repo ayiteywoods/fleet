@@ -48,6 +48,11 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch repair schedules
   useEffect(() => {
@@ -59,7 +64,9 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
   const fetchRepairSchedules = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/repair-schedule')
+      const response = await fetch('/api/repair-schedule', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setRepairSchedules(data)
@@ -79,6 +86,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -137,6 +145,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -183,6 +192,7 @@ export default function RepairScheduleModal({ isOpen, onClose }: RepairScheduleM
       try {
         const response = await fetch(`/api/repair-schedule?id=${schedule.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

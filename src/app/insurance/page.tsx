@@ -29,6 +29,7 @@ import Notification from '@/components/Notification'
 import AddInsuranceModal from '@/components/AddInsuranceModal'
 import EditInsuranceModal from '@/components/EditInsuranceModal'
 import ViewInsuranceModal from '@/components/ViewInsuranceModal'
+import PermissionGuard from '@/components/PermissionGuard'
 
 export default function InsurancePage() {
   const { themeMode } = useTheme()
@@ -55,6 +56,12 @@ export default function InsurancePage() {
     'policy_number', 'insurance_company', 'coverage_type', 'premium_amount', 'start_date', 'end_date'
   ])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // All available fields from the insurance table
   const availableFields = [
     { key: 'policy_number', label: 'Policy Number', type: 'text' },
@@ -73,7 +80,9 @@ export default function InsurancePage() {
   const fetchInsuranceRecords = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/insurance')
+      const response = await fetch('/api/insurance', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setInsuranceRecords(data)
@@ -431,6 +440,7 @@ export default function InsurancePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(insuranceData),
       })
@@ -479,6 +489,7 @@ export default function InsurancePage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(insuranceData),
       })
@@ -515,6 +526,7 @@ export default function InsurancePage() {
       try {
         const response = await fetch(`/api/insurance?id=${record.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         if (response.ok) {
@@ -704,13 +716,15 @@ export default function InsurancePage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-end">
               {/* Add Insurance Button */}
-              <button 
-                onClick={() => setShowAddInsuranceModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD INSURANCE</span>
-              </button>
+              <PermissionGuard permission="add insurance">
+                <button 
+                  onClick={() => setShowAddInsuranceModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD INSURANCE</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -944,27 +958,33 @@ export default function InsurancePage() {
                   }`}>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewInsurance(record)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="View Insurance"
-                        >
-                          <EyeIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEditInsurance(record)}
-                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          title="Edit Insurance"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteInsurance(record)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Delete Insurance"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <PermissionGuard permission="view insurance" fallback={null}>
+                          <button
+                            onClick={() => handleViewInsurance(record)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="View Insurance"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="edit insurance" fallback={null}>
+                          <button
+                            onClick={() => handleEditInsurance(record)}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            title="Edit Insurance"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="delete insurance" fallback={null}>
+                          <button
+                            onClick={() => handleDeleteInsurance(record)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete Insurance"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">

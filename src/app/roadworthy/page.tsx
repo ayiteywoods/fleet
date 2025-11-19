@@ -31,6 +31,7 @@ import Notification from '@/components/Notification'
 import AddRoadworthyModal from '@/components/AddRoadworthyModal'
 import EditRoadworthyModal from '@/components/EditRoadworthyModal'
 import ViewRoadworthyModal from '@/components/ViewRoadworthyModal'
+import PermissionGuard from '@/components/PermissionGuard'
 
 export default function RoadworthyPage() {
   const { themeMode } = useTheme()
@@ -760,13 +761,15 @@ export default function RoadworthyPage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-end">
               {/* Add Roadworthy Button */}
-              <button 
-                onClick={() => setShowAddRoadworthyModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">ADD ROADWORTHY</span>
-              </button>
+              <PermissionGuard permission="add roadworthy">
+                <button 
+                  onClick={() => setShowAddRoadworthyModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-3xl hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">ADD ROADWORTHY</span>
+                </button>
+              </PermissionGuard>
             </div>
 
             {/* Table Controls */}
@@ -978,27 +981,33 @@ export default function RoadworthyPage() {
                     }`}>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewRoadworthy(record)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="View Roadworthy"
-                        >
-                          <EyeIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEditRoadworthy(record)}
-                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          title="Edit Roadworthy"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRoadworthy(record)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Delete Roadworthy"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
+                        <PermissionGuard permission="view roadworthy" fallback={null}>
+                          <button
+                            onClick={() => handleViewRoadworthy(record)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="View Roadworthy"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="edit roadworthy" fallback={null}>
+                          <button
+                            onClick={() => handleEditRoadworthy(record)}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            title="Edit Roadworthy"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permission="delete roadworthy" fallback={null}>
+                          <button
+                            onClick={() => handleDeleteRoadworthy(record)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete Roadworthy"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">

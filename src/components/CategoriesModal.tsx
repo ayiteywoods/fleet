@@ -40,6 +40,11 @@ export default function CategoriesModal({ isOpen, onClose }: CategoriesModalProp
     title: '',
     message: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof Category>('name')
@@ -58,7 +63,9 @@ export default function CategoriesModal({ isOpen, onClose }: CategoriesModalProp
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/categories', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setCategories(data)
@@ -78,6 +85,7 @@ export default function CategoriesModal({ isOpen, onClose }: CategoriesModalProp
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -136,6 +144,7 @@ export default function CategoriesModal({ isOpen, onClose }: CategoriesModalProp
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingCategory.id,
@@ -181,6 +190,7 @@ export default function CategoriesModal({ isOpen, onClose }: CategoriesModalProp
       try {
         const response = await fetch(`/api/categories?id=${category.id}`, {
           method: 'DELETE',
+          headers: getAuthHeaders()
         })
 
         const result = await response.json()

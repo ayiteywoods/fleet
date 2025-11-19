@@ -30,6 +30,7 @@ import EditFuelLogModal from '../../components/EditFuelLogModal'
 import FuelExpenseLogModal from '../../components/FuelExpenseLogModal'
 import FuelRequestModal from '../../components/FuelRequestModal'
 import Notification from '../../components/Notification'
+import PermissionGuard from '@/components/PermissionGuard'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -98,6 +99,12 @@ export default function FuelPage() {
   
   // Chart data and settings
   const [timePeriod, setTimePeriod] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
+
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
   const [chartData, setChartData] = useState<{
     fuelTypes: { type: string; count: number; totalCost: number }[]
   }>({
@@ -209,7 +216,9 @@ export default function FuelPage() {
   const fetchFuelLogs = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/fuel-logs')
+      const response = await fetch('/api/fuel-logs', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setFuelLogs(data)
@@ -902,17 +911,19 @@ export default function FuelPage() {
             </div>
 
             {/* Right Side - Add Fuel Log Button */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                themeColor === 'blue' 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-600 text-white hover:bg-gray-700'
-              }`}
-            >
-              <PlusIcon className="w-4 h-4" />
-              ADD FUEL LOG
-            </button>
+            <PermissionGuard permission="add fuel log">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                  themeColor === 'blue' 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                <PlusIcon className="w-4 h-4" />
+                ADD FUEL LOG
+              </button>
+            </PermissionGuard>
           </div>
         </div>
 
@@ -1039,36 +1050,42 @@ export default function FuelPage() {
                     themeMode === 'dark' ? 'text-gray-300' : 'text-gray-900'
                   }`}>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleView(log)}
-                        className={`p-1 rounded transition-colors ${
-                          themeMode === 'dark' 
-                            ? 'text-blue-400 hover:bg-gray-700' 
-                            : 'text-blue-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        <EyeIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(log)}
-                        className={`p-1 rounded transition-colors ${
-                          themeMode === 'dark' 
-                            ? 'text-green-400 hover:bg-gray-700' 
-                            : 'text-green-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        <PencilIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(log.id)}
-                        className={`p-1 rounded transition-colors ${
-                          themeMode === 'dark' 
-                            ? 'text-red-400 hover:bg-gray-700' 
-                            : 'text-red-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      <PermissionGuard permission="view fuel log" fallback={null}>
+                        <button
+                          onClick={() => handleView(log)}
+                          className={`p-1 rounded transition-colors ${
+                            themeMode === 'dark' 
+                              ? 'text-blue-400 hover:bg-gray-700' 
+                              : 'text-blue-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="edit fuel log" fallback={null}>
+                        <button
+                          onClick={() => handleEdit(log)}
+                          className={`p-1 rounded transition-colors ${
+                            themeMode === 'dark' 
+                              ? 'text-green-400 hover:bg-gray-700' 
+                              : 'text-green-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="delete fuel log" fallback={null}>
+                        <button
+                          onClick={() => handleDelete(log.id)}
+                          className={`p-1 rounded transition-colors ${
+                            themeMode === 'dark' 
+                              ? 'text-red-400 hover:bg-gray-700' 
+                              : 'text-red-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </td>
                 </tr>

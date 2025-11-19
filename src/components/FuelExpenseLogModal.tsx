@@ -61,11 +61,21 @@ export default function FuelExpenseLogModal({ isOpen, onClose }: FuelExpenseLogM
   })
   const [fuelRequests, setFuelRequests] = useState<any[]>([])
 
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') {
+      return {}
+    }
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   // Fetch fuel expense logs
   const fetchFuelExpenseLogs = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/fuel-expense-log')
+      const response = await fetch('/api/fuel-expense-log', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setFuelExpenseLogs(data)
@@ -80,7 +90,9 @@ export default function FuelExpenseLogModal({ isOpen, onClose }: FuelExpenseLogM
   // Fetch fuel requests (including those already converted to expense logs)
   const fetchFuelRequests = async () => {
     try {
-      const response = await fetch('/api/fuel-request?include_converted=true')
+      const response = await fetch('/api/fuel-request?include_converted=true', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setFuelRequests(data)
@@ -165,7 +177,8 @@ export default function FuelExpenseLogModal({ isOpen, onClose }: FuelExpenseLogM
     if (confirm('Are you sure you want to delete this fuel expense log?')) {
       try {
         const response = await fetch(`/api/fuel-expense-log?id=${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: getAuthHeaders()
         })
         if (response.ok) {
           fetchFuelExpenseLogs()
@@ -208,7 +221,8 @@ export default function FuelExpenseLogModal({ isOpen, onClose }: FuelExpenseLogM
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData)
       })

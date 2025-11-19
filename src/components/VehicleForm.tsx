@@ -18,6 +18,11 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
     mileage: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +33,7 @@ export default function VehicleForm({ onClose, onSuccess }: VehicleFormProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })

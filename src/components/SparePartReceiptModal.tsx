@@ -127,6 +127,11 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
     district: '',
     status: ''
   })
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -151,7 +156,9 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
 
   const fetchReceipts = async () => {
     try {
-      const response = await fetch('/api/spare-part-receipt')
+      const response = await fetch('/api/spare-part-receipt', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setReceipts(data)
@@ -165,7 +172,9 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
 
   const fetchDispatches = async () => {
     try {
-      const response = await fetch('/api/spare-part-dispatch')
+      const response = await fetch('/api/spare-part-dispatch', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setDispatches(data)
@@ -179,7 +188,9 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch('/api/vehicles')
+      const response = await fetch('/api/vehicles', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)
@@ -198,6 +209,7 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -248,6 +260,7 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -295,7 +308,8 @@ export default function SparePartReceiptModal({ isOpen, onClose }: SparePartRece
 
     try {
       const response = await fetch(`/api/spare-part-receipt?id=${id}`, {
-        method: 'DELETE',
+          method: 'DELETE',
+          headers: getAuthHeaders()
       })
 
       if (response.ok) {

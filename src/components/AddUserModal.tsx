@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, User, Mail, Phone, Shield, MapPin, Calendar, FileText, Key } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface AddUserModalProps {
   isOpen: boolean
@@ -12,6 +13,10 @@ interface AddUserModalProps {
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
   const { themeMode } = useTheme()
+  const { user: currentUser } = usePermissions()
+  const normalizedRole = currentUser?.role ? currentUser.role.toLowerCase() : ''
+  const isCompanyAdmin =
+    normalizedRole.includes('company') && normalizedRole.includes('admin')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,10 +29,23 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     license_expiry: '',
     specialization: '',
     password: '',
-    is_active: true
+    is_active: true,
+    group: ''
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!currentUser) return
+    setFormData((prev) => ({
+      ...prev,
+      role: isCompanyAdmin ? 'company user' : prev.role,
+      group:
+        isCompanyAdmin && currentUser.group !== undefined && currentUser.group !== null
+          ? String(currentUser.group)
+          : prev.group
+    }))
+  }, [currentUser, isCompanyAdmin])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -82,10 +100,12 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
 
     setLoading(true)
     try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify(formData),
       })
@@ -98,7 +118,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
           name: '',
           email: '',
           phone: '',
-          role: 'user',
+          role: isCompanyAdmin ? 'company user' : 'user',
           region: '',
           district: '',
           license_number: '',
@@ -106,7 +126,11 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
           license_expiry: '',
           specialization: '',
           password: '',
-          is_active: true
+          is_active: true,
+          group:
+            isCompanyAdmin && currentUser?.group
+              ? String(currentUser.group)
+              : ''
         })
         onClose()
       } else {
@@ -242,13 +266,35 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
                       ? 'bg-gray-700 text-white'
                       : 'bg-white text-gray-900'
                   }`}
+                  disabled={isCompanyAdmin}
                 >
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
                   <option value="driver">Driver</option>
+                  <option value="company user">Company User</option>
                 </select>
                 {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="group" className="block text-sm font-medium mb-1">
+                  Group {isCompanyAdmin && '(auto-assigned)'}
+                </label>
+                <input
+                  type="text"
+                  id="group"
+                  name="group"
+                  value={formData.group}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 ${
+                    themeMode === 'dark'
+                      ? 'bg-gray-700 text-white'
+                      : 'bg-white text-gray-900'
+                  }`}
+                  placeholder="Enter group ID"
+                  readOnly={isCompanyAdmin}
+                />
               </div>
 
               <div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   HomeIcon,
   TruckIcon,
@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
 import { getIconColor, getButtonColor, getBrandBgColor } from '@/lib/themeUtils'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface SidebarProps {
   isCollapsed: boolean
@@ -34,7 +35,9 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { themeColor, themeMode } = useTheme()
+  const { can, canAccess, permissions, loading: permissionsLoading } = usePermissions()
   const [expandedSections, setExpandedSections] = useState({
     admin: false,
     reports: false,
@@ -48,69 +51,130 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     }))
   }
 
-  const navigationItems = [
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token')
+    }
+    router.push('/login')
+  }
+
+  // Define all navigation items with their permission requirements
+  const allNavigationItems = [
     {
       name: 'Dashboard',
       href: '/',
       icon: HomeIcon,
-      active: pathname === '/'
+      active: pathname === '/',
+      permission: null // Dashboard is always accessible
     },
     {
       name: 'Vehicles',
       href: '/vehicles',
       icon: TruckIcon,
-      active: pathname === '/vehicles' || pathname.startsWith('/vehicle-profile/')
+      active: pathname === '/vehicles' || pathname.startsWith('/vehicle-profile/'),
+      permission: 'view vehicles'
     },
     {
       name: 'Drivers',
       href: '/drivers',
       icon: UserGroupIcon,
-      active: pathname === '/drivers' || pathname.startsWith('/driver-profile/')
+      active: pathname === '/drivers' || pathname.startsWith('/driver-profile/'),
+      permission: 'view driver'
     },
     {
       name: 'Fuel',
       href: '/fuel',
       icon: BoltIcon,
-      active: pathname === '/fuel'
+      active: pathname === '/fuel',
+      permission: 'view fuel'
     },
     {
       name: 'Insurance',
       href: '/insurance',
       icon: ShieldCheckIcon,
-      active: pathname === '/insurance'
+      active: pathname === '/insurance',
+      permission: 'view insurance'
     },
     {
       name: 'Roadworthy',
       href: '/roadworthy',
       icon: RoadworthyIcon,
-      active: pathname === '/roadworthy'
+      active: pathname === '/roadworthy',
+      permission: 'view roadworthy'
     },
     {
       name: 'Repairs',
       href: '/repairs',
       icon: WrenchScrewdriverIcon,
-      active: pathname === '/repairs'
+      active: pathname === '/repairs',
+      permission: 'view repair'
     },
     {
       name: 'Maintenance',
       href: '/maintenance',
       icon: Cog6ToothIcon,
-      active: pathname === '/maintenance'
+      active: pathname === '/maintenance',
+      permission: 'view maintenance'
     }
   ]
-
-  // If no user, definitely don't show Live Tracking
-  if (!user) {
-    console.log('[Sidebar] No user object - hiding Live Tracking')
-  }
 
   // Check if user is super admin
   const isSuperAdmin = user?.role ? (
     user.role.toLowerCase() === 'super admin' ||
     user.role.toLowerCase() === 'superadmin' ||
+    user.role.toLowerCase() === 'super user' ||
+    user.role.toLowerCase() === 'superuser' ||
     user.role.toLowerCase() === 'super_user' ||
-    user.role.toLowerCase() === 'superuser'
+    user.role.toLowerCase() === 'admin'
   ) : false
+
+  // Helper function to check permission
+  const hasPermission = (permissionName: string): boolean => {
+    if (!permissions || permissions.length === 0) return false
+    const normalizedPermission = permissionName.toLowerCase().trim()
+    return permissions.includes(normalizedPermission)
+  }
+
+  // Filter navigation items based on permissions
+  const navigationItems = allNavigationItems.filter(item => {
+    // Dashboard is always accessible
+    if (!item.permission) return true
+    
+    // Super admins can see everything
+    if (isSuperAdmin) {
+      console.log(`[Sidebar] Showing "${item.name}" - super admin access`)
+      return true
+    }
+    
+    // If permissions are still loading, show items temporarily (they'll be filtered once loaded)
+    if (permissionsLoading) {
+      console.log(`[Sidebar] Showing "${item.name}" - permissions loading`)
+      return true
+    }
+    
+    // If no permissions at all, hide items (user needs permissions assigned to their role)
+    if (!permissions || permissions.length === 0) {
+      console.warn(`[Sidebar] No permissions found for role "${user?.role || 'unknown'}" - hiding "${item.name}". User needs permissions assigned to their role via Roles modal.`)
+      return false // Hide items if no permissions - user needs to assign permissions to their role
+    }
+    
+    // Check if user has the required permission
+    const hasAccess = hasPermission(item.permission)
+    
+    // Debug logging for each item
+    if (!hasAccess) {
+      console.log(`[Sidebar] Hiding "${item.name}" - missing permission: ${item.permission}`)
+    } else {
+      console.log(`[Sidebar] Showing "${item.name}" - has permission: ${item.permission}`)
+    }
+    
+    return hasAccess
+  })
+
+  // If no user, definitely don't show Live Tracking
+  if (!user) {
+    console.log('[Sidebar] No user object - hiding Live Tracking')
+  }
 
   // Only show Live Tracking if user explicitly has access OR is super admin
   // hasLiveTracking must be strictly true (not just truthy)
@@ -151,9 +215,16 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     console.log('[Sidebar] ❌ NOT showing Live Tracking - user does not have access')
   }
   
-  // Add other items
-  additionalItems.push(
-    {
+  // Add other items with permission checks
+  // Reports - check for any report-related permission OR super admin
+  if (!permissionsLoading && (
+    isSuperAdmin ||
+    hasPermission('view report') || 
+    hasPermission('view reports') ||
+    canAccess('report') ||
+    canAccess('reports')
+  )) {
+    additionalItems.push({
       name: 'Reports',
       href: '/reports',
       icon: DocumentTextIcon,
@@ -161,8 +232,18 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       hasSubmenu: true,
       expanded: expandedSections.reports,
       onToggle: () => toggleSection('reports')
-    },
-    {
+    })
+  }
+  
+  // Settings - typically requires admin or specific settings permission
+  if (!permissionsLoading && (
+    hasPermission('view settings') ||
+    hasPermission('view setting') ||
+    canAccess('settings') ||
+    canAccess('setting') ||
+    isSuperAdmin
+  )) {
+    additionalItems.push({
       name: 'Settings',
       href: '/settings',
       icon: Cog6ToothIcon,
@@ -170,8 +251,18 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       hasSubmenu: true,
       expanded: expandedSections.settings,
       onToggle: () => toggleSection('settings')
-    }
-  )
+    })
+  }
+
+  // Debug logging for permissions
+  console.log('[Sidebar] Permission Check Status:', {
+    permissionsLoading,
+    isSuperAdmin,
+    userRole: user?.role,
+    permissionsCount: permissions?.length || 0,
+    permissions: permissions,
+    visibleItems: navigationItems.map(i => i.name)
+  })
 
   return (
     <div className={`transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} h-screen fixed left-0 top-0 z-50 flex flex-col ${
@@ -256,14 +347,15 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
               <UserIcon className="w-4 h-4" />
               My Profile
             </Link>
-            <Link href="/logout" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname === '/logout' 
-                ? 'bg-red-600 text-white' 
-                : themeMode === 'dark' ? 'text-red-400 hover:bg-gray-700 hover:text-red-300' : 'text-red-600 hover:bg-gray-100 hover:text-red-700'
-            }`}>
+            <button
+              onClick={handleLogout}
+              className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                themeMode === 'dark' ? 'text-red-400 hover:bg-gray-700 hover:text-red-300' : 'text-red-600 hover:bg-gray-100 hover:text-red-700'
+              }`}
+            >
               <span className="w-4 h-4">L</span>
               Logout
-            </Link>
+            </button>
           </div>
         )}
       </div>

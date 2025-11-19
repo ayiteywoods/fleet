@@ -45,6 +45,11 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch vehicle makes
   useEffect(() => {
@@ -56,7 +61,9 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
   const fetchVehicleMakes = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/vehicle-makes')
+      const response = await fetch('/api/vehicle-makes', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setVehicleMakes(data)
@@ -76,6 +83,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -119,6 +127,7 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify({
           id: editingMake.id,
@@ -161,10 +170,11 @@ export default function VehicleMakesModal({ isOpen, onClose }: VehicleMakesModal
   const handleDeleteMake = async (id: string) => {
     if (!confirm('Are you sure you want to delete this vehicle make?')) return
 
-      try {
+    try {
       const response = await fetch(`/api/vehicle-makes?id=${id}`, {
-          method: 'DELETE',
-        })
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      })
 
         if (response.ok) {
           setNotification({

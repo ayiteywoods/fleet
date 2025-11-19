@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ReactNode, cloneElement } from 'react'
 import { 
   Cog6ToothIcon,
   UserGroupIcon,
@@ -43,6 +43,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/contexts/ThemeContext'
 import HorizonDashboardLayout from '@/components/HorizonDashboardLayout'
+import PermissionGuard from '@/components/PermissionGuard'
 import CategoriesModal from '@/components/CategoriesModal'
 import ClustersModal from '@/components/ClustersModal'
 import VehicleMakesModal from '@/components/VehicleMakesModal'
@@ -64,6 +65,7 @@ import SparePartRequestModal from '@/components/SparePartRequestModal'
 import SparePartReceiptModal from '@/components/SparePartReceiptModal'
 import CompaniesModal from '@/components/CompaniesModal'
 import UsersModal from '@/components/UsersModal'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface SettingCard {
   id: string
@@ -75,6 +77,14 @@ interface SettingCard {
 
 export default function SettingsPage() {
   const { themeMode } = useTheme()
+  const { user } = usePermissions()
+  const roleLower = user?.role ? user.role.toLowerCase() : ''
+  const hasGlobalSettingsAccess =
+    roleLower === 'super user' ||
+    roleLower === 'superuser' ||
+    roleLower === 'super_user' ||
+    roleLower === 'super admin' ||
+    roleLower === 'superadmin'
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null)
   const [showCategoriesModal, setShowCategoriesModal] = useState(false)
   const [showClustersModal, setShowClustersModal] = useState(false)
@@ -283,6 +293,106 @@ export default function SettingsPage() {
     }
   ]
 
+  const cardPermissionMap: Record<string, string | null> = {
+    general: 'view general settings',
+    categories: 'view categories',
+    clusters: 'view clusters',
+    groups: 'view groups',
+    mechanics: 'view mechanics',
+    permissions: 'view permissions',
+    roles: 'view roles',
+    tags: 'view tags',
+    sparePartDispatch: 'view spare parts dispatch',
+    sparePartInventory: 'view spare parts inventory',
+    sparePartReceipt: 'view spare parts receipt',
+    sparePartRequest: 'view spare parts request',
+    subsidiary: 'view subsidiary',
+    supervisors: 'view supervisors',
+    users: 'view user',
+    companies: 'view companies',
+    vehicleDispatch: 'view vehicle dispatch',
+    vehicleMakes: 'view vehicle makes',
+    vehicleModels: 'view vehicle models',
+    vehicleReservation: 'view vehicle reservation',
+    vehicleTypes: 'view vehicle types',
+    workshops: 'view workshops',
+    security: 'view security settings',
+    notifications: 'view notification settings',
+    appearance: 'view appearance settings',
+    system: 'view system settings'
+  }
+
+  const renderSettingCard = (card: SettingCard, index?: number): ReactNode => {
+    const IconComponent = card.icon
+    const cardContent = (
+      <div
+        className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
+          themeMode === 'dark'
+            ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700'
+            : 'bg-white hover:bg-gray-50 border border-gray-200'
+        }`}
+        onClick={() => handleSettingClick(card.id)}
+      >
+        <div className="flex items-center">
+          <div
+            className={`p-3 rounded-full mr-4 ${
+              themeMode === 'dark'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-blue-100 text-blue-600'
+            }`}
+          >
+            <IconComponent className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h3
+              className={`text-lg font-semibold mb-1 flex justify-between items-center ${
+                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}
+            >
+              <span>{card.title}</span>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleSettingClick(card.id)
+                }}
+                className={`text-xs font-medium hover:underline flex items-center gap-1 ${
+                  themeMode === 'dark'
+                    ? 'text-brand-400 hover:text-brand-300'
+                    : 'text-brand-600 hover:text-brand-700'
+                }`}
+              >
+                Manage
+                <ChevronRightIcon className="w-3 h-3" />
+              </button>
+            </h3>
+            <p
+              className={`text-sm ${
+                themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}
+            >
+              {card.description}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+
+    const permission = hasGlobalSettingsAccess ? null : cardPermissionMap[card.id]
+    if (!permission) {
+      return cloneElement(cardContent, { key: card.id ?? index })
+    }
+
+    return (
+      <PermissionGuard
+        key={card.id ?? index}
+        permission={permission}
+        fallback={null}
+      >
+        {cardContent}
+      </PermissionGuard>
+    )
+  }
+
   const handleSettingClick = (settingId: string) => {
     if (settingId === 'categories') {
       setShowCategoriesModal(true)
@@ -358,53 +468,13 @@ export default function SettingsPage() {
               <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
-              {settingCards.filter(card => 
-                ['general', 'categories', 'clusters', 'groups', 'mechanics', 'permissions', 'roles', 'tags'].includes(card.id)
-              ).map((card) => {
-                const IconComponent = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => handleSettingClick(card.id)}
-                    className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                      themeMode === 'dark' 
-                        ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700' 
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-3 rounded-full mr-4 ${
-                        themeMode === 'dark' 
-                          ? 'bg-blue-500/20 text-blue-400' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-1 flex justify-between items-center ${
-                          themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          <span>{card.title}</span>
-                          <button
-                            onClick={() => handleSettingClick(card.id)}
-                            className={`text-xs font-medium hover:underline flex items-center gap-1 ${
-                              themeMode === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-700'
-                            }`}
-                          >
-                            Manage
-                            <ChevronRightIcon className="w-3 h-3" />
-                          </button>
-                        </h3>
-                        <p className={`text-sm ${
-                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {settingCards
+                .filter((card) =>
+                  ['general', 'categories', 'clusters', 'groups', 'mechanics', 'permissions', 'roles', 'tags'].includes(
+                    card.id
+                  )
                 )
-              })}
+                .map((card, idx) => renderSettingCard(card, idx))}
             </div>
           </div>
 
@@ -419,53 +489,13 @@ export default function SettingsPage() {
               <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
-              {settingCards.filter(card => 
-                ['vehicleDispatch', 'vehicleMakes', 'vehicleModels', 'vehicleReservation', 'vehicleTypes'].includes(card.id)
-              ).map((card) => {
-                const IconComponent = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => handleSettingClick(card.id)}
-                    className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                      themeMode === 'dark' 
-                        ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700' 
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-3 rounded-full mr-4 ${
-                        themeMode === 'dark' 
-                          ? 'bg-blue-500/20 text-blue-400' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-1 flex justify-between items-center ${
-                          themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          <span>{card.title}</span>
-                          <button
-                            onClick={() => handleSettingClick(card.id)}
-                            className={`text-xs font-medium hover:underline flex items-center gap-1 ${
-                              themeMode === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-700'
-                            }`}
-                          >
-                            Manage
-                            <ChevronRightIcon className="w-3 h-3" />
-                          </button>
-                        </h3>
-                        <p className={`text-sm ${
-                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {settingCards
+                .filter((card) =>
+                  ['vehicleDispatch', 'vehicleMakes', 'vehicleModels', 'vehicleReservation', 'vehicleTypes'].includes(
+                    card.id
+                  )
                 )
-              })}
+                .map((card, idx) => renderSettingCard(card, idx))}
             </div>
           </div>
 
@@ -480,53 +510,11 @@ export default function SettingsPage() {
               <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
-              {settingCards.filter(card => 
-                ['sparePartDispatch', 'sparePartInventory', 'sparePartReceipt', 'sparePartRequest'].includes(card.id)
-              ).map((card) => {
-                const IconComponent = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => handleSettingClick(card.id)}
-                    className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                      themeMode === 'dark' 
-                        ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700' 
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-3 rounded-full mr-4 ${
-                        themeMode === 'dark' 
-                          ? 'bg-blue-500/20 text-blue-400' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-1 flex justify-between items-center ${
-                          themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          <span>{card.title}</span>
-                          <button
-                            onClick={() => handleSettingClick(card.id)}
-                            className={`text-xs font-medium hover:underline flex items-center gap-1 ${
-                              themeMode === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-700'
-                            }`}
-                          >
-                            Manage
-                            <ChevronRightIcon className="w-3 h-3" />
-                          </button>
-                        </h3>
-                        <p className={`text-sm ${
-                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {settingCards
+                .filter((card) =>
+                  ['sparePartDispatch', 'sparePartInventory', 'sparePartReceipt', 'sparePartRequest'].includes(card.id)
                 )
-              })}
+                .map((card, idx) => renderSettingCard(card, idx))}
             </div>
           </div>
 
@@ -541,53 +529,9 @@ export default function SettingsPage() {
               <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
-              {settingCards.filter(card => 
-                ['subsidiary', 'supervisors', 'users', 'companies'].includes(card.id)
-              ).map((card) => {
-                const IconComponent = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => handleSettingClick(card.id)}
-                    className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                      themeMode === 'dark' 
-                        ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700' 
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-3 rounded-full mr-4 ${
-                        themeMode === 'dark' 
-                          ? 'bg-blue-500/20 text-blue-400' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-1 flex justify-between items-center ${
-                          themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          <span>{card.title}</span>
-                          <button
-                            onClick={() => handleSettingClick(card.id)}
-                            className={`text-xs font-medium hover:underline flex items-center gap-1 ${
-                              themeMode === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-700'
-                            }`}
-                          >
-                            Manage
-                            <ChevronRightIcon className="w-3 h-3" />
-                          </button>
-                        </h3>
-                        <p className={`text-sm ${
-                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {settingCards
+                .filter((card) => ['subsidiary', 'supervisors', 'users', 'companies'].includes(card.id))
+                .map((card, idx) => renderSettingCard(card, idx))}
             </div>
           </div>
 
@@ -602,53 +546,26 @@ export default function SettingsPage() {
               <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
-              {settingCards.filter(card => 
-                ['workshops'].includes(card.id)
-              ).map((card) => {
-                const IconComponent = card.icon
-                return (
-                  <div
-                    key={card.id}
-                    onClick={() => handleSettingClick(card.id)}
-                    className={`p-6 rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
-                      themeMode === 'dark' 
-                        ? 'bg-navy-800 hover:bg-navy-700 border border-navy-700' 
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div className={`p-3 rounded-full mr-4 ${
-                        themeMode === 'dark' 
-                          ? 'bg-blue-500/20 text-blue-400' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`text-lg font-semibold mb-1 flex justify-between items-center ${
-                          themeMode === 'dark' ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          <span>{card.title}</span>
-                          <button
-                            onClick={() => handleSettingClick(card.id)}
-                            className={`text-xs font-medium hover:underline flex items-center gap-1 ${
-                              themeMode === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-700'
-                            }`}
-                          >
-                            Manage
-                            <ChevronRightIcon className="w-3 h-3" />
-                          </button>
-                        </h3>
-                        <p className={`text-sm ${
-                          themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {settingCards
+                .filter((card) => ['workshops'].includes(card.id))
+                .map((card, idx) => renderSettingCard(card, idx))}
+            </div>
+          </div>
+
+          {/* Application Preferences Section */}
+          <div>
+            <div className="flex items-center mb-6">
+              <h2 className={`text-lg font-semibold flex-shrink-0 ${
+                themeMode === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>
+                Application Preferences
+              </h2>
+              <hr className={`flex-1 ml-4 ${themeMode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ml-0">
+              {settingCards
+                .filter((card) => ['security', 'notifications', 'appearance', 'system'].includes(card.id))
+                .map((card, idx) => renderSettingCard(card, idx))}
             </div>
           </div>
         </div>

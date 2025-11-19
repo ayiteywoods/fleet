@@ -17,7 +17,7 @@ interface VehicleModel {
   vehicle_make: {
     id: string
     name: string
-  }
+  } | null
 }
 
 interface ViewVehicleModelModalProps {
@@ -35,7 +35,7 @@ export default function ViewVehicleModelModal({ isOpen, onClose, vehicleModel }:
     const data = [
       ['Field', 'Value'],
       ['Model Name', vehicleModel.name],
-      ['Make', vehicleModel.vehicle_make.name],
+      ['Make', vehicleModel.vehicle_make?.name || 'N/A'],
       ['Description', vehicleModel.description || 'N/A'],
       ['Created At', vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleString() : 'N/A'],
       ['Updated At', vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleString() : 'N/A']
@@ -51,7 +51,7 @@ export default function ViewVehicleModelModal({ isOpen, onClose, vehicleModel }:
     const data = [
       ['Field', 'Value'],
       ['Model Name', vehicleModel.name],
-      ['Make', vehicleModel.vehicle_make.name],
+      ['Make', vehicleModel.vehicle_make?.name || 'N/A'],
       ['Description', vehicleModel.description || 'N/A'],
       ['Created At', vehicleModel.created_at ? new Date(vehicleModel.created_at).toLocaleString() : 'N/A'],
       ['Updated At', vehicleModel.updated_at ? new Date(vehicleModel.updated_at).toLocaleString() : 'N/A']
@@ -83,7 +83,7 @@ export default function ViewVehicleModelModal({ isOpen, onClose, vehicleModel }:
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.text(`Model Name: ${vehicleModel.name}`, 20, 60)
-    doc.text(`Make: ${vehicleModel.vehicle_make.name}`, 20, 70)
+    doc.text(`Make: ${vehicleModel.vehicle_make?.name || 'N/A'}`, 20, 70)
     doc.text(`Description: ${vehicleModel.description || 'N/A'}`, 20, 80)
     
     // Timestamps
@@ -127,7 +127,7 @@ export default function ViewVehicleModelModal({ isOpen, onClose, vehicleModel }:
               </div>
               <div class="field">
                 <span class="label">Make:</span>
-                <span class="value">${vehicleModel.vehicle_make.name}</span>
+                <span class="value">${vehicleModel.vehicle_make?.name || 'N/A'}</span>
               </div>
               <div class="field">
                 <span class="label">Description:</span>
@@ -210,7 +210,7 @@ export default function ViewVehicleModelModal({ isOpen, onClose, vehicleModel }:
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">Make</p>
-                <p className="text-gray-900">{vehicleModel.vehicle_make.name}</p>
+                <p className="text-gray-900">{vehicleModel.vehicle_make?.name || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-700">Description</p>

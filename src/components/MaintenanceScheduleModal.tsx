@@ -50,12 +50,19 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   // Fetch maintenance schedules
   const fetchMaintenanceSchedules = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/maintenance-schedule')
+      const response = await fetch('/api/maintenance-schedule', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setMaintenanceSchedules(data)
@@ -91,6 +98,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -147,6 +155,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders()
         },
         body: JSON.stringify(formData),
       })
@@ -192,6 +201,7 @@ export default function MaintenanceScheduleModal({ isOpen, onClose }: Maintenanc
     try {
       const response = await fetch(`/api/maintenance-schedule?id=${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {

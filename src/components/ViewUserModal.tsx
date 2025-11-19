@@ -81,6 +81,11 @@ interface ViewUserModalProps {
 
 export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
   const [companies, setCompanies] = useState<Company[]>([])
+  const getAuthHeaders = () => {
+    if (typeof window === 'undefined') return {}
+    const token = localStorage.getItem('token')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
   useEffect(() => {
     fetchCompanies()
@@ -88,7 +93,9 @@ export default function ViewUserModal({ user, onClose }: ViewUserModalProps) {
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch('/api/companies')
+      const response = await fetch('/api/companies', {
+        headers: getAuthHeaders()
+      })
       if (response.ok) {
         const data = await response.json()
         setCompanies(data)
