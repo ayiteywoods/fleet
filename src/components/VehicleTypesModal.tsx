@@ -45,11 +45,6 @@ export default function VehicleTypesModal({ isOpen, onClose }: VehicleTypesModal
     const token = localStorage.getItem('token')
     return token ? { Authorization: `Bearer ${token}` } : {}
   }
-  const getAuthHeaders = () => {
-    if (typeof window === 'undefined') return {}
-    const token = localStorage.getItem('token')
-    return token ? { Authorization: `Bearer ${token}` } : {}
-  }
   
   // Sorting and pagination state
   const [sortField, setSortField] = useState<keyof VehicleType>('type')

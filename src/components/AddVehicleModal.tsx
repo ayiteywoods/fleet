@@ -262,7 +262,6 @@ export default function AddVehicleModal({ isOpen, onClose, onSubmit }: AddVehicl
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/drivers?subsidiary_id=${subsidiaryId}`)
       const response = await fetch(`/api/drivers?subsidiary_id=${subsidiaryId}`, {
         headers: getAuthHeaders()
       })
