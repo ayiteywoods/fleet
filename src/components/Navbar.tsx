@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Menu, Search, Bell, User } from 'lucide-react'
+import { Search, Bell } from 'lucide-react'
+import { UserIcon } from '@heroicons/react/24/outline'
 import { LuListCollapse } from 'react-icons/lu'
 import { useTheme } from '@/contexts/ThemeContext'
-import { getIconColor, getButtonColor } from '@/lib/themeUtils'
+import { getBrandBgColor } from '@/lib/themeUtils'
 
 interface NavbarProps {
   onToggleSidebar: () => void
@@ -180,12 +181,8 @@ export default function Navbar({ onToggleSidebar, isSidebarCollapsed, user }: Na
               themeMode === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
             }`}
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              themeColor === 'blue' ? 'bg-blue-600' :
-              themeColor === 'gray' ? 'bg-gray-600' :
-              'bg-yellow-600'
-            }`}>
-              <User className="w-4 h-4 text-white" />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${getBrandBgColor(themeColor)}`}>
+              <UserIcon className="w-5 h-5 text-white" />
             </div>
             {user && (
               <div className="text-left">

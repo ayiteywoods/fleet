@@ -7,6 +7,8 @@ import { RiMoonFill, RiSunFill } from "react-icons/ri";
 import { IoMdNotificationsOutline, IoMdInformationCircleOutline } from "react-icons/io";
 import { BsArrowBarUp } from "react-icons/bs";
 import { useTheme } from '@/contexts/ThemeContext';
+import { getBrandBgColor } from '@/lib/themeUtils';
+import { UserIcon } from '@heroicons/react/24/outline';
 
 interface NavbarProps {
   onOpenSidenav: () => void;
@@ -22,7 +24,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: NavbarProps) => {
-  const { themeMode, toggleThemeMode } = useTheme();
+  const { themeMode, toggleThemeMode, themeColor } = useTheme();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -331,11 +333,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
             onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             className="cursor-pointer"
           >
-            <img
-              className="h-10 w-10 rounded-full"
-              src="/profilemoi.png"
-              alt="Profile"
-            />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${getBrandBgColor(themeColor)}`}>
+              <UserIcon className="h-5 w-5 text-white" />
+            </div>
           </button>
 
           {/* Profile Dropdown */}
@@ -344,11 +344,9 @@ const Navbar = ({ onOpenSidenav, brandText, isSidebarCollapsed = false, user }: 
               {/* Profile Info */}
               <div className="px-4 py-3 border-b border-gray-200 dark:border-navy-700">
                 <div className="flex items-center space-x-3">
-                  <img
-                    className="h-10 w-10 rounded-full object-cover"
-                    src="/profilemoi.png"
-                    alt="Profile"
-                  />
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${getBrandBgColor(themeColor)}`}>
+                    <UserIcon className="h-5 w-5 text-white" />
+                  </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {user?.name || 'Temple Jedi'}
