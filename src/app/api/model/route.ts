@@ -55,12 +55,40 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, description, vehicle_make_id } = body
-    
+
+    if (!name || !vehicle_make_id) {
+      return NextResponse.json(
+        { error: 'Model name and vehicle make are required.' },
+        { status: 400 }
+      )
+    }
+
+    let makeId: bigint
+    try {
+      makeId = BigInt(vehicle_make_id)
+    } catch (e) {
+      console.error('Invalid vehicle_make_id value:', vehicle_make_id, e)
+      return NextResponse.json(
+        { error: 'Invalid vehicle make selected.' },
+        { status: 400 }
+      )
+    }
+
+    // Work around legacy DB where `id` is unique but not properly auto-incrementing
+    // Find the current max(id) and insert with next BigInt value
+    const lastModel = await prisma.model.findFirst({
+      orderBy: { id: 'desc' },
+      select: { id: true }
+    })
+    const currentId = (lastModel?.id as bigint | undefined) ?? BigInt(0)
+    const nextId = currentId + BigInt(1)
+
     const model = await prisma.model.create({
       data: {
+        id: nextId,
         name: name || '',
         description: description || null,
-        vehicle_make_id: BigInt(vehicle_make_id),
+        vehicle_make_id: makeId,
         created_at: new Date(),
         updated_at: new Date()
       },
@@ -70,10 +98,10 @@ export async function POST(request: NextRequest) {
     })
     
     return NextResponse.json(serializeBigInt(model), { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating model:', error)
     return NextResponse.json(
-      { error: 'Failed to create model' },
+      { error: 'Failed to create model', details: error?.message ?? 'Unknown error' },
       { status: 500 }
     )
   }

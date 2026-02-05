@@ -32,6 +32,7 @@ import AddVehicleModal from '@/components/AddVehicleModal'
 import ViewVehicleModal from '@/components/ViewVehicleModal'
 import EditVehicleModal from '@/components/EditVehicleModal'
 import VehicleMakesModal from '@/components/VehicleMakesModal'
+import VehicleModelsModal from '@/components/VehicleModelsModal'
 import VehicleTypesModal from '@/components/VehicleTypesModal'
 import Notification from '@/components/Notification'
 import PermissionGuard from '@/components/PermissionGuard'
@@ -77,6 +78,7 @@ function VehiclesPageContent() {
   const [showViewVehicleModal, setShowViewVehicleModal] = useState(false)
   const [showEditVehicleModal, setShowEditVehicleModal] = useState(false)
   const [showVehicleMakesModal, setShowVehicleMakesModal] = useState(false)
+  const [showVehicleModelsModal, setShowVehicleModelsModal] = useState(false)
   const [showVehicleTypesModal, setShowVehicleTypesModal] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -1029,11 +1031,14 @@ function VehiclesPageContent() {
                 >
                   MAKE
                 </button>
-                <button className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
-                  themeMode === 'dark' 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}>
+                <button 
+                  onClick={() => setShowVehicleModelsModal(true)}
+                  className={`px-4 py-2 rounded-3xl text-sm font-medium transition-colors ${
+                    themeMode === 'dark' 
+                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
                   MODEL
                 </button>
                 <button 
@@ -1495,6 +1500,12 @@ function VehiclesPageContent() {
           isOpen={showVehicleMakesModal}
           onClose={() => setShowVehicleMakesModal(false)}
         />
+
+      {/* Vehicle Models Modal */}
+      <VehicleModelsModal
+        isOpen={showVehicleModelsModal}
+        onClose={() => setShowVehicleModelsModal(false)}
+      />
 
         {/* Vehicle Types Modal */}
         <VehicleTypesModal

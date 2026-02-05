@@ -52,7 +52,7 @@ export default function VehicleModelsModal({ isOpen, onClose }: VehicleModelsMod
   const [sortField, setSortField] = useState<keyof VehicleModel>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const getAuthHeaders = () => {
     if (typeof window === 'undefined') return {}
