@@ -64,6 +64,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Safely parse optional numeric IDs coming from the client
+    let spcodeValue: bigint | null = null
+    if (subsidiary) {
+      try {
+        spcodeValue = BigInt(subsidiary)
+      } catch (e) {
+        console.error('Invalid subsidiary value for driver:', subsidiary, e)
+        return NextResponse.json(
+          { error: 'Invalid subsidiary selected.' },
+          { status: 400 }
+        )
+      }
+    }
+
+    let vehicleIdValue: bigint | null = null
+    if (vehicle_id) {
+      try {
+        vehicleIdValue = BigInt(vehicle_id)
+      } catch (e) {
+        console.error('Invalid vehicle_id value for driver:', vehicle_id, e)
+        return NextResponse.json(
+          { error: 'Invalid vehicle ID. Please enter a numeric ID.' },
+          { status: 400 }
+        )
+      }
+    }
+
     const driver = await prisma.driver_operators.create({
       data: {
         name,
@@ -74,18 +101,18 @@ export async function POST(request: NextRequest) {
         region,
         district,
         status: status || 'Active',
-        spcode: subsidiary ? BigInt(subsidiary) : null,
-        vehicle_id: vehicle_id ? BigInt(vehicle_id) : null,
+        spcode: spcodeValue,
+        vehicle_id: vehicleIdValue,
         created_at: new Date(),
         updated_at: new Date()
       }
     })
 
     return NextResponse.json(serializeBigInt(driver), { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating driver:', error)
     return NextResponse.json(
-      { error: 'Failed to create driver' },
+      { error: 'Failed to create driver', details: error?.message ?? 'Unknown error' },
       { status: 500 }
     )
   }
